@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #1175BB;
+  --color-primary-dark: #0B5A94;
+  --color-primary-soft: #E8F2FA;
+  --color-accent: #E08F26;
+  --color-bg: #F5F5F7;
+  --color-surface: #FFFFFF;
+  --color-border: #E5E5EA;
+  --color-text-main: #1D1D1F;
+  --color-text-muted: #6E6E73;
+  --color-danger: #D70015;
+  --color-danger-soft: #FDECEE;
+  --color-success: #1E8E3E;
+  --color-warning: #B26A00;
+
+  --radius-badge: 6px;
+  --radius-control: 8px;
+  --radius-card: 10px;
+  --radius-sheet: 12px;
+
+  --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 8px 30px rgba(0, 0, 0, 0.12);
+
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-inter), "Segoe UI", sans-serif;
+}
+
+:root {
+  --primary: #1175BB;
+  --primary-dark: #0B5A94;
+  --primary-soft: #E8F2FA;
+  --accent: #E08F26;
+  --bg: #F5F5F7;
+  --surface: #FFFFFF;
+  --border: #E5E5EA;
+  --text: #1D1D1F;
+  --text-muted: #6E6E73;
+  --danger: #D70015;
+  --danger-soft: #FDECEE;
+  --success: #1E8E3E;
+  --warning: #B26A00;
+  --radius-badge: 6px;
+  --radius-control: 8px;
+  --radius-card: 10px;
+  --radius-sheet: 12px;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
