@@ -1,7 +1,7 @@
 // Admin overview dashboard featuring key metrics, recent requests, and low stock warnings
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   Clock,
@@ -28,48 +28,50 @@ export default function AdminDashboardPage() {
   const [lowStockItems, setLowStockItems] = useState<Item[]>([]);
   const [recentRequests, setRecentRequests] = useState<RequestWithDetails[]>([]);
 
-  const loadDashboardData = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      // 1. Fetch pending requests count
-      const { count: pendingCount } = await supabase
-        .from('requests')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'diproses');
-      setTotalPendingRequests(pendingCount || 0);
-
-      // 2. Fetch items for total count and low stock items
-      const { data: itemsData } = await supabase
-        .from('items')
-        .select('*')
-        .order('nama', { ascending: true });
-
-      if (itemsData) {
-        setTotalItems(itemsData.length);
-        const lowList = itemsData.filter((it) => isLowStock(it.stok, it.stok_minimum));
-        setLowStockItems(lowList);
-      }
-
-      // 3. Fetch latest 8 requests with item and profile details
-      const { data: requestsData } = await supabase
-        .from('requests')
-        .select('*, items(*), profiles(*)')
-        .order('created_at', { ascending: false })
-        .limit(8);
-
-      if (requestsData) {
-        setRecentRequests(requestsData as RequestWithDetails[]);
-      }
-    } catch {
-      // Handle error state gracefully
-    } finally {
-      setIsLoading(false);
-    }
-  }, [supabase]);
-
   useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
+    let isMounted = true;
+
+    async function fetchData() {
+      try {
+        const { count: pendingCount } = await supabase
+          .from('requests')
+          .select('*', { count: 'exact', head: true })
+          .eq('status', 'diproses');
+        if (isMounted) setTotalPendingRequests(pendingCount || 0);
+
+        const { data: itemsData } = await supabase
+          .from('items')
+          .select('*')
+          .order('nama', { ascending: true });
+
+        if (isMounted && itemsData) {
+          setTotalItems(itemsData.length);
+          const lowList = itemsData.filter((it) => isLowStock(it.stok, it.stok_minimum));
+          setLowStockItems(lowList);
+        }
+
+        const { data: requestsData } = await supabase
+          .from('requests')
+          .select('*, items(*), profiles(*)')
+          .order('created_at', { ascending: false })
+          .limit(8);
+
+        if (isMounted && requestsData) {
+          setRecentRequests(requestsData as RequestWithDetails[]);
+        }
+      } catch {
+        // Handle error state gracefully
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase]);
 
   return (
     <div>

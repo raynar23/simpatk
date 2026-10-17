@@ -37,43 +37,7 @@ export default function UserDashboardPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Load user profile and inventory items for the dropdown
-  const loadInitialData = useCallback(async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // 1. Fetch user profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileData) {
-        setProfile(profileData as Profile);
-      }
-
-      // 2. Fetch available items
-      const { data: itemsData } = await supabase
-        .from('items')
-        .select('*')
-        .order('nama', { ascending: true });
-
-      if (itemsData && itemsData.length > 0) {
-        setItems(itemsData as Item[]);
-        setSelectedItemId(itemsData[0].id);
-      }
-    } catch {
-      showToast('Gagal memuat profil akun.', 'error');
-    } finally {
-      setIsLoadingProfile(false);
-    }
-  }, [supabase, showToast]);
-
-  // Load user request history
   const loadRequests = useCallback(async () => {
-    setIsLoadingRequests(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -97,10 +61,60 @@ export default function UserDashboardPage() {
     }
   }, [supabase, showToast]);
 
+  // Initial data loading on mount
   useEffect(() => {
-    loadInitialData();
-    loadRequests();
-  }, [loadInitialData, loadRequests]);
+    let isMounted = true;
+
+    async function init() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !isMounted) return;
+
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (isMounted && profileData) {
+          setProfile(profileData as Profile);
+        }
+
+        const { data: itemsData } = await supabase
+          .from('items')
+          .select('*')
+          .order('nama', { ascending: true });
+
+        if (isMounted && itemsData && itemsData.length > 0) {
+          setItems(itemsData as Item[]);
+          setSelectedItemId(itemsData[0].id);
+        }
+
+        const { data: requestsData, error: reqError } = await supabase
+          .from('requests')
+          .select('*, items(*)')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (!reqError && isMounted) {
+          setMyRequests((requestsData as RequestWithDetails[]) || []);
+        }
+      } catch {
+        if (isMounted) showToast('Gagal memuat data pengguna.', 'error');
+      } finally {
+        if (isMounted) {
+          setIsLoadingProfile(false);
+          setIsLoadingRequests(false);
+        }
+      }
+    }
+
+    init();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase, showToast]);
 
   // Realtime subscription for request updates (e.g. status changes marked by admin)
   useEffect(() => {

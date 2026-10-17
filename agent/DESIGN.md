@@ -77,3 +77,12 @@ Bahasa Indonesia baku, singkat, to the point. Contoh label: "Kirim Permintaan", 
 - Teknis: meta viewport yang benar, gunakan dvh bukan vh untuk tinggi layar penuh, tidak ada elemen yang melebihi lebar layar, teks tidak terpotong, jarak antar elemen tetap lega di 360px.
 - Verifikasi: setiap halaman diperiksa di lebar 360, 390, 768, 1024, dan 1440px (gunakan browser bila tersedia) sebelum tahap dinyatakan selesai. Laporkan hasilnya singkat.
 
+## Halaman Login
+- Struktur: Layar terbagi dua pada laptop (lg, 1024px ke atas). Latar halaman putih dengan padding 12px. Grid 2 kolom sama lebar. Kiri: panel foto terminal TPS Surabaya dengan radius 12px dan tinggi calc(100dvh - 24px). Kanan: area form login.
+- Panel Foto: Foto /images/tps-terminal.jpg dengan object-cover dan object-position 62% 50%. Overlay solid primary-dark sekitar 35% (maksimal 45%) untuk mempertahankan warna alami derek kuning dan langit tanpa gradien dekoratif. Logo monokrom putih TPS Surabaya di kiri atas (tinggi 36-44px). Teks kiri bawah: "SIMPATK" (Inter semi-bold 32px) dan deskripsi 14px: "Sistem Informasi Manajemen Permintaan ATK, General Affairs Pelindo Terminal Petikemas."
+- Area Form: Terpusat secara vertikal dan horizontal, lebar maksimal 380px, tanpa kartu atau garis kotak pembungkus. Judul "Masuk" (Inter semi-bold 28px) dan subjudul 14px text-muted: "Masuk menggunakan akun yang telah terdaftar."
+- Kontrol Input & Tombol: Input email dan kata sandi tinggi 40px (HP: 44px), radius 8px, latar token bg, border 1px; saat fokus berlatar putih dengan cincin primary 2px. Kata sandi dilengkapi toggle intip (Eye/EyeOff Lucide dengan aria-label). Tombol "Masuk" warna primary, radius 8px, tinggi 40px (HP: 44px), teks putih 14px medium, dengan spinner Loader2 saat proses.
+- Error Banner: Latar danger-soft, teks danger, icon AlertCircle 16px, aria-live="polite", layout stabil tanpa melompat.
+- Footer Form: Teks kecil rata tengah di dasar form (12px text-muted): "General Affairs - Pelindo Terminal Petikemas".
+- Tablet dan HP (< lg): Panel foto disembunyikan. Logo berwarna Pelindo di atas form (tinggi 40px, rata tengah), padding 24px, tinggi min 100dvh, padding bawah memperhitungkan safe-area.
+

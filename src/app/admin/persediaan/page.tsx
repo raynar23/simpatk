@@ -1,14 +1,13 @@
 // Admin inventory management page with live search, stock adjustment RPCs, and item creation
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   Boxes,
   Plus,
   Minus,
   Search,
   PackagePlus,
-  AlertTriangle,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { AdminToolbar } from '@/components/ui/AdminToolbar';
@@ -45,30 +44,35 @@ export default function AdminPersediaanPage() {
   const [newStokAwal, setNewStokAwal] = useState('0');
   const [newStokMinimum, setNewStokMinimum] = useState('5');
 
-  // Load items from Supabase
-  const loadItems = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('items')
-        .select('*')
-        .order('nama', { ascending: true });
-
-      if (error) {
-        showToast('Gagal memuat katalog barang.', 'error');
-        return;
-      }
-      setItems((data as Item[]) || []);
-    } catch {
-      showToast('Gagal menghubungi server.', 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [supabase, showToast]);
-
+  // Load items from Supabase on mount
   useEffect(() => {
-    loadItems();
-  }, [loadItems]);
+    let isMounted = true;
+
+    async function fetchItems() {
+      try {
+        const { data, error } = await supabase
+          .from('items')
+          .select('*')
+          .order('nama', { ascending: true });
+
+        if (error) {
+          if (isMounted) showToast('Gagal memuat katalog barang.', 'error');
+          return;
+        }
+        if (isMounted) setItems((data as Item[]) || []);
+      } catch {
+        if (isMounted) showToast('Gagal menghubungi server.', 'error');
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    fetchItems();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase, showToast]);
 
   // Filtered items by search query
   const filteredItems = useMemo(() => {

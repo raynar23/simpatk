@@ -1,7 +1,7 @@
 // Admin request management page with status tabs, confirmation dialog, and Supabase Realtime
 'use client';
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   ClipboardList,
   CheckCircle2,
@@ -33,30 +33,35 @@ export default function AdminPermintaanPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
-  // Fetch all requests
-  const loadRequests = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('requests')
-        .select('*, items(*), profiles(*)')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        showToast('Gagal memuat data permintaan.', 'error');
-        return;
-      }
-      setRequests((data as RequestWithDetails[]) || []);
-    } catch {
-      showToast('Gagal menghubungi server.', 'error');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [supabase, showToast]);
-
+  // Fetch all requests on mount
   useEffect(() => {
-    loadRequests();
-  }, [loadRequests]);
+    let isMounted = true;
+
+    async function fetchRequests() {
+      try {
+        const { data, error } = await supabase
+          .from('requests')
+          .select('*, items(*), profiles(*)')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          if (isMounted) showToast('Gagal memuat data permintaan.', 'error');
+          return;
+        }
+        if (isMounted) setRequests((data as RequestWithDetails[]) || []);
+      } catch {
+        if (isMounted) showToast('Gagal menghubungi server.', 'error');
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    }
+
+    fetchRequests();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase, showToast]);
 
   // Realtime subscription for requests table
   useEffect(() => {
