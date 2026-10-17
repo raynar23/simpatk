@@ -1,11 +1,20 @@
 'use client';
 
-// Login page with split layout (terminal image panel and centered clean form)
+// Dynamic login page with full-bleed terminal backdrop on left and animated modern form card on right
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import {
+  Loader2,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Mail,
+  Lock,
+  ArrowRight,
+  CheckCircle2,
+} from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -66,106 +75,137 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-dvh bg-white lg:p-3 flex items-center justify-center">
-      <div className="w-full max-w-[1920px] mx-auto grid grid-cols-1 lg:grid-cols-2 lg:gap-3 min-h-dvh lg:min-h-[calc(100dvh-24px)]">
-        {/* Left column: Photo Panel (lg and above) */}
-        <section className="hidden lg:flex relative overflow-hidden rounded-sheet bg-primary-dark select-none h-full min-h-[calc(100dvh-24px)] flex-col justify-between p-10">
-          {/* Terminal background image with object-position 62% 50% */}
-          <Image
-            src="/images/tps-terminal.jpg"
-            alt="Terminal Petikemas Surabaya"
-            fill
-            priority
-            quality={80}
-            sizes="(min-width: 1024px) 50vw, 100vw"
-            className="object-cover"
-            style={{ objectPosition: '62% 50%' }}
-          />
+    <main className="min-h-dvh w-full flex flex-col lg:flex-row bg-[#F8FAFC]">
+      {/* Left column: Full-bleed Photo Panel (0 margin, 0 padding, edge-to-edge) */}
+      <section className="hidden lg:flex relative w-1/2 xl:w-[52%] min-h-dvh select-none overflow-hidden flex-col justify-between p-12 shrink-0">
+        {/* Terminal background image with object-position 62% 50% */}
+        <Image
+          src="/images/tps-terminal.jpg"
+          alt="Terminal Petikemas Surabaya"
+          fill
+          priority
+          quality={85}
+          sizes="52vw"
+          className="object-cover"
+          style={{ objectPosition: '62% 50%' }}
+        />
 
-          {/* Solid primary-dark overlay (approx 38% for crisp natural photo colors) */}
-          <div className="absolute inset-0 bg-[#0B5A94]/38 z-10" />
+        {/* Dynamic multi-layer overlay for crisp contrast and vibrant colors */}
+        <div className="absolute inset-0 bg-[#0B5A94]/25 z-10" />
+        <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/70 via-black/25 to-transparent z-10" />
+        <div className="absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-10" />
 
-          {/* Top content: White TPS logo */}
-          <div className="relative z-20">
-            <div className="relative h-11 w-52">
-              <Image
-                src="/logo/tps-white.png"
-                alt="Logo Pelindo Terminal Petikemas TPS"
-                fill
-                className="object-contain object-left drop-shadow-sm"
-                priority
-              />
+        {/* Top Content: White TPS Logo and Status Badge */}
+        <div className="relative z-20 flex items-center justify-between">
+          <div className="relative h-11 w-56">
+            <Image
+              src="/logo/tps-white.png"
+              alt="Logo Pelindo Terminal Petikemas TPS"
+              fill
+              className="object-contain object-left drop-shadow-md"
+              priority
+            />
+          </div>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-xs font-medium shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+            Portal Aktif
+          </span>
+        </div>
+
+        {/* Bottom Content: App Title, Description, and Feature Chips */}
+        <div className="relative z-20 text-white max-w-lg space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-badge bg-primary text-white text-xs font-semibold tracking-wide uppercase shadow-sm">
+            General Affairs
+          </div>
+          <h1 className="text-4xl font-bold tracking-tight text-white leading-tight drop-shadow-md">
+            SIMPATK
+          </h1>
+          <p className="text-sm text-white/95 leading-relaxed drop-shadow-sm font-normal">
+            Sistem Informasi Manajemen Permintaan ATK, General Affairs Pelindo Terminal Petikemas.
+          </p>
+
+          <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-white/90">
+            <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15">
+              <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
+              <span>Otomatisasi Disetujui</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15">
+              <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
+              <span>Stok Fisik Realtime</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15">
+              <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
+              <span>100% Paperless</span>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* Bottom content: App title and description */}
-          <div className="relative z-20 text-white max-w-lg">
-            <h1 className="text-[32px] font-semibold tracking-tight text-white leading-tight drop-shadow-sm">
-              SIMPATK
-            </h1>
-            <p className="mt-2 text-sm text-white/95 leading-relaxed drop-shadow-sm">
-              Sistem Informasi Manajemen Permintaan ATK, General Affairs Pelindo Terminal Petikemas.
-            </p>
-          </div>
-        </section>
-
-        {/* Right column: Form Area */}
-        <section className="flex flex-col justify-between items-center w-full px-6 py-8 sm:px-10 lg:px-8 min-h-dvh lg:min-h-[calc(100dvh-24px)] pb-[calc(env(safe-area-inset-bottom,0px)+24px)]">
-          <div className="w-full max-w-[380px] my-auto flex flex-col">
-            {/* Mobile / Tablet logo: centered color logo (< lg) */}
-            <div className="lg:hidden mb-8 flex justify-center">
-              <div className="relative h-10 w-52">
+      {/* Right column: Form Area with Elevated Card & Refined Micro-interactions */}
+      <section className="flex-1 flex flex-col justify-between items-center px-4 py-8 sm:px-8 lg:px-10 min-h-dvh bg-[#F8FAFC] pb-[calc(env(safe-area-inset-bottom,0px)+24px)]">
+        <div className="w-full max-w-[420px] my-auto">
+          {/* Form Card Container with subtle elevation */}
+          <div className="bg-surface rounded-sheet border border-border/80 shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-6 sm:p-9 transition-all">
+            {/* Header with Color Pelindo Logo */}
+            <div className="mb-6">
+              <div className="relative h-10 w-48 mb-4">
                 <Image
                   src="/logo/pelindo-color.png"
                   alt="Logo Pelindo Terminal Petikemas"
                   fill
-                  className="object-contain"
+                  className="object-contain object-left"
                   priority
                 />
               </div>
-            </div>
-
-            {/* Title & Subtitle */}
-            <div className="mb-6">
-              <h2 className="text-[28px] font-semibold text-text-main tracking-tight leading-tight">
-                Masuk
+              <h2 className="text-2xl font-bold text-text-main tracking-tight leading-tight">
+                Masuk ke Akun
               </h2>
-              <p className="text-sm text-text-muted mt-1.5 leading-normal">
-                Masuk menggunakan akun yang telah terdaftar.
+              <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
+                Gunakan akun kedinasan untuk mengakses portal permintaan ATK.
               </p>
             </div>
 
             {/* Login Form */}
             <form onSubmit={handleLogin} className="space-y-4">
+              {/* Email Field with Left Icon */}
               <div>
                 <label
                   htmlFor="email"
-                  className="block text-[13px] font-medium text-text-main mb-1.5"
+                  className="block text-xs font-semibold text-text-main mb-1.5"
                 >
-                  Email
+                  Alamat Email
                 </label>
-                <input
-                  ref={emailInputRef}
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nama@tps.co.id"
-                  className="w-full rounded-control border border-border bg-bg px-3.5 text-base sm:text-sm text-text-main placeholder:text-text-muted/60 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary min-h-[44px] lg:min-h-[40px] lg:h-10"
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
+                    <Mail className="w-4 h-4" strokeWidth={1.5} />
+                  </div>
+                  <input
+                    ref={emailInputRef}
+                    id="email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="nama@tps.co.id"
+                    className="w-full rounded-control border border-border bg-bg pl-10 pr-3.5 py-2.5 text-base sm:text-xs text-text-main placeholder:text-text-muted/60 transition-all hover:border-primary/40 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[44px] sm:min-h-[38px]"
+                  />
+                </div>
               </div>
 
+              {/* Password Field with Left Icon and Show/Hide Button */}
               <div>
                 <label
                   htmlFor="password"
-                  className="block text-[13px] font-medium text-text-main mb-1.5"
+                  className="block text-xs font-semibold text-text-main mb-1.5"
                 >
                   Kata Sandi
                 </label>
                 <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
+                    <Lock className="w-4 h-4" strokeWidth={1.5} />
+                  </div>
                   <input
                     id="password"
                     name="password"
@@ -175,7 +215,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full rounded-control border border-border bg-bg pl-3.5 pr-10 text-base sm:text-sm text-text-main placeholder:text-text-muted/60 transition-colors focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary min-h-[44px] lg:min-h-[40px] lg:h-10"
+                    className="w-full rounded-control border border-border bg-bg pl-10 pr-10 py-2.5 text-base sm:text-xs text-text-main placeholder:text-text-muted/60 transition-all hover:border-primary/40 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[44px] sm:min-h-[38px]"
                   />
                   <button
                     type="button"
@@ -193,7 +233,32 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Error container: preserves layout stability */}
+              {/* Quick Demo Account Selector for instant testing */}
+              <div className="pt-0.5">
+                <span className="block text-[11px] font-medium text-text-muted mb-1.5">
+                  Pilihan Akun Uji Coba:
+                </span>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEmail('admin@tps.co.id')}
+                    className="py-1.5 px-2.5 text-[11px] font-medium rounded-control border border-border bg-bg hover:bg-primary-soft hover:text-primary hover:border-primary/30 transition-all text-text-muted truncate cursor-pointer text-left"
+                  >
+                    <span className="font-semibold text-text-main block">Admin GA</span>
+                    admin@tps.co.id
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEmail('ga@tps.co.id')}
+                    className="py-1.5 px-2.5 text-[11px] font-medium rounded-control border border-border bg-bg hover:bg-primary-soft hover:text-primary hover:border-primary/30 transition-all text-text-muted truncate cursor-pointer text-left"
+                  >
+                    <span className="font-semibold text-text-main block">Divisi Pemohon</span>
+                    ga@tps.co.id
+                  </button>
+                </div>
+              </div>
+
+              {/* Error banner: preserves layout stability */}
               <div
                 aria-live="polite"
                 className={`transition-all duration-150 ${
@@ -213,31 +278,35 @@ export default function LoginPage() {
                 )}
               </div>
 
+              {/* Submit Button */}
               <div className="pt-2">
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full inline-flex items-center justify-center rounded-control bg-primary px-4 text-sm font-medium text-white hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] lg:min-h-[40px] lg:h-10 transition-colors cursor-pointer"
+                  className="w-full inline-flex items-center justify-center rounded-control bg-primary hover:bg-primary-dark active:scale-[0.99] text-white px-4 py-2.5 text-xs font-semibold shadow-sm hover:shadow transition-all disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] sm:min-h-[40px] cursor-pointer"
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Memproses
+                      Memproses Masuk...
                     </>
                   ) : (
-                    'Masuk'
+                    <>
+                      <span>Masuk ke Sistem</span>
+                      <ArrowRight className="w-4 h-4 ml-2" strokeWidth={1.5} />
+                    </>
                   )}
                 </button>
               </div>
             </form>
           </div>
+        </div>
 
-          {/* Centered Small Footer */}
-          <footer className="text-center text-xs text-text-muted py-2 mt-auto">
-            General Affairs - Pelindo Terminal Petikemas
-          </footer>
-        </section>
-      </div>
+        {/* Small Footer */}
+        <footer className="text-center text-xs text-text-muted py-2 mt-4">
+          General Affairs &bull; PT Pelindo Terminal Petikemas &copy; 2025
+        </footer>
+      </section>
     </main>
   );
 }
