@@ -95,8 +95,8 @@ export default function LoginPage() {
         <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/70 via-black/25 to-transparent z-10" />
         <div className="absolute inset-x-0 bottom-0 h-80 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-10" />
 
-        {/* Top Content: White TPS Logo and Status Badge */}
-        <div className="relative z-20 flex items-center justify-between">
+        {/* Top Content: White TPS Logo */}
+        <div className="relative z-20">
           <div className="relative h-11 w-56">
             <Image
               src="/logo/tps-white.png"
@@ -106,10 +106,6 @@ export default function LoginPage() {
               priority
             />
           </div>
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-white text-xs font-medium shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-            Portal Aktif
-          </span>
         </div>
 
         {/* Bottom Content: App Title, Description, and Feature Chips */}
