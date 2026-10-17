@@ -1,6 +1,6 @@
-// User layout featuring top brand header with account controls
+// User layout utilizing the unified 100dvh AppShell architecture
 import React from 'react';
-import { UserHeader } from '@/components/ui/UserHeader';
+import { AppShell } from '@/components/layout/AppShell';
 import { createClient } from '@/lib/supabase/server';
 
 export default async function UserLayout({
@@ -24,11 +24,13 @@ export default async function UserLayout({
   }
 
   return (
-    <div className="min-h-dvh bg-bg text-text-main flex flex-col">
-      <UserHeader divisionName={divisionName} />
-      <main className="flex-1 max-w-[1200px] w-full mx-auto px-4 sm:px-6 py-6 pb-16">
-        {children}
-      </main>
-    </div>
+    <AppShell
+      role="user"
+      divisionName={divisionName}
+      userId={user?.id}
+      title="User Portal"
+    >
+      {children}
+    </AppShell>
   );
 }

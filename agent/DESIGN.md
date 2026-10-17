@@ -32,57 +32,52 @@ Dilarang: gradien ungu/pink/neon, gradien dekoratif, warna glow, bayangan berwar
 ## Tipografi
 - Font: `-apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", sans-serif`. Perangkat Apple memakai SF Pro, perangkat lain memakai Inter.
 - Muat Inter lewat `next/font` (self-host), bobot 400, 500, 600.
-- Ukuran dasar 14px, tabel 13px, judul halaman 22px semi-bold, judul bagian 15px semi-bold. Teks kecil minimal 12px.
-- Gunakan `font-variant-numeric: tabular-nums` untuk angka stok dan jumlah.
+- Tipografi rapat ala macOS: ukuran dasar 13px, tinggi baris tabel 40px, judul halaman 20px semi-bold, judul bagian 14px semi-bold, label 12px.
+- Gunakan `font-variant-numeric: tabular-nums` untuk semua angka stok, jumlah, dan nilai keuangan.
 - Tanpa huruf kapital semua untuk judul; letter-spacing normal (judul besar boleh -0.01em).
 
-## Bentuk dan Jarak
+## Bentuk, Panel, dan Bayangan
 - Radius: kartu dan panel 10px, tombol dan input 8px, badge 6px. Maksimal 12px. Tidak ada bentuk pil kecuali segmented control.
-- Garis tipis 1px `border`. Bayangan sangat halus (`0 1px 2px rgba(0,0,0,0.06)`), tanpa bayangan besar.
-- Skala jarak 4px (4, 8, 12, 16, 24, 32). Padding kartu 16 sampai 20px.
+- Kartu & Panel: border 1px `border-border`, TANPA bayangan (bayangan hanya untuk dialog dan dropdown). Pemisah memakai garis tipis; susun konten seperti panel macOS (header panel kecil, garis pemisah tipis), bukan kartu bertumpuk.
+- Ikon KPI & Header: TANPA kotak ikon berwarna. Ikon polos 16px warna muted tanpa latar.
+- Skala jarak 4px (4, 8, 12, 16, 20, 24). Padding kartu 14 sampai 16px.
 - Tinggi kontrol (tombol, input) 32 sampai 36px.
 
-## Layout (gaya Mac)
-- Layar lebar: sidebar kiri 232px (biru gelap `primary-dark` dengan logo putih, atau abu muda ala Finder), konten di kanan dengan toolbar atas tipis (judul halaman, pencarian, tindakan).
-- Item sidebar aktif: latar `primary-soft` atau putih transparan 12%, bukan blok warna tebal.
-- Tabel gaya daftar macOS: header kecil abu, baris dengan garis pemisah tipis, tanpa zebra mencolok, hover baris sangat halus.
-- Form dalam grup bergaya iOS (label kiri/atas, input bersih, fokus cincin biru 2px).
-- Dialog (Tambah Stok, Kurangi Stok, Tambah Barang) gaya sheet: tengah layar, latar redup, radius 12px.
-- Layar kecil: sidebar menjadi tab bar bawah bergaya iOS.
-- Status memakai badge kecil tanpa titik atau pointer artifisial: Diproses (kuning tua), Selesai (hijau). Stok menipis: badge dan baris merah lembut dengan teks `danger`.
+## Status & Badge
+- Status memakai badge teks saja tanpa titik/pointer artifisial:
+  - In Progress (diproses): kuning tua (#9A5B00), latar tint (#FFF8E6), border (#FFE2A4), radius 6px, 12px medium.
+  - Completed (selesai): hijau (#1E8E3E), latar tint (#EBF7EE), border (#C8E9D0).
+  - Low Stock (menipis): merah (#D70015), latar tint (#FDECEE), border danger/20.
+  - Out of Stock (habis): merah tua (#9B0010), latar tint (#FBE8EA), border (#F2C2C6).
+  - In Stock (aman): teks abu (#6E6E73) tanpa badge.
 
 ## Icon
-- Satu set saja: Lucide, stroke 1.5, ukuran 16 atau 18px, warna ikut teks. Tanpa emoji di mana pun (UI, teks, toast, data seed, komentar).
-- Icon hanya sebagai pendamping label, tidak dibuat dekoratif besar.
+- Satu set saja: Lucide, stroke 1.5, ukuran 16 atau 18px, warna ikut teks. Tanpa emoji di mana pun.
+- Icon hanya sebagai pendamping label atau navigasi, tidak dibuat dekoratif besar dengan latar berwarna.
 
 ## Interaksi dan Gerak
 - Transisi 120 sampai 180ms, easing ease-out. Tidak ada animasi mantul, scale berlebihan, glow, atau efek hover mencolok.
-- Kursor standar. Gunakan cursor pointer hanya pada elemen yang benar-benar dapat diklik, tanpa efek tambahan.
-- Wajib ada: loading skeleton tipis, empty state yang rapi (teks singkat, tanpa ilustrasi kartun), toast konfirmasi sederhana, validasi form jelas, fokus keyboard terlihat.
+- Kursor standar. Gunakan cursor pointer hanya pada elemen yang benar-benar dapat diklik.
+- Wajib ada: loading skeleton tipis, empty state rapi tanpa ilustrasi kartun, toast konfirmasi sederhana, validasi form jelas, fokus keyboard terlihat.
 
 ## Ciri AI Slop yang Dihindari
-Radius terlalu besar, kartu bersusun dengan bayangan tebal, gradien dekoratif, glassmorphism berlebihan, emoji sebagai ikon, ilustrasi generik, hero besar bertulisan slogan, teks pemanis berlebihan, badge bergradasi, animasi masuk di semua elemen, pointer atau titik status artifisial (dot indicator / AI slop). Dilarang memakai titik status atau pointer buatan di seluruh halaman maupun komponen.
+Radius terlalu besar, kartu bersusun dengan bayangan tebal, gradien dekoratif, glassmorphism berlebihan, emoji sebagai ikon, ilustrasi generik, hero besar bertulisan slogan, teks pemanis berlebihan, badge bergradasi, animasi masuk di semua elemen, pointer atau titik status artifisial (dot indicator / AI slop), kotak ikon berwarna di KPI card.
 
 ## Teks & Bahasa
-Seluruh antarmuka menggunakan Bahasa Inggris profesional, baku, dan singkat. Contoh label: "Submit Request", "Mark as Completed", "Add Stock", "Deduct Stock", "Low Stock", "Out of Stock", "Login", "Dashboard", "Inventory", "Requests". Aturan ini berlaku untuk semua tombol, dialog, tabel, filter, dan pesan sistem.
+Seluruh antarmuka menggunakan Bahasa Inggris profesional, baku, dan singkat. Contoh label: "Submit Request", "Mark as Completed", "Add Stock", "Deduct Stock", "Low Stock", "Out of Stock", "Login", "Dashboard", "Inventory", "Requests", "Shopping List", "Reports", "Settings". Aturan ini berlaku untuk semua tombol, dialog, tabel, filter, dan pesan sistem.
 
-## Responsif (laptop dan mobile sama pentingnya)
-- Pendekatan mobile-first. Breakpoint Tailwind: dasar (di bawah 640px, HP), sm 640, md 768, lg 1024 (laptop), xl 1280. Konten dibatasi lebar maksimal 1200px dan berada di tengah pada layar lebar.
-- Navigasi: lg ke atas memakai sidebar kiri 232px. Di bawah lg, sidebar disembunyikan. Admin memakai tab bar bawah bergaya iOS (Dashboard, Permintaan, Persediaan) dengan padding safe-area (env(safe-area-inset-bottom)). User hanya punya satu halaman, jadi memakai bar atas sederhana berisi logo dan menu akun (Keluar), tanpa tab bar.
-- Tabel: md ke atas tampil sebagai tabel. Di bawah md, setiap baris menjadi kartu daftar ringkas (baris judul: barang dan status, baris bawah: jumlah, divisi, tanggal, tombol aksi). Dilarang scroll horizontal pada halaman maupun tabel di HP.
-- Dialog: md ke atas dialog di tengah layar. Di bawah md menjadi bottom sheet (menempel di bawah, lebar penuh, radius atas 12px, tinggi maksimal 90dvh, bisa di-scroll, tombol aksi tetap terlihat).
-- Kontrol sentuh: di HP tinggi tombol dan input minimal 44px dan ukuran font input 16px (mencegah zoom otomatis di iOS). Di laptop tetap 32 sampai 36px sesuai DESIGN.md.
-- Grid: StatTile 1 kolom di HP, 3 kolom mulai sm. Toolbar halaman (pencarian, tombol, SegmentedControl) disusun menumpuk di HP, SegmentedControl lebar penuh. Form user satu kolom di HP, dua kolom (Jumlah dan Keperluan) boleh mulai md.
-- Panel login: panel biru kiri hanya tampil mulai lg; di bawah itu hanya form dengan logo berwarna di atas.
-- Teknis: meta viewport yang benar, gunakan dvh bukan vh untuk tinggi layar penuh, tidak ada elemen yang melebihi lebar layar, teks tidak terpotong, jarak antar elemen tetap lega di 360px.
-- Verifikasi: setiap halaman diperiksa di lebar 360, 390, 768, 1024, dan 1440px (gunakan browser bila tersedia) sebelum tahap dinyatakan selesai. Laporkan hasilnya singkat.
+## App Shell & Navigasi (100dvh)
+- App shell tinggi 100dvh tanpa scroll halaman (overflow-hidden); hanya panel tertentu yang boleh scroll internal (overflow-y-auto). Dirancang untuk viewport minimal 1280x680; di bawah 640px tinggi layar, izinkan scroll halaman sebagai cadangan agar konten tidak terpotong.
+- Sidebar (Admin dan User memakai komponen yang sama):
+  - Desktop (lg+): 232px saat terbuka, dapat diciutkan menjadi 64px (ikon saja dengan tooltip) lewat tombol PanelLeft di toolbar dan shortcut Ctrl/Cmd+B. Status disimpan di localStorage (try/catch), transisi 180ms.
+  - Mobile (< lg): drawer dari kiri (280px, overlay redup, tutup lewat tombol, ESC, ketuk overlay, atau pindah halaman, fokus terjaga, scroll body dikunci), dibuka dari tombol hamburger di toolbar.
+  - Tab bar bawah HP telah DIHAPUS.
+- Toolbar atas (52px): toggle sidebar (PanelLeft / hamburger), judul/breadcrumb, pencarian cepat (Ctrl/Cmd+K membuka command palette: pindah halaman, cari barang, cari nomor permintaan), ikon notifikasi dengan jumlah kejadian realtime (5 riwayat terbaru), menu akun (nama divisi, peran, Settings, Logout).
 
 ## Halaman Login
-- Struktur: Layar terbagi dua pada laptop (lg, 1024px ke atas). Sisi kiri foto terminal penuh (full-bleed, 0 padding, 0 margin ke tepi layar) dengan bayangan samping (side drop shadow) yang jatuh ke area kanan untuk kedalaman visual yang kuat. Sisi kanan area form dengan latar lembut #F8FAFC.
-- Panel Foto: Foto /images/tps-terminal.jpg mengisi penuh tinggi layar (100dvh) dengan object-cover dan object-position 62% 50%. Overlay bertingkat (solid primary-dark 25% + gradien hitam halus di atas dan bawah) sehingga warna asli derek kuning dan langit tetap menyala. Panel memiliki z-20 dengan drop shadow samping (14px 0 40px rgba(0,0,0,0.18)) dan border pembatas halus. Kiri atas: logo monokrom putih TPS Surabaya. Kiri bawah: tag General Affairs, judul "SIMPATK" (36px), deskripsi 14px, serta indikator fitur (Otomatisasi Disetujui, Stok Fisik Realtime, 100% Paperless).
-- Area Form: Terpusat secara vertikal dan horizontal. Menggunakan kartu terangkat modern (radius 12px, border 1px border-border, bayangan elevasi dan bayangan samping berlapis [0 20px 50px -12px rgba(15,23,42,0.10), -8px 0 24px -6px rgba(17,117,187,0.08)], garis aksen gradien biru Pelindo di bagian atas kartu). Header kartu menampilkan logo berwarna Pelindo, judul "Masuk ke Akun", dan subjudul informatif.
-- Kontrol Input & Tombol: Input email dan kata sandi bersih dan terfokus, dilengkapi icon pendamping (Mail, Lock) di sisi kiri, toggle intip (Eye/EyeOff) di sisi kanan, serta ring fokus biru 2px. Tombol "Masuk ke Sistem" tampil menonjol dengan bayangan aksen biru Pelindo (shadow-[0_4px_14px_rgba(17,117,187,0.30)]), transisi aktif, dan indikator loader animasi saat proses masuk.
+- Struktur: Layar terbagi dua pada laptop (lg, 1024px ke atas). Sisi kiri foto terminal penuh (full-bleed, 0 padding, 0 margin ke tepi layar) dengan bayangan samping (side drop shadow) yang jatuh ke area kanan. Sisi kanan area form dengan latar lembut #F8FAFC.
+- Panel Foto: Foto /images/tps-terminal.jpg mengisi penuh tinggi layar (100dvh) dengan object-cover dan object-position 62% 50%. Overlay bertingkat (solid primary-dark 25% + gradien hitam halus). Tag General Affairs, judul "SIMPATK" (36px), deskripsi dalam bahasa Inggris, serta indikator fitur (Automated Workflow, Realtime Physical Stock, 100% Paperless).
+- Area Form: Terpusat secara vertikal dan horizontal. Spasi lega (mb-9) antara logo Pelindo TPS dan judul "Login". Form input Email Address dan Password dengan ikon pendamping. Tombol submit berlabel "Login". Footer dinamis menggunakan tahun berjalan `new Date().getFullYear()`.
 - Error Banner: Latar danger-soft, teks danger, icon AlertCircle 16px, aria-live="polite", layout stabil tanpa melompat.
-- Footer Form: Teks kecil rata tengah di dasar form (12px text-muted): "General Affairs - PT Pelindo Terminal Petikemas © 2025".
 - Tablet dan HP (< lg): Panel foto disembunyikan. Form tampil penuh dengan logo berwarna di atas, padding aman safe-area.
 

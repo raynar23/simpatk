@@ -5,7 +5,7 @@ delete from public.requests;
 delete from public.items;
 
 -- Reset request number sequence
-perform setval('public.request_number_seq', 1, false);
+select setval('public.request_number_seq', 1, false);
 
 -- 2. Insert 24 realistic ATK items across all 7 categories
 -- Exactly 7 items have stok <= stok_minimum (with 2 items out of stock: stok = 0)
