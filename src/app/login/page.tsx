@@ -14,6 +14,7 @@ import {
   Lock,
   ArrowRight,
   CheckCircle2,
+  ShieldCheck,
 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -274,10 +275,27 @@ export default function LoginPage() {
               </div>
             </form>
 
-            {/* Enterprise Portal Identity Indicator */}
-            <div className="mt-6 pt-4 border-t border-border/60 flex items-center justify-center gap-2 text-[11px] text-text-muted">
-              <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0" />
-              <span>Portal Resmi PT Pelindo Terminal Petikemas</span>
+            {/* Enterprise Security & Portal Verification Widget */}
+            <div className="mt-6 pt-4 border-t border-border/60">
+              <div className="flex items-center justify-between rounded-control bg-bg/90 border border-border/80 px-3.5 py-2.5 shadow-xs">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-primary-soft flex items-center justify-center text-primary shrink-0">
+                    <ShieldCheck className="w-4 h-4" strokeWidth={1.5} />
+                  </div>
+                  <div className="min-w-0 text-left">
+                    <p className="text-xs font-semibold text-text-main leading-tight truncate">
+                      Portal Resmi Kedinasan
+                    </p>
+                    <p className="text-[11px] text-text-muted mt-0.5 truncate">
+                      General Affairs &bull; Pelindo TPS
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-badge bg-success-soft border border-success/30 text-success text-[10px] font-semibold shrink-0 ml-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+                  <span>Terverifikasi</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
