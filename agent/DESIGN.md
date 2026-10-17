@@ -63,8 +63,8 @@ Dilarang: gradien ungu/pink/neon, gradien dekoratif, warna glow, bayangan berwar
 ## Ciri AI Slop yang Dihindari
 Radius terlalu besar, kartu bersusun dengan bayangan tebal, gradien dekoratif, glassmorphism berlebihan, emoji sebagai ikon, ilustrasi generik, hero besar bertulisan slogan, teks pemanis berlebihan, badge bergradasi, animasi masuk di semua elemen, pointer atau titik status artifisial (dot indicator / AI slop). Dilarang memakai titik status atau pointer buatan di seluruh halaman maupun komponen.
 
-## Teks
-Bahasa Indonesia baku, singkat, to the point. Contoh label: "Kirim Permintaan", "Tandai Selesai", "Tambah Stok", "Kurangi Stok", "Stok Menipis".
+## Teks & Bahasa
+Seluruh antarmuka menggunakan Bahasa Inggris profesional, baku, dan singkat. Contoh label: "Submit Request", "Mark as Completed", "Add Stock", "Deduct Stock", "Low Stock", "Out of Stock", "Login", "Dashboard", "Inventory", "Requests". Aturan ini berlaku untuk semua tombol, dialog, tabel, filter, dan pesan sistem.
 
 ## Responsif (laptop dan mobile sama pentingnya)
 - Pendekatan mobile-first. Breakpoint Tailwind: dasar (di bawah 640px, HP), sm 640, md 768, lg 1024 (laptop), xl 1280. Konten dibatasi lebar maksimal 1200px dan berada di tengah pada layar lebar.

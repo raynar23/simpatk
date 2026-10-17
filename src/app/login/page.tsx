@@ -44,9 +44,9 @@ export default function LoginPage() {
 
       if (error) {
         if (error.message.includes('Invalid login credentials')) {
-          setErrorMessage('Email atau kata sandi salah. Silakan periksa kembali.');
+          setErrorMessage('Invalid email or password. Please verify your credentials.');
         } else {
-          setErrorMessage('Gagal masuk ke sistem. Periksa koneksi internet Anda atau coba sesaat lagi.');
+          setErrorMessage('Failed to sign in. Please check your network connection and try again.');
         }
         setIsLoading(false);
         return;
@@ -68,7 +68,7 @@ export default function LoginPage() {
         }
       }
     } catch {
-      setErrorMessage('Terjadi kendala pada sistem. Silakan coba kembali.');
+      setErrorMessage('A system error occurred. Please try again.');
       setIsLoading(false);
     }
   };
@@ -116,17 +116,17 @@ export default function LoginPage() {
             SIMPATK
           </h1>
           <p className="text-sm text-white/95 leading-relaxed drop-shadow-sm font-normal">
-            Sistem Informasi Manajemen Permintaan ATK, General Affairs Pelindo Terminal Petikemas.
+            Office Supply Management System, General Affairs Pelindo Terminal Petikemas.
           </p>
 
           <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-white/90">
             <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15">
               <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
-              <span>Otomatisasi Disetujui</span>
+              <span>Automated Workflow</span>
             </div>
             <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15">
               <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
-              <span>Stok Fisik Realtime</span>
+              <span>Realtime Physical Stock</span>
             </div>
             <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15">
               <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
@@ -136,7 +136,7 @@ export default function LoginPage() {
         </div>
       </section>
 
-      {/* Right column: Form Area with Elevated Card & Refined Micro-interactions */}
+      {/* Right column: Form Area with Elevated Card & Refined Spacing */}
       <section className="flex-1 flex flex-col justify-between items-center px-4 py-8 sm:px-8 lg:px-12 min-h-dvh bg-[#F8FAFC] pb-[calc(env(safe-area-inset-bottom,0px)+24px)] relative z-10">
         <div className="w-full max-w-[420px] my-auto">
           {/* Form Card Container with multi-layered side & elevation shadow */}
@@ -144,9 +144,9 @@ export default function LoginPage() {
             {/* Top decorative primary gradient line */}
             <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary via-primary-light to-primary" />
 
-            {/* Header with Color Pelindo Logo */}
+            {/* Header with Color Pelindo Logo and Generous Spacing */}
             <div className="mb-6">
-              <div className="relative h-10 w-48 mb-4">
+              <div className="relative h-10 w-48 mb-9">
                 <Image
                   src="/logo/pelindo-color.png"
                   alt="Logo Pelindo Terminal Petikemas"
@@ -156,10 +156,10 @@ export default function LoginPage() {
                 />
               </div>
               <h2 className="text-2xl font-bold text-text-main tracking-tight leading-tight">
-                Masuk ke Akun
+                Login
               </h2>
               <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
-                Gunakan akun kedinasan untuk mengakses portal permintaan ATK.
+                Enter your corporate credentials to access the office supply portal.
               </p>
             </div>
 
@@ -171,7 +171,7 @@ export default function LoginPage() {
                   htmlFor="email"
                   className="block text-xs font-semibold text-text-main mb-1.5"
                 >
-                  Alamat Email
+                  Email Address
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
@@ -186,7 +186,7 @@ export default function LoginPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nama@tps.co.id"
+                    placeholder="name@tps.co.id"
                     className="w-full rounded-control border border-border bg-bg pl-10 pr-3.5 py-2.5 text-base sm:text-xs text-text-main placeholder:text-text-muted/60 transition-all hover:border-primary/40 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[44px] sm:min-h-[38px]"
                   />
                 </div>
@@ -198,7 +198,7 @@ export default function LoginPage() {
                   htmlFor="password"
                   className="block text-xs font-semibold text-text-main mb-1.5"
                 >
-                  Kata Sandi
+                  Password
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
@@ -219,7 +219,7 @@ export default function LoginPage() {
                     type="button"
                     tabIndex={0}
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-text-muted hover:text-text-main transition-colors cursor-pointer"
                   >
                     {showPassword ? (
@@ -261,21 +261,20 @@ export default function LoginPage() {
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Memproses Masuk...
+                      Logging in...
                     </>
                   ) : (
-                    <span>Masuk ke Sistem</span>
+                    <span>Login</span>
                   )}
                 </button>
               </div>
             </form>
-
           </div>
         </div>
 
         {/* Small Footer */}
         <footer className="text-center text-xs text-text-muted py-2 mt-4">
-          General Affairs - PT Pelindo Terminal Petikemas &copy; 2025
+          General Affairs - PT Pelindo Terminal Petikemas &copy; {new Date().getFullYear()}
         </footer>
       </section>
     </main>
