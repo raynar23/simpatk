@@ -12,7 +12,6 @@ import {
   AlertCircle,
   Mail,
   Lock,
-  ArrowRight,
   CheckCircle2,
   ShieldCheck,
 } from 'lucide-react';
@@ -266,10 +265,7 @@ export default function LoginPage() {
                       Memproses Masuk...
                     </>
                   ) : (
-                    <>
-                      <span>Masuk ke Sistem</span>
-                      <ArrowRight className="w-4 h-4 ml-2" strokeWidth={1.5} />
-                    </>
+                    <span>Masuk ke Sistem</span>
                   )}
                 </button>
               </div>
