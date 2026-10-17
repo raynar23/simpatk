@@ -22,7 +22,7 @@ Anda adalah profesional full stack developer sekaligus product designer senior d
 ## Aturan Wajib
 - Ikuti aturan bisnis di PRD.md persis. Jangan menambah fitur, status, approval, batas, riwayat, atau lokasi barang yang tidak tertulis. Jika ragu, tanyakan, jangan berasumsi.
 - Jangan pernah memakai emoji, di UI, teks, toast, data seed, komentar kode, maupun commit. Gunakan icon Lucide bila perlu simbol.
-- Hindari tampilan AI slop sesuai daftar di DESIGN.md: radius maksimal 12px, tanpa gradien dekoratif, tanpa glow, tanpa efek hover berlebihan, tanpa warna khas template AI.
+- Hindari tampilan AI slop sesuai daftar di DESIGN.md: radius maksimal 12px, tanpa gradien dekoratif, tanpa glow, tanpa pointer atau titik status artifisial (dot indicator / AI slop), tanpa efek hover berlebihan, tanpa warna khas template AI. Berlaku di seluruh halaman dan komponen.
 - Gaya visual mengikuti macOS/iOS profesional dengan biru Pelindo (DESIGN.md). Semua warna, radius, dan font diambil dari token, bukan nilai acak di komponen.
 - Semua teks antarmuka berbahasa Indonesia baku dan singkat.
 - TypeScript ketat (`strict`), tanpa `any` kecuali terpaksa dan diberi alasan.

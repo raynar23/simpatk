@@ -49,7 +49,7 @@ Dilarang: gradien ungu/pink/neon, gradien dekoratif, warna glow, bayangan berwar
 - Form dalam grup bergaya iOS (label kiri/atas, input bersih, fokus cincin biru 2px).
 - Dialog (Tambah Stok, Kurangi Stok, Tambah Barang) gaya sheet: tengah layar, latar redup, radius 12px.
 - Layar kecil: sidebar menjadi tab bar bawah bergaya iOS.
-- Status memakai badge kecil dengan titik warna: Diproses (kuning tua), Selesai (hijau). Stok menipis: badge dan baris merah lembut dengan teks `danger`.
+- Status memakai badge kecil tanpa titik atau pointer artifisial: Diproses (kuning tua), Selesai (hijau). Stok menipis: badge dan baris merah lembut dengan teks `danger`.
 
 ## Icon
 - Satu set saja: Lucide, stroke 1.5, ukuran 16 atau 18px, warna ikut teks. Tanpa emoji di mana pun (UI, teks, toast, data seed, komentar).
@@ -61,7 +61,7 @@ Dilarang: gradien ungu/pink/neon, gradien dekoratif, warna glow, bayangan berwar
 - Wajib ada: loading skeleton tipis, empty state yang rapi (teks singkat, tanpa ilustrasi kartun), toast konfirmasi sederhana, validasi form jelas, fokus keyboard terlihat.
 
 ## Ciri AI Slop yang Dihindari
-Radius terlalu besar, kartu bersusun dengan bayangan tebal, gradien dekoratif, glassmorphism berlebihan, emoji sebagai ikon, ilustrasi generik, hero besar bertulisan slogan, teks pemanis berlebihan, badge bergradasi, animasi masuk di semua elemen.
+Radius terlalu besar, kartu bersusun dengan bayangan tebal, gradien dekoratif, glassmorphism berlebihan, emoji sebagai ikon, ilustrasi generik, hero besar bertulisan slogan, teks pemanis berlebihan, badge bergradasi, animasi masuk di semua elemen, pointer atau titik status artifisial (dot indicator / AI slop). Dilarang memakai titik status atau pointer buatan di seluruh halaman maupun komponen.
 
 ## Teks
 Bahasa Indonesia baku, singkat, to the point. Contoh label: "Kirim Permintaan", "Tandai Selesai", "Tambah Stok", "Kurangi Stok", "Stok Menipis".
@@ -82,8 +82,7 @@ Bahasa Indonesia baku, singkat, to the point. Contoh label: "Kirim Permintaan", 
 - Panel Foto: Foto /images/tps-terminal.jpg mengisi penuh tinggi layar (100dvh) dengan object-cover dan object-position 62% 50%. Overlay bertingkat (solid primary-dark 25% + gradien hitam halus di atas dan bawah) sehingga warna asli derek kuning dan langit tetap menyala. Panel memiliki z-20 dengan drop shadow samping (14px 0 40px rgba(0,0,0,0.18)) dan border pembatas halus. Kiri atas: logo monokrom putih TPS Surabaya. Kiri bawah: tag General Affairs, judul "SIMPATK" (36px), deskripsi 14px, serta indikator fitur (Otomatisasi Disetujui, Stok Fisik Realtime, 100% Paperless).
 - Area Form: Terpusat secara vertikal dan horizontal. Menggunakan kartu terangkat modern (radius 12px, border 1px border-border, bayangan elevasi dan bayangan samping berlapis [0 20px 50px -12px rgba(15,23,42,0.10), -8px 0 24px -6px rgba(17,117,187,0.08)], garis aksen gradien biru Pelindo di bagian atas kartu). Header kartu menampilkan logo berwarna Pelindo, judul "Masuk ke Akun", dan subjudul informatif.
 - Kontrol Input & Tombol: Input email dan kata sandi bersih dan terfokus, dilengkapi icon pendamping (Mail, Lock) di sisi kiri, toggle intip (Eye/EyeOff) di sisi kanan, serta ring fokus biru 2px. Tombol "Masuk ke Sistem" tampil menonjol dengan bayangan aksen biru Pelindo (shadow-[0_4px_14px_rgba(17,117,187,0.30)]), transisi aktif, dan indikator loader animasi saat proses masuk.
-- Widget Verifikasi Kedinasan: Bagian bawah kartu dilengkapi widget verifikasi keamanan kedinasan (icon ShieldCheck dalam lingkaran biru lembut, label "Portal Resmi Kedinasan", sublabel "General Affairs • Pelindo TPS", serta badge status "Terverifikasi" berlatar hijau lembut dengan titik berdenyut).
 - Error Banner: Latar danger-soft, teks danger, icon AlertCircle 16px, aria-live="polite", layout stabil tanpa melompat.
-- Footer Form: Teks kecil rata tengah di dasar form (12px text-muted): "General Affairs • PT Pelindo Terminal Petikemas © 2025".
+- Footer Form: Teks kecil rata tengah di dasar form (12px text-muted): "General Affairs - PT Pelindo Terminal Petikemas © 2025".
 - Tablet dan HP (< lg): Panel foto disembunyikan. Form tampil penuh dengan logo berwarna di atas, padding aman safe-area.
 
