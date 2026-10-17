@@ -47,3 +47,11 @@ Minimal 10 barang ATK (Pulpen, Pensil, Kertas A4, Spidol, Stapler, Isi Staples, 
 - Demo end to end berjalan: user kirim permintaan, muncul langsung di Admin GA, ditandai selesai, user melihat status berubah.
 - Tampilan terasa profesional dan rapi, mengesankan client GA.
 - Semua data tersimpan di database sungguhan.
+
+## Fitur Tambahan (inisiatif developer)
+- Kode dan Kategori Barang: Kode ATK standar (ATK-001) dan 7 kategori baku (Kertas, Alat Tulis, Perekat dan Pemotong, Arsip dan Map, Perlengkapan Meja, Tinta dan Toner, Lainnya) dengan estimasi harga satuan (Rp).
+- Nomor Registrasi Permintaan: Penomoran otomatis format sequence (REQ-YYYY-00001) dan catatan tindak lanjut GA opsional.
+- Dashboard Analitik & KPI: Ringkasan metrik periode (total permintaan, perbandingan periode sebelumnya, waktu penyelesaian rata-rata, tingkat penyelesaian, nilai persediaan) serta grafik tren permintaan, top 5 barang, dan breakdown status.
+- Daftar Belanja Pengadaan: Estimasi otomatis kebutuhan pembelian untuk barang menipis/habis beserta estimasi anggaran, seleksi checkbox, cetak stylesheet, dan ekspor CSV.
+- Laporan Terstruktur: Tab ringkasan bulanan, barang paling diminta, dan posisi persediaan dengan ekspor CSV dan tombol cetak.
+- Shell & UX Enterprise: macOS-style collapsible sidebar (Ctrl/Cmd+B), mobile drawer, quick command palette (Ctrl/Cmd+K), master-detail inspector panel, server-side pagination dan sorting.
