@@ -76,8 +76,8 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-dvh w-full flex flex-col lg:flex-row bg-[#F8FAFC]">
-      {/* Left column: Full-bleed Photo Panel (0 margin, 0 padding, edge-to-edge) */}
-      <section className="hidden lg:flex relative w-1/2 xl:w-[52%] min-h-dvh select-none overflow-hidden flex-col justify-between p-12 shrink-0">
+      {/* Left column: Full-bleed Photo Panel with right side drop shadow */}
+      <section className="hidden lg:flex relative w-1/2 xl:w-[52%] min-h-dvh select-none overflow-hidden flex-col justify-between p-12 shrink-0 z-20 shadow-[14px_0_40px_rgba(0,0,0,0.18),4px_0_12px_rgba(0,0,0,0.08)] border-r border-black/10">
         {/* Terminal background image with object-position 62% 50% */}
         <Image
           src="/images/tps-terminal.jpg"
@@ -138,10 +138,13 @@ export default function LoginPage() {
       </section>
 
       {/* Right column: Form Area with Elevated Card & Refined Micro-interactions */}
-      <section className="flex-1 flex flex-col justify-between items-center px-4 py-8 sm:px-8 lg:px-10 min-h-dvh bg-[#F8FAFC] pb-[calc(env(safe-area-inset-bottom,0px)+24px)]">
+      <section className="flex-1 flex flex-col justify-between items-center px-4 py-8 sm:px-8 lg:px-12 min-h-dvh bg-[#F8FAFC] pb-[calc(env(safe-area-inset-bottom,0px)+24px)] relative z-10">
         <div className="w-full max-w-[420px] my-auto">
-          {/* Form Card Container with subtle elevation */}
-          <div className="bg-surface rounded-sheet border border-border/80 shadow-[0_8px_30px_rgba(0,0,0,0.06)] p-6 sm:p-9 transition-all">
+          {/* Form Card Container with multi-layered side & elevation shadow */}
+          <div className="relative bg-surface rounded-sheet border border-border/80 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.10),0_4px_16px_-2px_rgba(15,23,42,0.05),-8px_0_24px_-6px_rgba(17,117,187,0.08)] p-6 sm:p-9 transition-all overflow-hidden">
+            {/* Top decorative primary gradient line */}
+            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary via-primary-light to-primary" />
+
             {/* Header with Color Pelindo Logo */}
             <div className="mb-6">
               <div className="relative h-10 w-48 mb-4">
@@ -229,31 +232,6 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Quick Demo Account Selector for instant testing */}
-              <div className="pt-0.5">
-                <span className="block text-[11px] font-medium text-text-muted mb-1.5">
-                  Pilihan Akun Uji Coba:
-                </span>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setEmail('admin@tps.co.id')}
-                    className="py-1.5 px-2.5 text-[11px] font-medium rounded-control border border-border bg-bg hover:bg-primary-soft hover:text-primary hover:border-primary/30 transition-all text-text-muted truncate cursor-pointer text-left"
-                  >
-                    <span className="font-semibold text-text-main block">Admin GA</span>
-                    admin@tps.co.id
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEmail('ga@tps.co.id')}
-                    className="py-1.5 px-2.5 text-[11px] font-medium rounded-control border border-border bg-bg hover:bg-primary-soft hover:text-primary hover:border-primary/30 transition-all text-text-muted truncate cursor-pointer text-left"
-                  >
-                    <span className="font-semibold text-text-main block">Divisi Pemohon</span>
-                    ga@tps.co.id
-                  </button>
-                </div>
-              </div>
-
               {/* Error banner: preserves layout stability */}
               <div
                 aria-live="polite"
@@ -274,12 +252,12 @@ export default function LoginPage() {
                 )}
               </div>
 
-              {/* Submit Button */}
+              {/* Submit Button with elevated glow shadow */}
               <div className="pt-2">
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full inline-flex items-center justify-center rounded-control bg-primary hover:bg-primary-dark active:scale-[0.99] text-white px-4 py-2.5 text-xs font-semibold shadow-sm hover:shadow transition-all disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] sm:min-h-[40px] cursor-pointer"
+                  className="w-full inline-flex items-center justify-center rounded-control bg-primary hover:bg-primary-dark active:scale-[0.99] text-white px-4 py-2.5 text-xs font-semibold shadow-[0_4px_14px_rgba(17,117,187,0.30)] hover:shadow-[0_6px_20px_rgba(17,117,187,0.40)] transition-all disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px] sm:min-h-[42px] cursor-pointer"
                 >
                   {isLoading ? (
                     <>
@@ -295,6 +273,12 @@ export default function LoginPage() {
                 </button>
               </div>
             </form>
+
+            {/* Enterprise Portal Identity Indicator */}
+            <div className="mt-6 pt-4 border-t border-border/60 flex items-center justify-center gap-2 text-[11px] text-text-muted">
+              <span className="w-1.5 h-1.5 rounded-full bg-success shrink-0" />
+              <span>Portal Resmi PT Pelindo Terminal Petikemas</span>
+            </div>
           </div>
         </div>
 
