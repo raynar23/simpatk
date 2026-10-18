@@ -29,6 +29,10 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useShell } from './ShellContext';
 import { Tooltip } from '@/components/ui/Tooltip';
+import {
+  fetchServerNotificationState,
+  persistNotificationState,
+} from '@/lib/notificationState';
 
 interface NavItemDef {
   label: string;
@@ -71,9 +75,10 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
     async function loadCounts() {
       try {
         if (role === 'admin') {
-          const [reqRes, itemsRes] = await Promise.all([
+          const [reqRes, itemsRes, serverState] = await Promise.all([
             supabase.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'diproses'),
             supabase.from('items').select('stok, stok_minimum'),
+            fetchServerNotificationState(),
           ]);
 
           if (ignore) return;
@@ -92,10 +97,13 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
               localStorage.setItem('simpatk_sidebar_ack_pending_count', String(rawPending));
             } catch {}
             setPendingRequestsCount(0);
+            if (userId) persistNotificationState(userId, { ack_pending: rawPending });
           } else {
+            const serverAck = serverState?.ack_pending;
             const ackPendingStr = typeof window !== 'undefined' ? localStorage.getItem('simpatk_sidebar_ack_pending_count') : null;
-            if (ackPendingStr !== null) {
-              setPendingRequestsCount(Math.max(0, rawPending - Number(ackPendingStr)));
+            const ackVal = serverAck !== undefined ? serverAck : ackPendingStr !== null ? Number(ackPendingStr) : null;
+            if (ackVal !== null) {
+              setPendingRequestsCount(Math.max(0, rawPending - ackVal));
             } else {
               setPendingRequestsCount(rawPending);
             }
@@ -107,10 +115,13 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
               localStorage.setItem('simpatk_sidebar_ack_low_stock_count', String(rawLow));
             } catch {}
             setLowStockCount(0);
+            if (userId) persistNotificationState(userId, { ack_low_stock: rawLow });
           } else {
+            const serverAckLow = serverState?.ack_low_stock;
             const ackLowStr = typeof window !== 'undefined' ? localStorage.getItem('simpatk_sidebar_ack_low_stock_count') : null;
-            if (ackLowStr !== null) {
-              setLowStockCount(Math.max(0, rawLow - Number(ackLowStr)));
+            const ackLowVal = serverAckLow !== undefined ? serverAckLow : ackLowStr !== null ? Number(ackLowStr) : null;
+            if (ackLowVal !== null) {
+              setLowStockCount(Math.max(0, rawLow - ackLowVal));
             } else {
               setLowStockCount(rawLow);
             }
@@ -185,8 +196,30 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
       )
       .subscribe();
 
+    const handleBellRead = () => {
+      setPendingRequestsCount(0);
+      if (userId) {
+        persistNotificationState(userId, { ack_pending: rawPendingRef.current });
+      }
+    };
+
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.ack_pending !== undefined) {
+        setPendingRequestsCount(Math.max(0, rawPendingRef.current - customEvent.detail.ack_pending));
+      }
+      if (customEvent.detail?.ack_low_stock !== undefined) {
+        setLowStockCount(Math.max(0, rawLowRef.current - customEvent.detail.ack_low_stock));
+      }
+    };
+
+    window.addEventListener('simpatk_bell_read', handleBellRead);
+    window.addEventListener('simpatk_notif_sync', handleSync);
+
     return () => {
       supabase.removeChannel(channel);
+      window.removeEventListener('simpatk_bell_read', handleBellRead);
+      window.removeEventListener('simpatk_notif_sync', handleSync);
     };
   }, [supabase, role, userId, pathname]);
 
@@ -199,9 +232,11 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
       if (href === '/admin/permintaan') {
         setPendingRequestsCount(0);
         localStorage.setItem('simpatk_sidebar_ack_pending_count', String(rawPendingRef.current));
+        if (userId) persistNotificationState(userId, { ack_pending: rawPendingRef.current });
       } else if (href === '/admin/persediaan') {
         setLowStockCount(0);
         localStorage.setItem('simpatk_sidebar_ack_low_stock_count', String(rawLowRef.current));
+        if (userId) persistNotificationState(userId, { ack_low_stock: rawLowRef.current });
       } else if (href === '/user/riwayat') {
         setUserUpdatesCount(0);
         const timestamp = String(new Date().getTime());

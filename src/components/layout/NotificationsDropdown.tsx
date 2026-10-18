@@ -5,6 +5,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Bell, CheckCircle2, Clock, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import {
+  getLocalNotificationState,
+  fetchServerNotificationState,
+  persistNotificationState,
+} from '@/lib/notificationState';
 
 interface NotificationsDropdownProps {
   role: 'admin' | 'user';
@@ -64,11 +69,17 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
 
     async function loadNotifications() {
       try {
-        const storedTimeStr = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null;
-        const lastReadMs = storedTimeStr ? Number(storedTimeStr) : null;
+        const localState = getLocalNotificationState(userId);
+        let lastReadMs: number | null = localState?.bell_read_at ? new Date(localState.bell_read_at).getTime() : null;
+
+        if (lastReadMs === null) {
+          const storedTimeStr = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null;
+          if (storedTimeStr) lastReadMs = Number(storedTimeStr);
+        }
 
         if (role === 'admin') {
-          const [reqRes, pendingRes] = await Promise.all([
+          const [serverState, reqRes, pendingRes] = await Promise.all([
+            fetchServerNotificationState(),
             supabase
               .from('requests')
               .select('id, nomor, status, created_at, completed_at, items(nama), profiles(nama_divisi)')
@@ -81,6 +92,10 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
           ]);
 
           if (ignore) return;
+
+          if (serverState?.bell_read_at) {
+            lastReadMs = new Date(serverState.bell_read_at).getTime();
+          }
 
           if (reqRes.data) {
             const now = Date.now();
@@ -117,14 +132,21 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
           // User (Pemohon)
           if (!userId) return;
 
-          const { data } = await supabase
-            .from('requests')
-            .select('id, nomor, status, created_at, completed_at, items(nama), profiles(nama_divisi)')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false })
-            .limit(10);
+          const [serverState, { data }] = await Promise.all([
+            fetchServerNotificationState(),
+            supabase
+              .from('requests')
+              .select('id, nomor, status, created_at, completed_at, items(nama), profiles(nama_divisi)')
+              .eq('user_id', userId)
+              .order('created_at', { ascending: false })
+              .limit(10),
+          ]);
 
           if (ignore) return;
+
+          if (serverState?.bell_read_at) {
+            lastReadMs = new Date(serverState.bell_read_at).getTime();
+          }
 
           if (data) {
             const now = Date.now();
@@ -161,8 +183,18 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
 
     loadNotifications();
 
+    const handleSync = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail?.bell_read_at) {
+        setUnreadCount(0);
+        setNotifications((prev) => prev.map((it) => ({ ...it, isUnread: false })));
+      }
+    };
+    window.addEventListener('simpatk_notif_sync', handleSync);
+
     return () => {
       ignore = true;
+      window.removeEventListener('simpatk_notif_sync', handleSync);
     };
   }, [role, userId, supabase, storageKey]);
 
@@ -233,19 +265,26 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
   // Mark all notifications as read: clears badge and persists timestamp
   const markAllAsRead = useCallback(() => {
     setUnreadCount(0);
+    const nowIso = new Date().toISOString();
     try {
       localStorage.setItem(storageKey, Date.now().toString());
-      window.dispatchEvent(new CustomEvent('simpatk_bell_read'));
     } catch {
       // Ignore
     }
+
+    persistNotificationState(userId || 'admin', {
+      bell_read_at: nowIso,
+      ack_pending: notifications.filter((n) => n.status === 'diproses').length,
+    });
+
     setNotifications((prev) =>
       prev.map((item) => ({
         ...item,
         isUnread: false,
       }))
     );
-  }, [storageKey]);
+    window.dispatchEvent(new CustomEvent('simpatk_bell_read'));
+  }, [storageKey, userId, notifications]);
 
   const handleOpenDropdown = () => {
     const nextOpen = !isOpen;
