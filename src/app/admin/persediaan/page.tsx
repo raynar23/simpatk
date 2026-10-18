@@ -365,57 +365,60 @@ export default function AdminPersediaanPage() {
         }}
         searchPlaceholder="Cari kode, nama barang, atau satuan..."
         filterControls={
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* Kategori Filter Dropdown with balanced chevron */}
-            <div className="relative inline-flex items-center">
-              <select
-                value={categoryFilter}
-                onChange={(e) => {
-                  setCategoryFilter(e.target.value);
-                  setPage(1);
-                }}
-                className="appearance-none pl-3 pr-8.5 py-1.5 text-xs rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[32px] cursor-pointer"
-                title="Filter berdasarkan kategori ATK"
-              >
-                <option value="semua">Semua Kategori</option>
-                {ATK_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown
-                className="pointer-events-none absolute right-3 w-3.5 h-3.5 text-text-muted"
-                strokeWidth={1.5}
-              />
-            </div>
+          <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+            {/* Dropdown Kategori & Dropdown Tanggal: Berada di 1 Baris yang Sama pada Mobile */}
+            <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center">
+              {/* Kategori Filter Dropdown with balanced chevron */}
+              <div className="relative w-full sm:w-auto">
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => {
+                    setCategoryFilter(e.target.value);
+                    setPage(1);
+                  }}
+                  className="w-full sm:w-auto appearance-none pl-3 pr-7 py-1.5 text-xs rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[34px] cursor-pointer truncate"
+                  title="Filter berdasarkan kategori ATK"
+                >
+                  <option value="semua">Semua Kategori</option>
+                  {ATK_CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted"
+                  strokeWidth={1.5}
+                />
+              </div>
 
-            {/* Filter Tanggal Dropdown with calendar icon and balanced chevron */}
-            <div className="relative inline-flex items-center">
-              <Calendar
-                className="pointer-events-none absolute left-2.5 w-3.5 h-3.5 text-text-muted"
-                strokeWidth={1.5}
-              />
-              <select
-                value={dateFilter}
-                onChange={(e) => {
-                  setDateFilter(e.target.value as typeof dateFilter);
-                  setPage(1);
-                }}
-                className="appearance-none pl-8 pr-8.5 py-1.5 text-xs rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[32px] cursor-pointer"
-                title="Filter berdasarkan rentang waktu pendaftaran"
-              >
-                <option value="semua">Semua Waktu</option>
-                <option value="7d">7 Hari Terakhir</option>
-                <option value="30d">30 Hari Terakhir</option>
-                <option value="6m">6 Bulan Terakhir</option>
-                <option value="1y">1 Tahun Terakhir</option>
-                <option value="custom">Kustom Tanggal...</option>
-              </select>
-              <ChevronDown
-                className="pointer-events-none absolute right-3 w-3.5 h-3.5 text-text-muted"
-                strokeWidth={1.5}
-              />
+              {/* Filter Tanggal Dropdown with calendar icon and balanced chevron */}
+              <div className="relative w-full sm:w-auto">
+                <Calendar
+                  className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted"
+                  strokeWidth={1.5}
+                />
+                <select
+                  value={dateFilter}
+                  onChange={(e) => {
+                    setDateFilter(e.target.value as typeof dateFilter);
+                    setPage(1);
+                  }}
+                  className="w-full sm:w-auto appearance-none pl-7 pr-7 py-1.5 text-xs rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[34px] cursor-pointer truncate"
+                  title="Filter berdasarkan rentang waktu pendaftaran"
+                >
+                  <option value="semua">Semua Waktu</option>
+                  <option value="7d">7 Hari Terakhir</option>
+                  <option value="30d">30 Hari Terakhir</option>
+                  <option value="6m">6 Bulan Terakhir</option>
+                  <option value="1y">1 Tahun Terakhir</option>
+                  <option value="custom">Kustom Tanggal...</option>
+                </select>
+                <ChevronDown
+                  className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted"
+                  strokeWidth={1.5}
+                />
+              </div>
             </div>
 
             {/* Custom Date Inputs if 'custom' is active */}

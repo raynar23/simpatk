@@ -73,12 +73,14 @@ export function DataTable<T extends object>({
 }: DataTableProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // ResizeObserver to dynamically adjust page size based on viewport height (min 5 rows)
+  // ResizeObserver to dynamically adjust page size based on viewport height on desktop (lg: >= 1024px)
   useEffect(() => {
     if (!enableDynamicHeight || !onPageSizeChange || !containerRef.current) return;
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) return;
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
+        if (typeof window !== 'undefined' && window.innerWidth < 1024) return;
         const height = entry.contentRect.height;
         // Table row height is 40px; header + toolbar + pagination takes ~110px
         const availableHeight = height - 110;
@@ -183,7 +185,7 @@ export function DataTable<T extends object>({
       )}
 
       {/* Table Content Area with Sticky Header */}
-      <div className="flex-1 overflow-x-auto overflow-y-auto">
+      <div className="flex-1 overflow-x-auto overflow-y-auto min-h-[360px] lg:min-h-0">
         <table className={`w-full min-w-[760px] text-left border-collapse text-xs ${tableClassName}`}>
           <thead className="sticky top-0 z-10 bg-bg border-b border-border">
             <tr>

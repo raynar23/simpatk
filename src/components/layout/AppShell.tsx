@@ -24,12 +24,12 @@ export function AppShell({
 }: AppShellProps) {
   return (
     <ShellProvider>
-      <div className="h-dvh max-h-dvh flex bg-bg text-text-main overflow-hidden max-h-[600px]:h-auto max-h-[600px]:min-h-dvh max-h-[600px]:overflow-visible">
+      <div className="min-h-screen flex bg-bg text-text-main overflow-x-hidden overflow-y-auto lg:h-dvh lg:max-h-dvh lg:overflow-hidden">
         {/* Unified Sidebar (Desktop collapsible + Mobile drawer) */}
         <AppSidebar role={role} divisionName={divisionName} />
 
         {/* Main Application Area */}
-        <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-h-screen min-w-0 overflow-visible lg:h-full lg:overflow-hidden">
           {/* Top Fixed Toolbar (52px) */}
           <AppToolbar
             role={role}
@@ -39,7 +39,7 @@ export function AppShell({
           />
 
           {/* Internal Content Area (PageContainer handles px-6 and max-w-[1360px]) */}
-          <main className="flex-1 min-h-0 flex flex-col overflow-hidden max-h-[600px]:overflow-y-auto">
+          <main className="flex-1 min-h-0 flex flex-col overflow-visible lg:overflow-hidden">
             {children}
           </main>
         </div>

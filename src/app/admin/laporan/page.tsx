@@ -833,18 +833,20 @@ export default function AdminLaporanPage() {
 
   // Header controls for PageContainer: Comprehensive Date Filter (7d to 2y) & Print Action
   const headerActions = (
-    <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-between sm:justify-end">
-      <DashboardDateFilter
-        currentRange={dateRange}
-        onChangeRange={handleRangeChange}
-        isLoading={isLoading}
-        presetOptions={['7d', '30d', '6m', '1y', '2y']}
-      />
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto justify-end">
+      <div className="w-full sm:w-auto">
+        <DashboardDateFilter
+          currentRange={dateRange}
+          onChangeRange={handleRangeChange}
+          isLoading={isLoading}
+          presetOptions={['7d', '30d', '6m', '1y', '2y']}
+        />
+      </div>
 
       <button
         type="button"
         onClick={() => window.print()}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control bg-primary hover:bg-primary/90 text-white shadow-xs transition-colors cursor-pointer min-h-[30px] shrink-0"
+        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control bg-primary hover:bg-primary/90 text-white shadow-xs transition-colors cursor-pointer min-h-[32px] w-full sm:w-auto shrink-0"
       >
         <Printer className="w-3.5 h-3.5" strokeWidth={1.5} />
         <span>Cetak Laporan</span>
@@ -888,9 +890,9 @@ export default function AdminLaporanPage() {
         </div>
       </div>
 
-      {/* Standalone Report Selector Nav (4 Distinct Modules) */}
-      <div className="flex items-center justify-between border-b border-border pb-2.5 flex-wrap gap-2 print:hidden w-full">
-        <div className="inline-flex p-0.5 rounded-control bg-bg border border-border text-xs flex-wrap w-full sm:w-auto">
+      {/* Standalone Report Selector Nav (4 Distinct Modules in Balanced Grid) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-2.5 gap-2.5 print:hidden w-full">
+        <div className="grid grid-cols-2 sm:flex sm:flex-row p-1 rounded-control bg-bg border border-border text-xs gap-1 w-full sm:w-auto">
           {[
             { key: 'transaksi' as const, label: 'Riwayat Transaksi', icon: ClipboardList },
             { key: 'rekapitulasi' as const, label: 'Rekapitulasi Kinerja', icon: BarChart3 },
@@ -904,72 +906,55 @@ export default function AdminLaporanPage() {
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveReport(tab.key)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-badge text-xs font-medium transition-colors cursor-pointer ${
+                className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-badge text-xs font-medium transition-colors cursor-pointer text-center ${
                   isActive
                     ? 'bg-surface text-primary shadow-xs font-semibold'
                     : 'text-text-muted hover:text-text-main'
                 }`}
               >
-                <Icon className="w-3.5 h-3.5" strokeWidth={1.5} />
-                <span>{tab.label}</span>
+                <Icon className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} />
+                <span className="truncate">{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Dedicated Download Action for active report */}
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-          {activeReport === 'transaksi' && (
-            <button
-              type="button"
-              onClick={handleExportTransactions}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control border border-border bg-surface hover:bg-border/20 text-text-main transition-colors cursor-pointer min-h-[30px]"
-            >
-              <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>Unduh CSV Transaksi</span>
-            </button>
-          )}
-
-          {activeReport === 'rekapitulasi' && (
-            <button
-              type="button"
-              onClick={handleExportMonthly}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control border border-border bg-surface hover:bg-border/20 text-text-main transition-colors cursor-pointer min-h-[30px]"
-            >
-              <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>Unduh CSV Rekapitulasi</span>
-            </button>
-          )}
-
-          {activeReport === 'konsumsi' && (
-            <button
-              type="button"
-              onClick={handleExportConsumption}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control border border-border bg-surface hover:bg-border/20 text-text-main transition-colors cursor-pointer min-h-[30px]"
-            >
-              <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>Unduh CSV Konsumsi</span>
-            </button>
-          )}
-
-          {activeReport === 'persediaan' && (
-            <button
-              type="button"
-              onClick={handleExportStock}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control border border-border bg-surface hover:bg-border/20 text-text-main transition-colors cursor-pointer min-h-[30px]"
-            >
-              <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>Unduh CSV Persediaan</span>
-            </button>
-          )}
+        {/* Dedicated Download Action on desktop */}
+        <div className="hidden sm:flex items-center gap-2 justify-end shrink-0">
+          <button
+            type="button"
+            onClick={
+              activeReport === 'transaksi'
+                ? handleExportTransactions
+                : activeReport === 'rekapitulasi'
+                ? handleExportMonthly
+                : activeReport === 'konsumsi'
+                ? handleExportConsumption
+                : handleExportStock
+            }
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control border border-border bg-surface hover:bg-bg text-text-main transition-colors cursor-pointer min-h-[32px]"
+            title="Unduh seluruh dataset laporan ke CSV"
+          >
+            <Download className="w-3.5 h-3.5 text-text-muted" strokeWidth={1.5} />
+            <span>
+              Unduh CSV{' '}
+              {activeReport === 'transaksi'
+                ? 'Transaksi'
+                : activeReport === 'rekapitulasi'
+                ? 'Rekapitulasi'
+                : activeReport === 'konsumsi'
+                ? 'Konsumsi'
+                : 'Persediaan'}
+            </span>
+          </button>
         </div>
       </div>
 
       {/* --- MODUL 1: RIWAYAT TRANSAKSI PERMINTAAN --- */}
       {activeReport === 'transaksi' && (
         <div className="flex-1 min-h-0 flex flex-col space-y-2.5">
-          {/* Mini KPI Strip */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 shrink-0 print:hidden">
+          {/* Mini KPI Strip (4 balanced cards: 2x2 on mobile, 4 columns on desktop) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 shrink-0 print:hidden">
             <div className="p-3 bg-surface rounded-card border border-border">
               <p className="text-[11px] text-text-muted font-medium">Total Tiket Masuk</p>
               <p className="text-lg font-bold text-text-main tabular-nums mt-0.5">
@@ -1038,6 +1023,8 @@ export default function AdminLaporanPage() {
             }
             isLoading={isLoading}
             emptyMessage="Tidak ada transaksi permintaan pada rentang tanggal terpilih."
+            csvFilename={`laporan_transaksi_${formatDateShort(new Date()).replace(/\s+/g, '_')}.csv`}
+            tableClassName="min-w-[850px]"
             enableDynamicHeight={true}
             className="flex-1 min-h-0"
           />
@@ -1047,8 +1034,8 @@ export default function AdminLaporanPage() {
       {/* --- MODUL 2: REKAPITULASI KINERJA BULANAN --- */}
       {activeReport === 'rekapitulasi' && (
         <div className="flex-1 min-h-0 flex flex-col space-y-2.5">
-          {/* Mini Summary Banner */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 shrink-0 print:hidden">
+          {/* Mini Summary Banner (4 balanced cards: 2x2 on mobile, 4 columns on desktop) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 shrink-0 print:hidden">
             <div className="p-3 bg-surface rounded-card border border-border">
               <p className="text-[11px] text-text-muted font-medium">Jumlah Periode Bulan</p>
               <p className="text-lg font-bold text-text-main tabular-nums mt-0.5">
@@ -1088,6 +1075,8 @@ export default function AdminLaporanPage() {
             onPageChange={setPageMonthly}
             isLoading={isLoading}
             emptyMessage="Tidak ada data rekapitulasi pada rentang tanggal ini."
+            csvFilename={`laporan_rekapitulasi_${formatDateShort(new Date()).replace(/\s+/g, '_')}.csv`}
+            tableClassName="min-w-[760px]"
             enableDynamicHeight={true}
             className="flex-1 min-h-0"
           />
@@ -1097,8 +1086,8 @@ export default function AdminLaporanPage() {
       {/* --- MODUL 3: KONSUMSI & DISTRIBUSI BARANG --- */}
       {activeReport === 'konsumsi' && (
         <div className="flex-1 min-h-0 flex flex-col space-y-2.5">
-          {/* Mini Summary Banner */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 shrink-0 print:hidden">
+          {/* Mini Summary Banner (4 balanced cards: 2x2 on mobile, 4 columns on desktop) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 shrink-0 print:hidden">
             <div className="p-3 bg-surface rounded-card border border-border">
               <p className="text-[11px] text-text-muted font-medium">Total Unit Diminta</p>
               <p className="text-lg font-bold text-primary tabular-nums mt-0.5">
@@ -1106,14 +1095,24 @@ export default function AdminLaporanPage() {
               </p>
             </div>
             <div className="p-3 bg-surface rounded-card border border-border">
-              <p className="text-[11px] text-text-muted font-medium">Estimasi Nilai Pengeluaran ATK</p>
+              <p className="text-[11px] text-text-muted font-medium">Estimasi Pengeluaran</p>
               <p className="text-lg font-bold text-text-main tabular-nums mt-0.5">
                 {formatRupiah(consumptionRows.reduce((acc, curr) => acc + curr.estimasiNilai, 0))}
               </p>
             </div>
-            <div className="p-3 bg-surface rounded-card border border-border col-span-2 md:col-span-1">
-              <p className="text-[11px] text-text-muted font-medium">Barang Paling Sering Diajukan</p>
-              <p className="text-sm font-bold text-text-main truncate mt-1">
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Rata-rata per Tiket</p>
+              <p className="text-lg font-bold text-text-main tabular-nums mt-0.5">
+                {(() => {
+                  const totalQty = consumptionRows.reduce((acc, curr) => acc + curr.totalDiminta, 0);
+                  const totalTiket = consumptionRows.reduce((acc, curr) => acc + curr.frekuensiTiket, 0);
+                  return totalTiket > 0 ? `${(totalQty / totalTiket).toFixed(1)} unit` : '0 unit';
+                })()}
+              </p>
+            </div>
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Barang Terpopuler</p>
+              <p className="text-xs font-bold text-text-main truncate mt-1.5" title={consumptionRows[0]?.nama}>
                 {consumptionRows[0]?.nama || '-'}
               </p>
             </div>
@@ -1134,6 +1133,8 @@ export default function AdminLaporanPage() {
             searchPlaceholder="Cari nama barang atau kode ATK..."
             isLoading={isLoading}
             emptyMessage="Tidak ada data konsumsi barang pada rentang tanggal ini."
+            csvFilename={`laporan_konsumsi_${formatDateShort(new Date()).replace(/\s+/g, '_')}.csv`}
+            tableClassName="min-w-[760px]"
             enableDynamicHeight={true}
             className="flex-1 min-h-0"
           />
@@ -1143,24 +1144,30 @@ export default function AdminLaporanPage() {
       {/* --- MODUL 4: POSISI PERSEDIAAN FISIK & VALUASI --- */}
       {activeReport === 'persediaan' && (
         <div className="flex-1 min-h-0 flex flex-col space-y-2.5">
-          {/* Mini Summary Banner */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 shrink-0 print:hidden">
+          {/* Mini Summary Banner (4 balanced cards: 2x2 on mobile, 4 columns on desktop) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 shrink-0 print:hidden">
             <div className="p-3 bg-surface rounded-card border border-border">
-              <p className="text-[11px] text-text-muted font-medium">Total Valuasi Fisik ATK</p>
+              <p className="text-[11px] text-text-muted font-medium">Total Valuasi Fisik</p>
               <p className="text-lg font-bold text-text-main tabular-nums mt-0.5">
                 {formatRupiah(rawItems.reduce((acc, curr) => acc + curr.stok * (curr.harga_satuan || 0), 0))}
               </p>
             </div>
             <div className="p-3 bg-surface rounded-card border border-border">
-              <p className="text-[11px] text-text-muted font-medium">Total Item Terdaftar (SKU)</p>
+              <p className="text-[11px] text-text-muted font-medium">Total Jenis Barang</p>
               <p className="text-lg font-bold text-primary tabular-nums mt-0.5">
                 {rawItems.length} SKU
               </p>
             </div>
-            <div className="p-3 bg-surface rounded-card border border-border col-span-2 md:col-span-1">
-              <p className="text-[11px] text-text-muted font-medium">Stok Kritis (Menipis / Habis)</p>
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Stok Menipis</p>
+              <p className="text-lg font-bold text-warning tabular-nums mt-0.5">
+                {rawItems.filter((i) => i.stok > 0 && i.stok <= i.stok_minimum).length} Barang
+              </p>
+            </div>
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Stok Habis</p>
               <p className="text-lg font-bold text-danger tabular-nums mt-0.5">
-                {rawItems.filter((i) => i.stok <= i.stok_minimum).length} Barang
+                {rawItems.filter((i) => i.stok === 0).length} Barang
               </p>
             </div>
           </div>
@@ -1201,6 +1208,8 @@ export default function AdminLaporanPage() {
             }
             isLoading={isLoading}
             emptyMessage="Katalog barang fisik kosong."
+            csvFilename={`laporan_persediaan_${formatDateShort(new Date()).replace(/\s+/g, '_')}.csv`}
+            tableClassName="min-w-[760px]"
             enableDynamicHeight={true}
             className="flex-1 min-h-0"
           />

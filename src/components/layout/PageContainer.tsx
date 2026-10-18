@@ -21,7 +21,7 @@ export function PageContainer({
   contentClassName = '',
 }: PageContainerProps) {
   return (
-    <div className={`w-full h-full max-w-[1360px] mx-auto px-4 sm:px-6 flex flex-col min-h-0 select-none ${className}`}>
+    <div className={`w-full min-h-full lg:h-full max-w-[1360px] mx-auto px-4 sm:px-6 flex flex-col min-h-0 select-none ${className}`}>
       {/* Uniform Responsive Page Header */}
       <div className="min-h-[56px] py-2.5 sm:py-0 sm:h-14 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between border-b border-border/80 gap-2 sm:gap-4">
         <div className="min-w-0 flex-1">
@@ -42,8 +42,8 @@ export function PageContainer({
         )}
       </div>
 
-      {/* Internal Content Area (scrollable on mobile < lg, zero-scroll 100dvh on desktop lg+) */}
-      <div className={`flex-1 min-h-0 pt-3.5 pb-3 flex flex-col overflow-y-auto lg:overflow-hidden ${contentClassName}`}>
+      {/* Internal Content Area (natural scroll on mobile < lg, zero-scroll 100dvh on desktop lg+) */}
+      <div className={`flex-1 min-h-0 pt-3.5 pb-6 flex flex-col overflow-visible lg:overflow-hidden ${contentClassName}`}>
         {children}
       </div>
     </div>
