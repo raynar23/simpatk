@@ -159,9 +159,6 @@ function CommandPaletteModal({
             placeholder="Ketik perintah, halaman, nama barang, atau nomor permintaan..."
             className="w-full text-xs text-text-main placeholder:text-text-muted bg-transparent focus:outline-none"
           />
-          <kbd className="hidden sm:inline-block text-[10px] font-mono text-text-muted bg-bg border border-border px-1.5 py-0.5 rounded-badge">
-            ESC
-          </kbd>
         </div>
 
         {/* Results List */}

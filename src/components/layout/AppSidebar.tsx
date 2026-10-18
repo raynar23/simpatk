@@ -436,19 +436,16 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
               <button
                 type="button"
                 onClick={openCommandPalette}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-control bg-white/10 hover:bg-white/15 border border-white/10 text-white/80 hover:text-white transition-colors cursor-pointer text-xs"
+                className="w-full flex items-center px-3 py-2 rounded-control bg-white/10 hover:bg-white/15 border border-white/10 text-white/80 hover:text-white transition-colors cursor-pointer text-xs"
               >
                 <div className="flex items-center gap-2">
                   <Search className="w-3.5 h-3.5 text-white/70" strokeWidth={1.5} />
                   <span>Cari atau pindah ke...</span>
                 </div>
-                <kbd className="text-[10px] font-mono text-white/70 bg-white/10 px-1.5 py-0.5 rounded-badge border border-white/10">
-                  Ctrl+K
-                </kbd>
               </button>
             ) : (
               <div className="flex justify-center">
-                <Tooltip content="Cari atau pindah ke... (Ctrl+K)" side="right">
+                <Tooltip content="Cari atau pindah ke..." side="right">
                   <button
                     type="button"
                     onClick={openCommandPalette}
@@ -568,15 +565,12 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
                   closeMobile();
                   openCommandPalette();
                 }}
-                className="w-full flex items-center justify-between px-3 py-2 rounded-control bg-white/10 hover:bg-white/15 border border-white/10 text-white/80 hover:text-white transition-colors cursor-pointer text-xs"
+                className="w-full flex items-center px-3 py-2 rounded-control bg-white/10 hover:bg-white/15 border border-white/10 text-white/80 hover:text-white transition-colors cursor-pointer text-xs"
               >
                 <div className="flex items-center gap-2">
                   <Search className="w-3.5 h-3.5 text-white/70" strokeWidth={1.5} />
                   <span>Cari atau pindah ke...</span>
                 </div>
-                <kbd className="text-[10px] font-mono text-white/70 bg-white/10 px-1.5 py-0.5 rounded-badge border border-white/10">
-                  Ctrl+K
-                </kbd>
               </button>
             </div>
 
