@@ -1,20 +1,11 @@
-// Admin Settings page: read-only corporate profile, secure password update, and system version info
+// Admin Settings page: full professional layout with corporate profile, security update, user access, and system environment
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  User,
-  Shield,
-  KeyRound,
-  Lock,
-  Eye,
-  EyeOff,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  Info,
-} from 'lucide-react';
+import Link from 'next/link';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { useToast } from '@/components/ui/Toast';
 import type { Profile } from '@/lib/types';
 
@@ -24,6 +15,7 @@ export default function AdminPengaturanPage() {
 
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [totalUserCount, setTotalUserCount] = useState<number>(2);
 
   // Password update form
   const [newPassword, setNewPassword] = useState('');
@@ -33,22 +25,26 @@ export default function AdminPengaturanPage() {
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  // Fetch current user and profile
+  // Fetch current user, profile, and user count
   useEffect(() => {
     let ignore = false;
 
-    async function loadProfile() {
+    async function loadData() {
       try {
         const { data: authData } = await supabase.auth.getUser();
         if (authData.user) {
-          const { data: profData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', authData.user.id)
-            .single();
+          const [profRes, countRes] = await Promise.all([
+            supabase.from('profiles').select('*').eq('id', authData.user.id).single(),
+            supabase.from('profiles').select('id', { count: 'exact', head: true }),
+          ]);
 
-          if (!ignore && profData) {
-            setProfile(profData as Profile);
+          if (!ignore) {
+            if (profRes.data) {
+              setProfile(profRes.data as Profile);
+            }
+            if (countRes.count !== null && countRes.count > 0) {
+              setTotalUserCount(countRes.count);
+            }
           }
         }
       } catch {
@@ -58,7 +54,7 @@ export default function AdminPengaturanPage() {
       }
     }
 
-    loadProfile();
+    loadData();
 
     return () => {
       ignore = true;
@@ -102,184 +98,196 @@ export default function AdminPengaturanPage() {
   };
 
   return (
-    <div className="p-3 sm:p-5 max-w-[960px] mx-auto space-y-5 select-none">
-      <div>
-        <h2 className="text-sm font-semibold text-text-main tracking-tight flex items-center gap-2">
-          <Shield className="w-4 h-4 text-primary" />
-          <span>Pengaturan Akun & Keamanan</span>
-        </h2>
-        <p className="text-[11px] text-text-muted mt-0.5">
-          Kelola profil identitas korporat dan kredensial autentikasi sistem Admin GA
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* 1. Read-only Profile Card */}
-        <div className="bg-surface rounded-card border border-border p-5 space-y-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-border">
-            <User className="w-4 h-4 text-primary" />
-            <h3 className="text-xs font-semibold text-text-main">Profil Akun Admin GA</h3>
-          </div>
-
-          {isLoadingProfile ? (
-            <div className="space-y-3">
-              <div className="h-8 bg-border/40 rounded-badge animate-pulse" />
-              <div className="h-8 bg-border/40 rounded-badge animate-pulse" />
-              <div className="h-8 bg-border/40 rounded-badge animate-pulse" />
+    <PageContainer
+      title="Pengaturan"
+      subtitle="Kelola profil identitas korporat, kredensial autentikasi, dan konfigurasi sistem Admin GA"
+      contentClassName="flex-1 min-h-0 flex flex-col justify-between overflow-y-auto space-y-4"
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+        {/* Kolom Kiri: Profil & Akses Pengguna */}
+        <div className="space-y-4">
+          {/* 1. Read-only Profile Card */}
+          <div className="bg-surface rounded-card border border-border p-4.5 space-y-3.5">
+            <div className="pb-2.5 border-b border-border flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-text-main">Profil Akun Admin GA</h3>
+              <span className="text-[11px] font-mono text-primary font-medium">Aktif</span>
             </div>
-          ) : (
-            <div className="space-y-3.5 text-xs">
-              <div>
-                <span className="text-[11px] text-text-muted block mb-0.5">Nama Divisi / Bagian</span>
-                <p className="font-semibold text-text-main bg-bg px-3 py-2 rounded-control border border-border">
-                  {profile?.nama_divisi || 'General Affairs'}
-                </p>
-              </div>
 
-              <div>
-                <span className="text-[11px] text-text-muted block mb-0.5">Alamat Email Terdaftar</span>
-                <p className="font-mono text-text-main bg-bg px-3 py-2 rounded-control border border-border">
-                  {profile?.email || 'admin.ga@tps.co.id'}
-                </p>
+            {isLoadingProfile ? (
+              <div className="space-y-3">
+                <div className="h-8 bg-border/40 rounded-badge animate-pulse" />
+                <div className="h-8 bg-border/40 rounded-badge animate-pulse" />
+                <div className="h-8 bg-border/40 rounded-badge animate-pulse" />
               </div>
-
-              <div>
-                <span className="text-[11px] text-text-muted block mb-0.5">Hak Akses Sistem</span>
-                <div className="flex items-center gap-2 bg-bg px-3 py-2 rounded-control border border-border">
-                  <CheckCircle2 className="w-4 h-4 text-primary" />
-                  <span className="font-semibold text-primary">Administrator GA (Penuh)</span>
+            ) : (
+              <div className="space-y-3 text-xs">
+                <div>
+                  <span className="text-[11px] text-text-muted block mb-1">Nama Divisi / Bagian</span>
+                  <p className="font-semibold text-text-main bg-bg px-3 py-2 rounded-control border border-border">
+                    {profile?.nama_divisi || 'General Affairs'}
+                  </p>
                 </div>
-              </div>
 
-              <p className="text-[11px] text-text-muted leading-relaxed pt-1">
-                Data profil identitas dikelola langsung oleh administrator sistem TI Pelindo Terminal Petikemas.
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* 2. Change Password Form */}
-        <div className="bg-surface rounded-card border border-border p-5 space-y-4">
-          <div className="flex items-center gap-2 pb-3 border-b border-border">
-            <KeyRound className="w-4 h-4 text-primary" />
-            <h3 className="text-xs font-semibold text-text-main">Ganti Kata Sandi</h3>
-          </div>
-
-          <form onSubmit={handleUpdatePassword} className="space-y-3.5 text-xs">
-            {/* New Password */}
-            <div>
-              <label htmlFor="new_password" className="block text-xs font-semibold text-text-main mb-1">
-                Kata Sandi Baru
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
-                  <Lock className="w-3.5 h-3.5" />
+                <div>
+                  <span className="text-[11px] text-text-muted block mb-1">Alamat Email Terdaftar</span>
+                  <p className="font-mono text-text-main bg-bg px-3 py-2 rounded-control border border-border">
+                    {profile?.email || 'admin.ga@tps.co.id'}
+                  </p>
                 </div>
-                <input
-                  id="new_password"
-                  type={showNewPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Minimal 6 karakter"
-                  required
-                  className="w-full pl-9 pr-9 py-2 rounded-control border border-border bg-bg text-text-main placeholder:text-text-muted focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[36px]"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  aria-label={showNewPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text-main cursor-pointer"
-                >
-                  {showNewPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-            </div>
 
-            {/* Confirm Password */}
-            <div>
-              <label htmlFor="confirm_password" className="block text-xs font-semibold text-text-main mb-1">
-                Konfirmasi Kata Sandi Baru
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-text-muted">
-                  <Lock className="w-3.5 h-3.5" />
+                <div>
+                  <span className="text-[11px] text-text-muted block mb-1">Hak Akses Sistem</span>
+                  <div className="bg-bg px-3 py-2 rounded-control border border-border flex items-center justify-between">
+                    <span className="font-semibold text-primary">Administrator GA (Penuh)</span>
+                    <span className="text-[10px] bg-primary-soft text-primary px-2 py-0.5 rounded-badge font-semibold">
+                      Role: Admin
+                    </span>
+                  </div>
                 </div>
-                <input
-                  id="confirm_password"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Ulangi kata sandi baru"
-                  required
-                  className="w-full pl-9 pr-9 py-2 rounded-control border border-border bg-bg text-text-main placeholder:text-text-muted focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[36px]"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-label={showConfirmPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text-main cursor-pointer"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                </button>
-              </div>
-            </div>
-
-            {passwordError && (
-              <div className="flex items-center gap-2 p-2.5 rounded-control bg-danger-soft border border-danger/20 text-xs text-danger">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{passwordError}</span>
               </div>
             )}
+          </div>
 
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isSubmittingPassword || !newPassword || !confirmPassword}
-                className="w-full inline-flex items-center justify-center gap-2 py-2 px-4 rounded-control bg-primary hover:bg-primary-dark active:scale-[0.99] text-white text-xs font-semibold shadow-xs transition-all disabled:opacity-50 cursor-pointer min-h-[36px]"
-              >
-                {isSubmittingPassword ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    <span>Memperbarui Kata Sandi...</span>
-                  </>
-                ) : (
-                  <span>Perbarui Kata Sandi</span>
-                )}
-              </button>
+          {/* 2. Pengelolaan Akses Pengguna */}
+          <div className="bg-surface rounded-card border border-border p-4.5 space-y-3.5">
+            <div className="pb-2.5 border-b border-border flex items-center justify-between">
+              <h3 className="text-xs font-semibold text-text-main">Pengelolaan Akun Pengguna</h3>
+              <span className="text-[11px] text-text-muted tabular-nums">{totalUserCount} Pengguna Terdaftar</span>
             </div>
-          </form>
+
+            <p className="text-xs text-text-muted leading-relaxed">
+              Sebagai Administrator GA, Anda memiliki hak akses penuh untuk mendaftarkan akun divisi pemohon baru, menentukan peranan sistem, dan memantau status pengguna yang aktif.
+            </p>
+
+            <div className="pt-1">
+              <Link
+                href="/admin/pengguna"
+                className="w-full inline-flex items-center justify-center gap-2 py-2 px-3 rounded-control border border-primary/30 bg-primary-soft hover:bg-primary-soft/80 text-primary text-xs font-semibold transition-colors cursor-pointer min-h-[34px]"
+              >
+                <span>Buka Pengelolaan Pengguna</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Kolom Kanan: Keamanan Kata Sandi & Konfigurasi Sistem */}
+        <div className="space-y-4">
+          {/* 3. Change Password Form */}
+          <div className="bg-surface rounded-card border border-border p-4.5 space-y-3.5">
+            <div className="pb-2.5 border-b border-border">
+              <h3 className="text-xs font-semibold text-text-main">Ganti Kata Sandi</h3>
+            </div>
+
+            <form onSubmit={handleUpdatePassword} className="space-y-3 text-xs">
+              {/* New Password */}
+              <div>
+                <label htmlFor="new_password" className="block text-xs font-semibold text-text-main mb-1">
+                  Kata Sandi Baru
+                </label>
+                <div className="relative">
+                  <input
+                    id="new_password"
+                    type={showNewPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Minimal 6 karakter"
+                    required
+                    className="w-full pl-3 pr-9 py-2 rounded-control border border-border bg-bg text-text-main placeholder:text-text-muted focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[34px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    aria-label={showNewPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text-main cursor-pointer"
+                  >
+                    {showNewPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label htmlFor="confirm_password" className="block text-xs font-semibold text-text-main mb-1">
+                  Konfirmasi Kata Sandi Baru
+                </label>
+                <div className="relative">
+                  <input
+                    id="confirm_password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Ulangi kata sandi baru"
+                    required
+                    className="w-full pl-3 pr-9 py-2 rounded-control border border-border bg-bg text-text-main placeholder:text-text-muted focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[34px]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    aria-label={showConfirmPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-text-muted hover:text-text-main cursor-pointer"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {passwordError && (
+                <div className="p-2.5 rounded-control bg-danger-soft border border-danger/20 text-xs text-danger">
+                  {passwordError}
+                </div>
+              )}
+
+              <div className="pt-1">
+                <button
+                  type="submit"
+                  disabled={isSubmittingPassword || !newPassword || !confirmPassword}
+                  className="w-full inline-flex items-center justify-center gap-2 py-2 px-4 rounded-control bg-primary hover:bg-primary-dark active:scale-[0.99] text-white text-xs font-semibold shadow-xs transition-all disabled:opacity-50 cursor-pointer min-h-[34px]"
+                >
+                  {isSubmittingPassword ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Memperbarui Kata Sandi...</span>
+                    </>
+                  ) : (
+                    <span>Perbarui Kata Sandi</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* 4. Konfigurasi Lingkungan & Keamanan */}
+          <div className="bg-surface rounded-card border border-border p-4.5 space-y-3">
+            <div className="pb-2.5 border-b border-border">
+              <h3 className="text-xs font-semibold text-text-main">Konfigurasi Sistem & Keamanan</h3>
+            </div>
+
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center justify-between py-1 border-b border-border/50">
+                <span className="text-text-muted">Zona Waktu Sistem</span>
+                <span className="font-semibold text-text-main">Asia/Jakarta (WIB)</span>
+              </div>
+              <div className="flex items-center justify-between py-1 border-b border-border/50">
+                <span className="text-text-muted">Format Waktu & Angka</span>
+                <span className="font-semibold text-text-main">Bahasa Indonesia (id-ID)</span>
+              </div>
+              <div className="flex items-center justify-between py-1 border-b border-border/50">
+                <span className="text-text-muted">Arsitektur Basis Data</span>
+                <span className="font-semibold text-text-main">PostgreSQL 15 + RLS</span>
+              </div>
+              <div className="flex items-center justify-between py-1">
+                <span className="text-text-muted">Keamanan Akses Klien</span>
+                <span className="font-semibold text-success">Aktif (Role Definer)</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 3. System Information Card */}
-      <div className="bg-surface rounded-card border border-border p-5 space-y-3 text-xs select-none">
-        <div className="flex items-center gap-2 pb-2 border-b border-border">
-          <Info className="w-4 h-4 text-primary" />
-          <h3 className="text-xs font-semibold text-text-main">Informasi Sistem SIMPATK</h3>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
-          <div>
-            <span className="text-[11px] text-text-muted block">Versi Aplikasi</span>
-            <span className="font-semibold text-text-main">SIMPATK v2.0 Enterprise</span>
-          </div>
-          <div>
-            <span className="text-[11px] text-text-muted block">Entitas Korporat</span>
-            <span className="font-semibold text-text-main">PT Pelindo Terminal Petikemas</span>
-          </div>
-          <div>
-            <span className="text-[11px] text-text-muted block">Arsitektur Database</span>
-            <span className="font-semibold text-text-main">PostgreSQL 15 + RLS Definer</span>
-          </div>
-          <div>
-            <span className="text-[11px] text-text-muted block">Status Sistem</span>
-            <span className="font-semibold text-success flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-success" />
-              Operasional Normal
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+      {/* Version Pinned at Bottom */}
+      <p className="text-center text-xs text-text-muted select-none mt-auto pt-6 pb-2 shrink-0">
+        SIMPATK Versi 2.0
+      </p>
+    </PageContainer>
   );
 }
