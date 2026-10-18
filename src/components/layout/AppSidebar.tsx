@@ -435,8 +435,8 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
         <div className="flex flex-col min-h-0 overflow-y-auto">
           {/* Header Brand + Inside Toggle Button */}
           <div
-            className={`h-14 border-b border-white/10 flex items-center shrink-0 ${
-              isCollapsed ? 'justify-center px-2' : 'justify-between px-4'
+            className={`min-h-[72px] border-b border-white/10 flex items-center shrink-0 transition-all ${
+              isCollapsed ? 'justify-center px-2 py-3' : 'justify-between px-5 py-4'
             }`}
           >
             {isCollapsed ? (
@@ -454,7 +454,7 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
               </div>
             ) : (
               <>
-                <div className="relative h-10 w-44">
+                <div className="relative h-11 w-44 my-1">
                   <Image
                     src="/logo/tps-white.png"
                     alt="Logo Pelindo Terminal Petikemas TPS"
@@ -478,7 +478,7 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
           </div>
 
           {/* Search Trigger Button below Logo & above UTAMA */}
-          <div className="shrink-0 p-2.5 border-b border-white/10">
+          <div className="shrink-0 p-3.5 border-b border-white/10">
             {!isCollapsed ? (
               <button
                 type="button"
@@ -584,8 +584,8 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
         >
           <div className="flex flex-col min-h-0 overflow-y-auto">
             {/* Header with Close Button */}
-            <div className="h-14 px-4 border-b border-white/10 flex items-center justify-between shrink-0">
-              <div className="relative h-9 w-40">
+            <div className="min-h-[72px] px-5 py-4 border-b border-white/10 flex items-center justify-between shrink-0">
+              <div className="relative h-10 w-44 my-1">
                 <Image
                   src="/logo/tps-white.png"
                   alt="Logo Pelindo Terminal Petikemas TPS"
@@ -605,7 +605,7 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
             </div>
 
             {/* Quick Search in Mobile Drawer */}
-            <div className="p-3 border-b border-white/10 shrink-0">
+            <div className="p-3.5 border-b border-white/10 shrink-0">
               <button
                 type="button"
                 onClick={() => {
