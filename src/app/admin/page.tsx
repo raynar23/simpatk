@@ -2,13 +2,6 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import Link from 'next/link';
-import {
-  Boxes,
-  ClipboardList,
-  ArrowUpDown,
-  Layers,
-} from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { DashboardKpis, type DashboardKpiData } from '@/components/admin/DashboardKpis';
@@ -165,85 +158,14 @@ export default function AdminDashboardPage() {
 
   return (
     <PageContainer
-      title="Dashboard General Affairs"
-      subtitle="Pusat kendali 4 fitur utama GA: Persediaan, Permintaan, Pembaruan Stok, dan Penempatan ATK"
+      title="Dashboard"
+      subtitle="Pemantauan metrik operasional dan visualisasi data inventaris ATK"
       actions={headerActions}
-      contentClassName="space-y-3"
+      contentClassName="space-y-3.5"
     >
       {/* 1. Tab Ringkasan */}
       {activeTab === 'ringkasan' && (
-        <div className="space-y-3 flex-1 flex flex-col min-h-0">
-          {/* Quick Access: 4 Fitur Utama General Affairs */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 shrink-0">
-            <Link
-              href="/admin/persediaan"
-              className="group p-2.5 rounded-card bg-surface hover:bg-primary-soft/30 border border-border hover:border-primary/40 transition-all flex items-center gap-2.5 shadow-2xs"
-            >
-              <div className="w-8 h-8 rounded-control bg-primary-soft text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Boxes className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-text-main group-hover:text-primary transition-colors truncate">
-                  1. Persediaan ATK
-                </p>
-                <p className="text-[10px] text-text-muted truncate">
-                  Inventaris &amp; kontrol stok
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              href="/admin/permintaan"
-              className="group p-2.5 rounded-card bg-surface hover:bg-primary-soft/30 border border-border hover:border-primary/40 transition-all flex items-center gap-2.5 shadow-2xs"
-            >
-              <div className="w-8 h-8 rounded-control bg-primary-soft text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <ClipboardList className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-text-main group-hover:text-primary transition-colors truncate">
-                  2. Permintaan ATK
-                </p>
-                <p className="text-[10px] text-text-muted truncate">
-                  Verifikasi &amp; serah terima
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              href="/admin/pembaruan-stok"
-              className="group p-2.5 rounded-card bg-surface hover:bg-primary-soft/30 border border-border hover:border-primary/40 transition-all flex items-center gap-2.5 shadow-2xs"
-            >
-              <div className="w-8 h-8 rounded-control bg-primary-soft text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <ArrowUpDown className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-text-main group-hover:text-primary transition-colors truncate">
-                  3. Pembaruan Stok
-                </p>
-                <p className="text-[10px] text-text-muted truncate">
-                  Mutasi masuk &amp; keluar
-                </p>
-              </div>
-            </Link>
-
-            <Link
-              href="/admin/penempatan"
-              className="group p-2.5 rounded-card bg-surface hover:bg-primary-soft/30 border border-border hover:border-primary/40 transition-all flex items-center gap-2.5 shadow-2xs"
-            >
-              <div className="w-8 h-8 rounded-control bg-primary-soft text-primary flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <Layers className="w-4 h-4" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-text-main group-hover:text-primary transition-colors truncate">
-                  4. Penempatan ATK
-                </p>
-                <p className="text-[10px] text-text-muted truncate">
-                  Tata letak Rak 1 - 4
-                </p>
-              </div>
-            </Link>
-          </div>
-
+        <div className="space-y-3.5 flex-1 flex flex-col min-h-0">
           {/* Row 1: 5 KPI Cards (no icons, pure flat metrics, strict period comparison) */}
           <DashboardKpis
             data={kpiData}
