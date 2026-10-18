@@ -31,3 +31,16 @@ export function formatDateShort(isoDate: string): string {
 export function isLowStock(stok: number, stokMinimum: number): boolean {
   return stok <= stokMinimum;
 }
+
+export function formatRupiah(amount: number): string {
+  try {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  } catch {
+    return `Rp ${amount.toLocaleString('id-ID')}`;
+  }
+}

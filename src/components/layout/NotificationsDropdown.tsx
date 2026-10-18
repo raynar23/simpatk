@@ -25,12 +25,12 @@ interface NotificationItem {
 function calculateRelativeTime(timestamp: string, baseNow: number): string {
   try {
     const diffMinutes = Math.floor((baseNow - new Date(timestamp).getTime()) / 60000);
-    if (diffMinutes < 1) return 'Just now';
-    if (diffMinutes < 60) return `${diffMinutes}m ago`;
+    if (diffMinutes < 1) return 'Baru saja';
+    if (diffMinutes < 60) return `${diffMinutes}m lalu`;
     const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffHours < 24) return `${diffHours}j lalu`;
     const diffDays = Math.floor(diffHours / 24);
-    return `${diffDays}d ago`;
+    return `${diffDays}h lalu`;
   } catch {
     return '';
   }
@@ -149,7 +149,7 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
       <button
         type="button"
         onClick={handleOpenDropdown}
-        aria-label="View notifications"
+        aria-label="Lihat notifikasi"
         aria-expanded={isOpen}
         className="relative w-8 h-8 rounded-control flex items-center justify-center text-text-muted hover:text-text-main hover:bg-bg transition-colors cursor-pointer"
       >
@@ -166,10 +166,10 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
           {/* Header */}
           <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-border bg-bg/40">
             <span className="text-xs font-semibold text-text-main">
-              Recent Activity
+              Aktivitas Terbaru
             </span>
             <span className="text-[10px] text-text-muted font-medium">
-              Last 5 requests
+              5 permintaan terakhir
             </span>
           </div>
 
@@ -177,7 +177,7 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
           <div className="max-h-72 overflow-y-auto divide-y divide-border/60">
             {notifications.length === 0 ? (
               <div className="py-8 text-center text-xs text-text-muted">
-                No recent notifications
+                Tidak ada notifikasi terbaru
               </div>
             ) : (
               notifications.map((item) => (
@@ -227,7 +227,7 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
               }}
               className="text-[11px] font-medium text-primary hover:underline cursor-pointer"
             >
-              View All Requests
+              Lihat Semua Permintaan
             </button>
           </div>
         </div>

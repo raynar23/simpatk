@@ -75,7 +75,7 @@ export function Inspector({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close inspector"
+            aria-label="Tutup panel"
             className="w-7 h-7 inline-flex items-center justify-center rounded-control border border-border text-text-muted hover:text-text-main hover:bg-bg transition-colors cursor-pointer shrink-0"
           >
             <X className="w-4 h-4" strokeWidth={1.5} />

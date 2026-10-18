@@ -62,7 +62,7 @@ export function AppToolbar({
         <button
           type="button"
           onClick={toggleMobile}
-          aria-label="Open navigation menu"
+          aria-label="Buka menu navigasi"
           className="lg:hidden w-8 h-8 rounded-control flex items-center justify-center text-text-muted hover:text-text-main hover:bg-bg transition-colors cursor-pointer"
         >
           <Menu className="w-4 h-4" strokeWidth={1.5} />
@@ -70,11 +70,11 @@ export function AppToolbar({
 
         {/* Desktop Sidebar Collapse Toggle (lg+) */}
         <div className="hidden lg:block">
-          <Tooltip content="Toggle Sidebar (Cmd+B)" side="bottom">
+          <Tooltip content="Ciutkan/Perluas Sidebar (Cmd+B)" side="bottom">
             <button
               type="button"
               onClick={toggleCollapse}
-              aria-label="Toggle sidebar collapse"
+              aria-label="Ciutkan atau perluas sidebar"
               className="w-8 h-8 rounded-control flex items-center justify-center text-text-muted hover:text-text-main hover:bg-bg transition-colors cursor-pointer"
             >
               <PanelLeft className="w-4 h-4" strokeWidth={1.5} />
@@ -100,7 +100,7 @@ export function AppToolbar({
         >
           <div className="flex items-center gap-2">
             <Search className="w-3.5 h-3.5" strokeWidth={1.5} />
-            <span>Search or jump to...</span>
+            <span>Cari atau pindah ke...</span>
           </div>
           <kbd className="text-[10px] font-mono text-text-muted bg-surface border border-border px-1.5 py-0.5 rounded-badge">
             ⌘K
@@ -114,7 +114,7 @@ export function AppToolbar({
         <button
           type="button"
           onClick={openCommandPalette}
-          aria-label="Open search palette"
+          aria-label="Buka pencarian cepat"
           className="md:hidden w-8 h-8 rounded-control flex items-center justify-center text-text-muted hover:text-text-main hover:bg-bg transition-colors cursor-pointer"
         >
           <Search className="w-4 h-4" strokeWidth={1.5} />
@@ -139,7 +139,7 @@ export function AppToolbar({
                 {divisionName || (role === 'admin' ? 'General Affairs' : 'Divisi Pemohon')}
               </p>
               <p className="text-[10px] text-text-muted truncate capitalize">
-                {role}
+                {role === 'admin' ? 'Admin GA' : 'Pemohon'}
               </p>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-text-muted" strokeWidth={1.5} />
@@ -152,8 +152,8 @@ export function AppToolbar({
                 <p className="font-semibold text-text-main truncate">
                   {divisionName || (role === 'admin' ? 'General Affairs' : 'Divisi Pemohon')}
                 </p>
-                <p className="text-[11px] text-text-muted capitalize">
-                  {role === 'admin' ? 'Admin GA Account' : 'Requester Division'}
+                <p className="text-[11px] text-text-muted">
+                  {role === 'admin' ? 'Akun Admin GA' : 'Akun Divisi Pemohon'}
                 </p>
               </div>
 
@@ -165,7 +165,7 @@ export function AppToolbar({
                   className="flex items-center gap-2.5 px-3 py-1.5 text-text-main hover:bg-bg transition-colors"
                 >
                   <Settings className="w-3.5 h-3.5 text-text-muted" strokeWidth={1.5} />
-                  <span>Settings</span>
+                  <span>Pengaturan</span>
                 </Link>
               </div>
 
@@ -176,7 +176,7 @@ export function AppToolbar({
                   className="w-full flex items-center gap-2.5 px-3 py-1.5 text-danger hover:bg-danger-soft transition-colors cursor-pointer text-left"
                 >
                   <LogOut className="w-3.5 h-3.5" strokeWidth={1.5} />
-                  <span>Logout</span>
+                  <span>Keluar</span>
                 </button>
               </div>
             </div>

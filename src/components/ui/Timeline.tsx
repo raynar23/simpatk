@@ -20,7 +20,7 @@ export function Timeline({
   const formatDate = (dateVal: string | Date) => {
     try {
       const d = new Date(dateVal);
-      return d.toLocaleDateString('en-GB', {
+      return d.toLocaleDateString('id-ID', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
@@ -37,26 +37,26 @@ export function Timeline({
   const steps = [
     {
       id: 'submitted',
-      label: 'Request Submitted',
-      description: 'Request recorded by division',
+      label: 'Permintaan Diajukan',
+      description: 'Permintaan berhasil dicatat oleh pemohon',
       timestamp: formatDate(createdAt),
       isDone: true,
       icon: CheckCircle2,
     },
     {
       id: 'in_progress',
-      label: 'Processing by General Affairs',
-      description: 'Physical inventory dispatched for handover',
-      timestamp: isCompleted && completedAt ? formatDate(createdAt) : 'Active',
+      label: 'Diproses oleh General Affairs',
+      description: 'Barang disiapkan untuk serah terima fisik',
+      timestamp: isCompleted && completedAt ? formatDate(createdAt) : 'Sedang Berjalan',
       isDone: true,
       icon: isCompleted ? CheckCircle2 : Clock,
     },
     {
       id: 'completed',
-      label: isCompleted ? 'Completed' : 'Awaiting Completion',
+      label: isCompleted ? 'Selesai' : 'Menunggu Penyelesaian',
       description: isCompleted
-        ? 'Handover completed by General Affairs'
-        : 'Pending GA verification and item handover',
+        ? 'Serah terima barang telah diselesaikan oleh GA'
+        : 'Menunggu verifikasi dan penyerahan barang oleh GA',
       timestamp: isCompleted && completedAt ? formatDate(completedAt) : null,
       isDone: isCompleted,
       icon: isCompleted ? CheckCircle2 : CircleDot,
@@ -116,7 +116,7 @@ export function Timeline({
             />
             <div className="min-w-0">
               <span className="font-semibold text-text-main block mb-0.5">
-                GA Handover Notes:
+                Catatan Serah Terima GA:
               </span>
               <p className="text-[11px] text-text-muted leading-relaxed">
                 {catatanGa}

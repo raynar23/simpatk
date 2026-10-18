@@ -103,18 +103,18 @@ function CommandPaletteModal({
 
   const adminNav = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-    { label: 'Requests', href: '/admin/permintaan', icon: ClipboardList },
-    { label: 'Inventory', href: '/admin/persediaan', icon: Boxes },
-    { label: 'Shopping List', href: '/admin/daftar-belanja', icon: ShoppingCart },
-    { label: 'Reports', href: '/admin/laporan', icon: FileText },
-    { label: 'Settings', href: '/admin/pengaturan', icon: Settings },
+    { label: 'Permintaan', href: '/admin/permintaan', icon: ClipboardList },
+    { label: 'Persediaan', href: '/admin/persediaan', icon: Boxes },
+    { label: 'Daftar Belanja', href: '/admin/daftar-belanja', icon: ShoppingCart },
+    { label: 'Laporan', href: '/admin/laporan', icon: FileText },
+    { label: 'Pengaturan', href: '/admin/pengaturan', icon: Settings },
   ];
 
   const userNav = [
     { label: 'Dashboard', href: '/user', icon: LayoutDashboard },
-    { label: 'Request History', href: '/user/riwayat', icon: Clock },
-    { label: 'ATK Catalog', href: '/user/katalog', icon: BookOpen },
-    { label: 'Settings', href: '/user/pengaturan', icon: Settings },
+    { label: 'Riwayat Permintaan', href: '/user/riwayat', icon: Clock },
+    { label: 'Katalog ATK', href: '/user/katalog', icon: BookOpen },
+    { label: 'Pengaturan', href: '/user/pengaturan', icon: Settings },
   ];
 
   const navLinks = role === 'admin' ? adminNav : userNav;
@@ -143,7 +143,7 @@ function CommandPaletteModal({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Quick Command Palette"
+        aria-label="Pencarian Cepat Perintah"
         className="relative w-full max-w-xl bg-surface rounded-card border border-border shadow-modal overflow-hidden animate-in fade-in zoom-in-95 duration-100"
       >
         {/* Search Input Bar */}
@@ -154,7 +154,7 @@ function CommandPaletteModal({
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type a command, page, item name, or request number..."
+            placeholder="Ketik perintah, halaman, nama barang, atau nomor permintaan..."
             className="w-full text-xs text-text-main placeholder:text-text-muted bg-transparent focus:outline-none"
           />
           <kbd className="hidden sm:inline-block text-[10px] font-mono text-text-muted bg-bg border border-border px-1.5 py-0.5 rounded-badge">
@@ -168,7 +168,7 @@ function CommandPaletteModal({
           {filteredNav.length > 0 && (
             <div>
               <div className="px-2 py-1 text-[10px] font-semibold text-text-muted uppercase tracking-wider">
-                Navigation
+                Navigasi
               </div>
               <div className="space-y-0.5 mt-1">
                 {filteredNav.map((item) => {
@@ -196,7 +196,7 @@ function CommandPaletteModal({
           {displayedItems.length > 0 && (
             <div>
               <div className="px-2 py-1 text-[10px] font-semibold text-text-muted uppercase tracking-wider">
-                Inventory Items
+                Daftar Barang ATK
               </div>
               <div className="space-y-0.5 mt-1">
                 {displayedItems.map((item) => (
@@ -234,7 +234,7 @@ function CommandPaletteModal({
           {displayedRequests.length > 0 && (
             <div>
               <div className="px-2 py-1 text-[10px] font-semibold text-text-muted uppercase tracking-wider">
-                Requests
+                Permintaan
               </div>
               <div className="space-y-0.5 mt-1">
                 {displayedRequests.map((req) => (
@@ -262,7 +262,7 @@ function CommandPaletteModal({
                       </div>
                     </div>
                     <span className="text-[11px] text-text-muted uppercase font-medium">
-                      {req.status}
+                      {req.status === 'selesai' ? 'Selesai' : 'Diproses'}
                     </span>
                   </button>
                 ))}
@@ -273,23 +273,23 @@ function CommandPaletteModal({
           {/* Empty / Loading State */}
           {isLoading && (
             <div className="py-6 text-center text-text-muted text-xs">
-              Searching...
+              Mencari...
             </div>
           )}
 
           {!isLoading && query.trim() && filteredNav.length === 0 && displayedItems.length === 0 && displayedRequests.length === 0 && (
             <div className="py-8 text-center text-text-muted text-xs">
-              No results found for &ldquo;{query}&rdquo;
+              Tidak ditemukan hasil untuk &ldquo;{query}&rdquo;
             </div>
           )}
         </div>
 
         {/* Footer shortcuts */}
         <div className="px-3 py-2 border-t border-border bg-bg/50 text-[11px] text-text-muted flex items-center justify-between">
-          <span>Navigate with mouse or arrow keys</span>
+          <span>Navigasi dengan mouse atau tombol panah</span>
           <div className="flex items-center gap-2">
-            <span>Open: Enter</span>
-            <span>Close: ESC</span>
+            <span>Buka: Enter</span>
+            <span>Tutup: ESC</span>
           </div>
         </div>
       </div>

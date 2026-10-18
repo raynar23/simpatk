@@ -19,27 +19,27 @@ export function Badge({ variant, children, className = '' }: BadgeProps) {
   const variantStyles = {
     diproses: {
       container: 'bg-[#FFF8E6] text-[#9A5B00] border-[#FFE2A4]',
-      defaultLabel: 'In Progress',
+      defaultLabel: 'Diproses',
       isTextOnly: false,
     },
     selesai: {
       container: 'bg-[#EBF7EE] text-[#1E8E3E] border-[#C8E9D0]',
-      defaultLabel: 'Completed',
+      defaultLabel: 'Selesai',
       isTextOnly: false,
     },
     menipis: {
       container: 'bg-danger-soft text-danger border-danger/20',
-      defaultLabel: 'Low Stock',
+      defaultLabel: 'Menipis',
       isTextOnly: false,
     },
     habis: {
       container: 'bg-[#FBE8EA] text-[#9B0010] border-[#F2C2C6]',
-      defaultLabel: 'Out of Stock',
+      defaultLabel: 'Habis',
       isTextOnly: false,
     },
     normal: {
       container: 'text-text-muted',
-      defaultLabel: 'In Stock',
+      defaultLabel: 'Tersedia',
       isTextOnly: true,
     },
     info: {

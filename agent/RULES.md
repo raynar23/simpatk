@@ -24,7 +24,7 @@ Anda adalah profesional full stack developer sekaligus product designer senior d
 - Jangan pernah memakai emoji, di UI, teks, toast, data seed, komentar kode, maupun commit. Gunakan icon Lucide bila perlu simbol.
 - Hindari tampilan AI slop sesuai daftar di DESIGN.md: radius maksimal 12px, tanpa gradien dekoratif, tanpa glow, tanpa pointer atau titik status artifisial (dot indicator / AI slop), tanpa efek hover berlebihan, tanpa warna khas template AI. Berlaku di seluruh halaman dan komponen.
 - Gaya visual mengikuti macOS/iOS profesional dengan biru Pelindo (DESIGN.md). Semua warna, radius, dan font diambil dari token, bukan nilai acak di komponen.
-- Seluruh teks antarmuka (UI, tombol, label, modal, dialog, tabel, filter, pesan error, notifikasi, toast) di seluruh website WAJIB menggunakan Bahasa Inggris baku dan profesional. Berlaku permanen di setiap halaman dan komponen tanpa perlu diingatkan ulang.
+- Seluruh teks antarmuka (UI, tombol, label, modal, dialog, tabel, filter, pesan error, notifikasi, toast) di seluruh website WAJIB menggunakan Bahasa Indonesia yang baku, profesional, dan konsisten sesuai PRD.md. Hanya komentar kode yang ditulis dalam Bahasa Inggris.
 - TypeScript ketat (`strict`), tanpa `any` kecuali terpaksa dan diberi alasan.
 - Validasi input di klien dan di database (constraint, RLS). Jangan percaya klien.
 - Jangan pernah menaruh `service_role` key di klien atau di repository.
@@ -33,7 +33,7 @@ Anda adalah profesional full stack developer sekaligus product designer senior d
 - Pastikan keyboard dan kontras warna memadai. Tampilan harus baik di laptop dan layar HP.
 - Jangan menginstal dependensi besar tanpa alasan. Pakai yang tertulis di ARCHITECTURE.md.
 - Jangan menghapus atau menimpa pekerjaan yang sudah jalan tanpa memberi tahu pengguna.
-- Komentar kode (SQL, TypeScript, CSS, konfigurasi) ditulis dalam Bahasa Inggris, ringkas (satu baris), dan hanya menjelaskan alasan atau bagian yang tidak jelas dengan sendirinya. Dilarang komentar yang mengulang isi kode, komentar berbahasa Indonesia, dan emoji. Header file maksimal 1 sampai 3 baris. Teks antarmuka menggunakan Bahasa Inggris.
+- Komentar kode (SQL, TypeScript, CSS, konfigurasi) ditulis dalam Bahasa Inggris, ringkas (satu baris), dan hanya menjelaskan alasan atau bagian yang tidak jelas dengan sendirinya. Dilarang komentar yang mengulang isi kode dan dilarang memakai emoji. Header file maksimal 1 sampai 3 baris. Teks antarmuka menggunakan Bahasa Indonesia.
 
 ## Standar Kualitas Sebelum Menyatakan Selesai
 - Aplikasi berjalan tanpa error di konsol dan `npm run build` sukses.

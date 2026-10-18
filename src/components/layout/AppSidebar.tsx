@@ -40,18 +40,18 @@ export function AppSidebar({ role, divisionName }: AppSidebarProps) {
 
   const adminNav = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
-    { label: 'Requests', href: '/admin/permintaan', icon: ClipboardList },
-    { label: 'Inventory', href: '/admin/persediaan', icon: Boxes },
-    { label: 'Shopping List', href: '/admin/daftar-belanja', icon: ShoppingCart },
-    { label: 'Reports', href: '/admin/laporan', icon: FileText },
-    { label: 'Settings', href: '/admin/pengaturan', icon: Settings },
+    { label: 'Permintaan', href: '/admin/permintaan', icon: ClipboardList },
+    { label: 'Persediaan', href: '/admin/persediaan', icon: Boxes },
+    { label: 'Daftar Belanja', href: '/admin/daftar-belanja', icon: ShoppingCart },
+    { label: 'Laporan', href: '/admin/laporan', icon: FileText },
+    { label: 'Pengaturan', href: '/admin/pengaturan', icon: Settings },
   ];
 
   const userNav = [
     { label: 'Dashboard', href: '/user', icon: LayoutDashboard },
-    { label: 'Request History', href: '/user/riwayat', icon: Clock },
-    { label: 'ATK Catalog', href: '/user/katalog', icon: BookOpen },
-    { label: 'Settings', href: '/user/pengaturan', icon: Settings },
+    { label: 'Riwayat Permintaan', href: '/user/riwayat', icon: Clock },
+    { label: 'Katalog ATK', href: '/user/katalog', icon: BookOpen },
+    { label: 'Pengaturan', href: '/user/pengaturan', icon: Settings },
   ];
 
   const navItems = role === 'admin' ? adminNav : userNav;
@@ -153,7 +153,7 @@ export function AppSidebar({ role, divisionName }: AppSidebarProps) {
                   {divisionName || (role === 'admin' ? 'General Affairs' : 'Divisi Pemohon')}
                 </p>
                 <p className="text-[11px] text-white/60 truncate uppercase tracking-wider mt-0.5">
-                  {role === 'admin' ? 'Admin Portal' : 'User Portal'}
+                  {role === 'admin' ? 'Portal Admin' : 'Portal Pemohon'}
                 </p>
               </div>
               <button
@@ -162,15 +162,15 @@ export function AppSidebar({ role, divisionName }: AppSidebarProps) {
                 className="w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs font-medium rounded-control text-white/80 hover:text-white hover:bg-white/10 border border-white/15 transition-colors cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" strokeWidth={1.5} />
-                <span>Logout</span>
+                <span>Keluar</span>
               </button>
             </div>
           ) : (
-            <Tooltip content="Logout" side="right">
+            <Tooltip content="Keluar" side="right">
               <button
                 type="button"
                 onClick={handleLogout}
-                aria-label="Logout"
+                aria-label="Keluar"
                 className="w-full flex items-center justify-center p-2 rounded-control text-white/80 hover:text-white hover:bg-white/10 border border-white/15 transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4" strokeWidth={1.5} />
@@ -197,7 +197,7 @@ export function AppSidebar({ role, divisionName }: AppSidebarProps) {
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Navigation drawer"
+          aria-label="Menu navigasi"
           className={`fixed inset-y-0 left-0 w-[280px] bg-primary-dark text-white flex flex-col justify-between shadow-modal transition-transform duration-180 ease-out z-50 ${
             isMobileOpen ? 'translate-x-0' : '-translate-x-full'
           }`}
@@ -217,7 +217,7 @@ export function AppSidebar({ role, divisionName }: AppSidebarProps) {
               <button
                 type="button"
                 onClick={closeMobile}
-                aria-label="Close navigation"
+                aria-label="Tutup navigasi"
                 className="w-8 h-8 rounded-control flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" strokeWidth={1.5} />
@@ -235,7 +235,7 @@ export function AppSidebar({ role, divisionName }: AppSidebarProps) {
                 {divisionName || (role === 'admin' ? 'General Affairs' : 'Divisi Pemohon')}
               </p>
               <p className="text-[11px] text-white/60 truncate uppercase tracking-wider mt-0.5">
-                {role === 'admin' ? 'Admin Portal' : 'User Portal'}
+                {role === 'admin' ? 'Portal Admin' : 'Portal Pemohon'}
               </p>
             </div>
             <button
@@ -244,7 +244,7 @@ export function AppSidebar({ role, divisionName }: AppSidebarProps) {
               className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium rounded-control text-white hover:bg-white/10 border border-white/15 transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" strokeWidth={1.5} />
-              <span>Logout</span>
+              <span>Keluar</span>
             </button>
           </div>
         </div>

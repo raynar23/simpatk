@@ -44,9 +44,9 @@ export default function LoginPage() {
 
       if (error) {
         if (error.message.includes('Invalid login credentials')) {
-          setErrorMessage('Invalid email or password. Please verify your credentials.');
+          setErrorMessage('Email atau kata sandi salah. Silakan periksa kembali.');
         } else {
-          setErrorMessage('Failed to sign in. Please check your network connection and try again.');
+          setErrorMessage('Gagal masuk. Periksa koneksi internet Anda dan coba lagi.');
         }
         setIsLoading(false);
         return;
@@ -68,7 +68,7 @@ export default function LoginPage() {
         }
       }
     } catch {
-      setErrorMessage('A system error occurred. Please try again.');
+      setErrorMessage('Terjadi kesalahan sistem. Silakan coba lagi.');
       setIsLoading(false);
     }
   };
@@ -116,21 +116,21 @@ export default function LoginPage() {
             SIMPATK
           </h1>
           <p className="text-sm text-white/95 leading-relaxed drop-shadow-sm font-normal">
-            Office Supply Management System, General Affairs Pelindo Terminal Petikemas.
+            Sistem Informasi Permintaan Alat Tulis Kantor, General Affairs Pelindo Terminal Petikemas.
           </p>
 
           <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-white/90">
             <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15">
               <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
-              <span>Automated Workflow</span>
+              <span>Alur Otomatis</span>
             </div>
             <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15">
               <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
-              <span>Realtime Physical Stock</span>
+              <span>Stok Fisik Realtime</span>
             </div>
             <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15">
               <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
-              <span>100% Paperless</span>
+              <span>100% Tanpa Kertas</span>
             </div>
           </div>
         </div>
@@ -156,10 +156,10 @@ export default function LoginPage() {
                 />
               </div>
               <h2 className="text-2xl font-bold text-text-main tracking-tight leading-tight">
-                Login
+                Masuk
               </h2>
               <p className="text-xs text-text-muted mt-1.5 leading-relaxed">
-                Enter your corporate credentials to access the office supply portal.
+                Masukkan email dan kata sandi korporat untuk mengakses sistem SIMPATK.
               </p>
             </div>
 
@@ -171,7 +171,7 @@ export default function LoginPage() {
                   htmlFor="email"
                   className="block text-xs font-semibold text-text-main mb-1.5"
                 >
-                  Email Address
+                  Email
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
@@ -198,7 +198,7 @@ export default function LoginPage() {
                   htmlFor="password"
                   className="block text-xs font-semibold text-text-main mb-1.5"
                 >
-                  Password
+                  Kata Sandi
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
@@ -219,7 +219,7 @@ export default function LoginPage() {
                     type="button"
                     tabIndex={0}
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-text-muted hover:text-text-main transition-colors cursor-pointer"
                   >
                     {showPassword ? (
@@ -261,10 +261,10 @@ export default function LoginPage() {
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Logging in...
+                      Memproses...
                     </>
                   ) : (
-                    <span>Login</span>
+                    <span>Masuk</span>
                   )}
                 </button>
               </div>

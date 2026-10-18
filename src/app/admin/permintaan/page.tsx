@@ -1,72 +1,83 @@
-// Admin request management page with status tabs, confirmation dialog, and Supabase Realtime
+// Admin request master-detail page with DataTable, Realtime updates, and Inspector slide-over
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import {
-  ClipboardList,
-  CheckCircle2,
-  Calendar,
-  Building2,
-  Layers,
-  FileText,
-} from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { AdminToolbar } from '@/components/ui/AdminToolbar';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
+import { RequestInspector } from '@/components/admin/RequestInspector';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Dialog } from '@/components/ui/Dialog';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
-import { formatDate } from '@/lib/utils';
-import type { RequestWithDetails, RequestStatus } from '@/lib/types';
+import { formatDateShort } from '@/lib/utils';
+import type { RequestWithDetails } from '@/lib/types';
 
 export default function AdminPermintaanPage() {
   const supabase = createClient();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
 
   const [isLoading, setIsLoading] = useState(true);
   const [requests, setRequests] = useState<RequestWithDetails[]>([]);
-  const [filterStatus, setFilterStatus] = useState<'semua' | RequestStatus>('semua');
   const [selectedRequest, setSelectedRequest] = useState<RequestWithDetails | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isInspectorOpen, setIsInspectorOpen] = useState(false);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
-  // Fetch all requests on mount
-  useEffect(() => {
-    let isMounted = true;
+  // Filters and pagination state
+  const [statusFilter, setStatusFilter] = useState<'semua' | 'diproses' | 'selesai'>('semua');
+  const [dateRangeFilter, setDateRangeFilter] = useState<'semua' | '7' | '30' | 'month'>('semua');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortColumn, setSortColumn] = useState<string>('created_at');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
-    async function fetchRequests() {
+  // Initial fetch all requests
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadRequests() {
       try {
         const { data, error } = await supabase
           .from('requests')
           .select('*, items(*), profiles(*)')
           .order('created_at', { ascending: false });
 
+        if (ignore) return;
         if (error) {
-          if (isMounted) showToast('Gagal memuat data permintaan.', 'error');
+          showToast('Gagal memuat data permintaan.', 'error');
           return;
         }
-        if (isMounted) setRequests((data as RequestWithDetails[]) || []);
+
+        if (data) {
+          setRequests(data as RequestWithDetails[]);
+          // If initial search param query matches a single request, auto-open it
+          const initialQ = searchParams.get('q');
+          if (initialQ) {
+            const found = (data as RequestWithDetails[]).find((r) => r.nomor === initialQ);
+            if (found) {
+              setSelectedRequest(found);
+              setIsInspectorOpen(true);
+            }
+          }
+        }
       } catch {
-        if (isMounted) showToast('Gagal menghubungi server.', 'error');
+        if (!ignore) showToast('Gagal menghubungi server.', 'error');
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (!ignore) setIsLoading(false);
       }
     }
 
-    fetchRequests();
+    loadRequests();
 
     return () => {
-      isMounted = false;
+      ignore = true;
     };
-  }, [supabase, showToast]);
+  }, [supabase, showToast, searchParams]);
 
   // Realtime subscription for requests table
   useEffect(() => {
     const channel = supabase
-      .channel('admin-requests-realtime')
+      .channel('admin-requests-realtime-sub')
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'requests' },
@@ -80,21 +91,23 @@ export default function AdminPermintaanPage() {
               .single();
 
             if (data) {
-              setRequests((prev) => [data as RequestWithDetails, ...prev.filter((r) => r.id !== data.id)]);
-              setHighlightedId(data.id);
-              showToast('Permintaan baru diterima dari divisi operasional.', 'info');
-              setTimeout(() => setHighlightedId(null), 2500);
+              const newReq = data as RequestWithDetails;
+              setRequests((prev) => [newReq, ...prev.filter((r) => r.id !== newReq.id)]);
+              setHighlightedId(newReq.id);
+              showToast(`Permintaan baru masuk: ${newReq.nomor || 'ATK'}`, 'info');
+              setTimeout(() => setHighlightedId(null), 3000);
             }
           } else if (payload.eventType === 'UPDATE') {
             setRequests((prev) =>
-              prev.map((req) =>
-                req.id === payload.new.id
+              prev.map((r) =>
+                r.id === payload.new.id
                   ? {
-                      ...req,
+                      ...r,
                       status: payload.new.status,
                       completed_at: payload.new.completed_at,
+                      catatan_ga: payload.new.catatan_ga,
                     }
-                  : req
+                  : r
               )
             );
           }
@@ -107,299 +120,239 @@ export default function AdminPermintaanPage() {
     };
   }, [supabase, showToast]);
 
-  // Status counts for SegmentedControl
-  const counts = useMemo(() => {
-    const total = requests.length;
-    const diproses = requests.filter((r) => r.status === 'diproses').length;
-    const selesai = requests.filter((r) => r.status === 'selesai').length;
-    return { total, diproses, selesai };
-  }, [requests]);
+  // Filtered and sorted data
+  const filteredData = useMemo(() => {
+    let result = [...requests];
 
-  // Filtered requests based on active tab
-  const filteredRequests = useMemo(() => {
-    if (filterStatus === 'semua') return requests;
-    return requests.filter((r) => r.status === filterStatus);
-  }, [requests, filterStatus]);
+    // Status filter
+    if (statusFilter !== 'semua') {
+      result = result.filter((r) => r.status === statusFilter);
+    }
 
-  // Mark request as finished using tandai_selesai RPC
-  const handleConfirmSelesai = async () => {
-    if (!selectedRequest) return;
-    setIsSubmitting(true);
+    // Date range filter
+    if (dateRangeFilter !== 'semua') {
+      const now = new Date();
+      if (dateRangeFilter === '7') {
+        const threshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        result = result.filter((r) => new Date(r.created_at) >= threshold);
+      } else if (dateRangeFilter === '30') {
+        const threshold = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        result = result.filter((r) => new Date(r.created_at) >= threshold);
+      } else if (dateRangeFilter === 'month') {
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        result = result.filter((r) => new Date(r.created_at) >= startOfMonth);
+      }
+    }
 
-    try {
-      const { error } = await supabase.rpc('tandai_selesai', {
-        p_request_id: selectedRequest.id,
-      });
+    // Search query filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (r) =>
+          r.nomor?.toLowerCase().includes(q) ||
+          r.items?.nama?.toLowerCase().includes(q) ||
+          r.items?.kode?.toLowerCase().includes(q) ||
+          r.keperluan?.toLowerCase().includes(q) ||
+          r.profiles?.nama_divisi?.toLowerCase().includes(q)
+      );
+    }
 
-      if (error) {
-        showToast(error.message || 'Gagal menandai permintaan selesai.', 'error');
-        return;
+    // Sorting
+    result.sort((a, b) => {
+      let valA: unknown = a[sortColumn as keyof RequestWithDetails];
+      let valB: unknown = b[sortColumn as keyof RequestWithDetails];
+
+      if (sortColumn === 'items') {
+        valA = a.items?.nama || '';
+        valB = b.items?.nama || '';
+      } else if (sortColumn === 'profiles') {
+        valA = a.profiles?.nama_divisi || '';
+        valB = b.profiles?.nama_divisi || '';
       }
 
-      showToast('Permintaan berhasil ditandai selesai.', 'success');
-      // Update local state immediately
-      setRequests((prev) =>
-        prev.map((r) =>
-          r.id === selectedRequest.id
-            ? { ...r, status: 'selesai', completed_at: new Date().toISOString() }
-            : r
-        )
-      );
-      setSelectedRequest(null);
-    } catch {
-      showToast('Terjadi kendala pada sistem.', 'error');
-    } finally {
-      setIsSubmitting(false);
-    }
+      if (valA === valB) return 0;
+      if (valA === null || valA === undefined) return 1;
+      if (valB === null || valB === undefined) return -1;
+
+      const comp = valA < valB ? -1 : 1;
+      return sortDirection === 'asc' ? comp : -comp;
+    });
+
+    return result;
+  }, [requests, statusFilter, dateRangeFilter, searchQuery, sortColumn, sortDirection]);
+
+  // Paginated slice
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredData.slice(start, start + pageSize);
+  }, [filteredData, page, pageSize]);
+
+  // Column definitions for DataTable
+  const columns: ColumnDef<RequestWithDetails>[] = [
+    {
+      id: 'nomor',
+      header: 'Nomor',
+      accessorKey: 'nomor',
+      isSortable: true,
+      cell: (row) => (
+        <span className="font-mono font-semibold text-primary text-[11px]">
+          {row.nomor || 'REQ'}
+        </span>
+      ),
+    },
+    {
+      id: 'created_at',
+      header: 'Tanggal',
+      accessorKey: 'created_at',
+      isSortable: true,
+      cell: (row) => (
+        <span className="text-text-muted tabular-nums whitespace-nowrap">
+          {formatDateShort(row.created_at)}
+        </span>
+      ),
+    },
+    {
+      id: 'profiles',
+      header: 'Divisi Pemohon',
+      cell: (row) => (
+        <span className="font-medium text-text-main truncate">
+          {row.profiles?.nama_divisi || 'Divisi Pemohon'}
+        </span>
+      ),
+    },
+    {
+      id: 'items',
+      header: 'Nama Barang ATK',
+      cell: (row) => (
+        <div className="min-w-0">
+          <p className="font-medium text-text-main truncate">{row.items?.nama || '-'}</p>
+          <p className="text-[10px] text-text-muted font-mono">{row.items?.kode}</p>
+        </div>
+      ),
+    },
+    {
+      id: 'jumlah',
+      header: 'Jumlah',
+      accessorKey: 'jumlah',
+      isNumeric: true,
+      isSortable: true,
+      cell: (row) => (
+        <span className="tabular-nums font-semibold text-text-main">
+          {row.jumlah} <span className="font-normal text-text-muted">{row.items?.satuan}</span>
+        </span>
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      accessorKey: 'status',
+      isNumeric: true,
+      isSortable: true,
+      cell: (row) => <Badge variant={row.status as 'diproses' | 'selesai'} />,
+    },
+  ];
+
+  const handleRowClick = (row: RequestWithDetails) => {
+    setSelectedRequest(row);
+    setIsInspectorOpen(true);
+  };
+
+  const handleCompletedSuccess = (updated: RequestWithDetails) => {
+    setRequests((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+    setSelectedRequest(updated);
   };
 
   return (
-    <div>
-      <AdminToolbar
-        title="Daftar Permintaan ATK"
-        subtitle="Kelola dan verifikasi status pengajuan ATK dari divisi operasional"
-      />
-
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-8 py-6 space-y-4">
-        {/* Filter Tab Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <SegmentedControl
-            options={[
-              { value: 'semua', label: 'Semua', count: counts.total },
-              { value: 'diproses', label: 'Diproses', count: counts.diproses },
-              { value: 'selesai', label: 'Selesai', count: counts.selesai },
-            ]}
-            value={filterStatus}
-            onChange={(val) => setFilterStatus(val)}
-          />
-
-          <div className="text-xs text-text-muted">
-            Menampilkan <strong className="text-text-main tabular-nums">{filteredRequests.length}</strong> permintaan
-          </div>
-        </div>
-
-        {/* Requests Container */}
-        <div className="bg-surface rounded-card border border-border shadow-subtle overflow-hidden">
-          {isLoading ? (
-            <div className="p-5 space-y-3">
-              {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : filteredRequests.length === 0 ? (
-            <div className="p-8">
-              <EmptyState
-                icon={ClipboardList}
-                title="Tidak ada permintaan"
-                description={
-                  filterStatus === 'semua'
-                    ? 'Belum ada permintaan ATK yang tercatat di sistem.'
-                    : `Tidak ada permintaan dengan status ${filterStatus}.`
-                }
-              />
-            </div>
-          ) : (
-            <div>
-              {/* Desktop Table View (>= md) */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-bg text-text-muted border-b border-border font-medium">
-                    <tr>
-                      <th className="py-3 px-4">Tanggal Pengajuan</th>
-                      <th className="py-3 px-4">Divisi Pemohon</th>
-                      <th className="py-3 px-4">Nama Barang</th>
-                      <th className="py-3 px-4 text-right">Jumlah</th>
-                      <th className="py-3 px-4">Keperluan</th>
-                      <th className="py-3 px-4 text-center">Status</th>
-                      <th className="py-3 px-4 text-right">Tindakan</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/60">
-                    {filteredRequests.map((req) => {
-                      const isHighlighted = req.id === highlightedId;
-                      return (
-                        <tr
-                          key={req.id}
-                          className={`transition-colors duration-500 ${
-                            isHighlighted
-                              ? 'bg-primary-soft/60'
-                              : 'hover:bg-bg/60'
-                          }`}
-                        >
-                          <td className="py-3 px-4 text-text-muted whitespace-nowrap">
-                            {formatDate(req.created_at)}
-                          </td>
-                          <td className="py-3 px-4 font-medium text-text-main max-w-[150px] truncate">
-                            {req.profiles?.nama_divisi || 'Divisi Pemohon'}
-                          </td>
-                          <td className="py-3 px-4 text-text-main max-w-[180px] truncate font-medium">
-                            {req.items?.nama || 'Barang ATK'}
-                          </td>
-                          <td className="py-3 px-4 text-right font-medium text-text-main tabular-nums whitespace-nowrap">
-                            {req.jumlah} {req.items?.satuan || 'pcs'}
-                          </td>
-                          <td className="py-3 px-4 text-text-muted max-w-[220px] truncate">
-                            {req.keperluan}
-                          </td>
-                          <td className="py-3 px-4 text-center whitespace-nowrap">
-                            <Badge
-                              variant={
-                                req.status === 'selesai' ? 'selesai' : 'diproses'
-                              }
-                            >
-                              {req.status === 'selesai' ? 'Selesai' : 'Diproses'}
-                            </Badge>
-                          </td>
-                          <td className="py-3 px-4 text-right whitespace-nowrap">
-                            {req.status === 'diproses' ? (
-                              <Button
-                                size="sm"
-                                variant="primary"
-                                onClick={() => setSelectedRequest(req)}
-                                className="cursor-pointer"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" strokeWidth={1.5} />
-                                Tandai Selesai
-                              </Button>
-                            ) : (
-                              <span className="text-[11px] text-text-muted italic">
-                                Selesai
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile Card View (< md) */}
-              <div className="md:hidden divide-y divide-border/60">
-                {filteredRequests.map((req) => {
-                  const isHighlighted = req.id === highlightedId;
-                  return (
-                    <div
-                      key={req.id}
-                      className={`p-4 space-y-2.5 transition-colors duration-500 ${
-                        isHighlighted ? 'bg-primary-soft/60' : ''
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-sm font-semibold text-text-main leading-snug">
-                          {req.items?.nama || 'Barang ATK'}
-                        </span>
-                        <Badge
-                          variant={
-                            req.status === 'selesai' ? 'selesai' : 'diproses'
-                          }
-                        >
-                          {req.status === 'selesai' ? 'Selesai' : 'Diproses'}
-                        </Badge>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-xs text-text-muted pt-1">
-                        <div>
-                          <span className="block text-[11px] text-text-muted/80">Jumlah:</span>
-                          <span className="font-semibold text-text-main tabular-nums">
-                            {req.jumlah} {req.items?.satuan || 'pcs'}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="block text-[11px] text-text-muted/80">Divisi:</span>
-                          <span className="font-medium text-text-main truncate block">
-                            {req.profiles?.nama_divisi || 'Divisi Pemohon'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="text-xs text-text-muted bg-bg/70 p-2 rounded-control">
-                        <span className="font-medium text-text-main">Keperluan: </span>
-                        {req.keperluan}
-                      </div>
-
-                      <div className="flex items-center justify-between pt-2">
-                        <span className="text-[11px] text-text-muted">
-                          {formatDate(req.created_at)}
-                        </span>
-                        {req.status === 'diproses' && (
-                          <Button
-                            size="sm"
-                            variant="primary"
-                            onClick={() => setSelectedRequest(req)}
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" strokeWidth={1.5} />
-                            Tandai Selesai
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+    <div className="p-3 sm:p-5 max-w-[1440px] mx-auto space-y-3 select-none">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="text-sm font-semibold text-text-main tracking-tight">
+            Daftar Permintaan ATK
+          </h2>
+          <p className="text-[11px] text-text-muted mt-0.5">
+            Kelola dan pantau proses serah terima barang operasional seluruh divisi
+          </p>
         </div>
       </div>
 
-      {/* Confirmation Dialog for Tandai Selesai */}
-      <Dialog
-        isOpen={!!selectedRequest}
-        onClose={() => setSelectedRequest(null)}
-        title="Tandai Permintaan Selesai"
-        description="Konfirmasi bahwa barang ATK telah diserahkan secara fisik."
-        footer={
-          <>
-            <Button
-              variant="secondary"
-              onClick={() => setSelectedRequest(null)}
-              disabled={isSubmitting}
-            >
-              Batal
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleConfirmSelesai}
-              isLoading={isSubmitting}
-            >
-              Konfirmasi Selesai
-            </Button>
-          </>
-        }
-      >
-        {selectedRequest && (
-          <div className="space-y-3 text-xs">
-            <div className="rounded-control bg-bg p-3 border border-border space-y-2">
-              <div className="flex items-center gap-2">
-                <Layers className="w-4 h-4 text-text-muted shrink-0" strokeWidth={1.5} />
-                <span className="font-semibold text-text-main text-sm">
-                  {selectedRequest.items?.nama}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-text-muted">
-                <Building2 className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-                <span>
-                  Divisi: <strong className="text-text-main">{selectedRequest.profiles?.nama_divisi}</strong>
-                </span>
-              </div>
-              <div className="flex items-center gap-2 text-text-muted">
-                <Calendar className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-                <span>
-                  Jumlah: <strong className="text-text-main tabular-nums">{selectedRequest.jumlah} {selectedRequest.items?.satuan}</strong>
-                </span>
-              </div>
-              <div className="flex items-start gap-2 text-text-muted pt-1 border-t border-border">
-                <FileText className="w-4 h-4 shrink-0 mt-0.5" strokeWidth={1.5} />
-                <span>Keperluan: {selectedRequest.keperluan}</span>
-              </div>
+      {/* Main DataTable Master View */}
+      <DataTable
+        columns={columns}
+        data={paginatedData}
+        totalCount={filteredData.length}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSortChange={(col, dir) => {
+          setSortColumn(col);
+          setSortDirection(dir);
+        }}
+        searchValue={searchQuery}
+        onSearchChange={(val) => {
+          setSearchQuery(val);
+          setPage(1);
+        }}
+        searchPlaceholder="Cari nomor, barang, keperluan, atau divisi..."
+        filterControls={
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Status Filter */}
+            <div className="inline-flex p-0.5 rounded-control bg-bg border border-border text-xs">
+              {[
+                { key: 'semua', label: 'Semua Status' },
+                { key: 'diproses', label: 'Diproses' },
+                { key: 'selesai', label: 'Selesai' },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter(opt.key as typeof statusFilter);
+                    setPage(1);
+                  }}
+                  className={`px-2 py-0.5 rounded-badge text-[11px] transition-colors cursor-pointer ${
+                    statusFilter === opt.key
+                      ? 'bg-surface text-text-main shadow-xs font-semibold'
+                      : 'text-text-muted hover:text-text-main'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
 
-            <p className="text-[11px] text-text-muted leading-relaxed">
-              Catatan: Status permintaan akan diperbarui menjadi <strong>Selesai</strong>. Sesuai aturan bisnis, tindakan ini tidak mengurangi jumlah stok persediaan secara otomatis.
-            </p>
+            {/* Date Range Filter */}
+            <select
+              value={dateRangeFilter}
+              onChange={(e) => {
+                setDateRangeFilter(e.target.value as typeof dateRangeFilter);
+                setPage(1);
+              }}
+              className="px-2 py-1 text-xs rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[32px] cursor-pointer"
+            >
+              <option value="semua">Semua Waktu</option>
+              <option value="7">7 Hari Terakhir</option>
+              <option value="30">30 Hari Terakhir</option>
+              <option value="month">Bulan Ini</option>
+            </select>
           </div>
-        )}
-      </Dialog>
+        }
+        onRowClick={handleRowClick}
+        isLoading={isLoading}
+        emptyMessage="Tidak ada permintaan yang sesuai kriteria filter."
+        csvFilename="daftar_permintaan_atk.csv"
+        className={highlightedId ? 'ring-2 ring-primary/40 transition-all' : ''}
+      />
+
+      {/* Detail Slide-over Inspector */}
+      <RequestInspector
+        request={selectedRequest}
+        isOpen={isInspectorOpen}
+        onClose={() => setIsInspectorOpen(false)}
+        onCompletedSuccess={handleCompletedSuccess}
+      />
     </div>
   );
 }

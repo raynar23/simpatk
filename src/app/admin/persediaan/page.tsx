@@ -1,52 +1,45 @@
-// Admin inventory management page with live search, stock adjustment RPCs, and item creation
+// Admin inventory management page with summary strip, DataTable, stock adjustments, and item creation
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import {
-  Boxes,
-  Plus,
-  Minus,
-  Search,
-  PackagePlus,
-} from 'lucide-react';
+import { useSearchParams } from 'next/navigation';
+import { Plus, Minus, Edit, PackagePlus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { AdminToolbar } from '@/components/ui/AdminToolbar';
+import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
+import { InventorySummaryStrip } from '@/components/admin/InventorySummaryStrip';
+import { StockAdjustModal } from '@/components/admin/StockAdjustModal';
+import { ItemUpsertModal, ATK_CATEGORIES } from '@/components/admin/ItemUpsertModal';
 import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Dialog } from '@/components/ui/Dialog';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
-import { isLowStock } from '@/lib/utils';
+import { formatRupiah, isLowStock } from '@/lib/utils';
 import type { Item } from '@/lib/types';
 
 export default function AdminPersediaanPage() {
   const supabase = createClient();
+  const searchParams = useSearchParams();
   const { showToast } = useToast();
 
   const [isLoading, setIsLoading] = useState(true);
   const [items, setItems] = useState<Item[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
 
   // Modals state
-  const [activeItem, setActiveItem] = useState<Item | null>(null);
-  const [modalType, setModalType] = useState<'tambah' | 'kurangi' | 'baru' | null>(null);
+  const [adjustItem, setAdjustItem] = useState<Item | null>(null);
+  const [adjustMode, setAdjustMode] = useState<'tambah' | 'kurangi' | null>(null);
+  const [itemToEdit, setItemToEdit] = useState<Item | null>(null);
+  const [isUpsertOpen, setIsUpsertOpen] = useState(false);
 
-  // Form inputs
-  const [adjustAmount, setAdjustAmount] = useState<string>('1');
-  const [formError, setFormError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  // Filters & pagination
+  const [categoryFilter, setCategoryFilter] = useState<string>('semua');
+  const [stockStatusFilter, setStockStatusFilter] = useState<'semua' | 'menipis' | 'habis' | 'normal'>('semua');
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [sortColumn, setSortColumn] = useState<string>('kode');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
-  // New item form
-  const [newNama, setNewNama] = useState('');
-  const [newSatuan, setNewSatuan] = useState('pcs');
-  const [newStokAwal, setNewStokAwal] = useState('0');
-  const [newStokMinimum, setNewStokMinimum] = useState('5');
-
-  // Load items from Supabase on mount
+  // Load items from Supabase
   useEffect(() => {
-    let isMounted = true;
+    let ignore = false;
 
     async function fetchItems() {
       try {
@@ -55,547 +48,352 @@ export default function AdminPersediaanPage() {
           .select('*')
           .order('nama', { ascending: true });
 
+        if (ignore) return;
         if (error) {
-          if (isMounted) showToast('Gagal memuat katalog barang.', 'error');
+          showToast('Gagal memuat katalog barang.', 'error');
           return;
         }
-        if (isMounted) setItems((data as Item[]) || []);
+
+        if (data) setItems(data as Item[]);
       } catch {
-        if (isMounted) showToast('Gagal menghubungi server.', 'error');
+        if (!ignore) showToast('Gagal menghubungi server.', 'error');
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (!ignore) setIsLoading(false);
       }
     }
 
     fetchItems();
 
     return () => {
-      isMounted = false;
+      ignore = true;
     };
   }, [supabase, showToast]);
 
-  // Filtered items by search query
+  // Filtered and sorted items
   const filteredItems = useMemo(() => {
-    if (!searchQuery.trim()) return items;
-    const q = searchQuery.toLowerCase();
-    return items.filter(
-      (it) => it.nama.toLowerCase().includes(q) || it.satuan.toLowerCase().includes(q)
-    );
-  }, [items, searchQuery]);
+    let result = [...items];
 
-  // Handle Tambah Stok RPC
-  const handleTambahStok = async () => {
-    if (!activeItem) return;
-    const amount = parseInt(adjustAmount, 10);
-    if (isNaN(amount) || amount <= 0) {
-      setFormError('Jumlah penambahan harus lebih dari 0.');
-      return;
+    // Category filter
+    if (categoryFilter !== 'semua') {
+      result = result.filter((it) => it.kategori === categoryFilter);
     }
 
-    setIsSubmitting(true);
-    setFormError(null);
-    try {
-      const { data, error } = await supabase.rpc('tambah_stok', {
-        p_item_id: activeItem.id,
-        p_jumlah: amount,
-      });
-
-      if (error) {
-        setFormError(error.message);
-        return;
-      }
-
-      showToast(`Stok ${activeItem.nama} berhasil ditambah ${amount} ${activeItem.satuan}.`, 'success');
-      setItems((prev) => prev.map((it) => (it.id === activeItem.id ? (data as Item) : it)));
-      closeModal();
-    } catch {
-      setFormError('Terjadi kendala saat menambah stok.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Handle Kurangi Stok RPC
-  const handleKurangiStok = async () => {
-    if (!activeItem) return;
-    const amount = parseInt(adjustAmount, 10);
-    if (isNaN(amount) || amount <= 0) {
-      setFormError('Jumlah pengurangan harus lebih dari 0.');
-      return;
+    // Stock status filter
+    if (stockStatusFilter === 'habis') {
+      result = result.filter((it) => it.stok === 0);
+    } else if (stockStatusFilter === 'menipis') {
+      result = result.filter((it) => it.stok > 0 && isLowStock(it.stok, it.stok_minimum));
+    } else if (stockStatusFilter === 'normal') {
+      result = result.filter((it) => it.stok > it.stok_minimum);
     }
 
-    if (amount > activeItem.stok) {
-      setFormError(`Jumlah melebihi stok saat ini (${activeItem.stok} ${activeItem.satuan}).`);
-      return;
+    // Search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (it) =>
+          it.nama.toLowerCase().includes(q) ||
+          it.kode?.toLowerCase().includes(q) ||
+          it.kategori?.toLowerCase().includes(q) ||
+          it.satuan.toLowerCase().includes(q)
+      );
     }
 
-    setIsSubmitting(true);
-    setFormError(null);
-    try {
-      const { data, error } = await supabase.rpc('kurangi_stok', {
-        p_item_id: activeItem.id,
-        p_jumlah: amount,
-      });
+    // Sorting
+    result.sort((a, b) => {
+      const valA = a[sortColumn as keyof Item];
+      const valB = b[sortColumn as keyof Item];
 
-      if (error) {
-        setFormError(error.message);
-        return;
-      }
+      if (valA === valB) return 0;
+      if (valA === null || valA === undefined) return 1;
+      if (valB === null || valB === undefined) return -1;
 
-      showToast(`Stok ${activeItem.nama} berhasil dikurangi ${amount} ${activeItem.satuan}.`, 'success');
-      setItems((prev) => prev.map((it) => (it.id === activeItem.id ? (data as Item) : it)));
-      closeModal();
-    } catch {
-      setFormError('Terjadi kendala saat mengurangi stok.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+      const comp = valA < valB ? -1 : 1;
+      return sortDirection === 'asc' ? comp : -comp;
+    });
 
-  // Handle Tambah Barang Baru
-  const handleTambahBarangBaru = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newNama.trim()) {
-      setFormError('Nama barang wajib diisi.');
-      return;
-    }
+    return result;
+  }, [items, categoryFilter, stockStatusFilter, searchQuery, sortColumn, sortDirection]);
 
-    const stok = parseInt(newStokAwal, 10);
-    const minStok = parseInt(newStokMinimum, 10);
+  // Paginated data slice
+  const paginatedItems = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredItems.slice(start, start + pageSize);
+  }, [filteredItems, page, pageSize]);
 
-    if (isNaN(stok) || stok < 0) {
-      setFormError('Stok awal minimal 0.');
-      return;
-    }
+  // DataTable column definitions
+  const columns: ColumnDef<Item>[] = [
+    {
+      id: 'kode',
+      header: 'Kode',
+      accessorKey: 'kode',
+      isSortable: true,
+      cell: (row) => (
+        <span className="font-mono font-semibold text-primary text-[11px]">
+          {row.kode || 'ATK-000'}
+        </span>
+      ),
+    },
+    {
+      id: 'nama',
+      header: 'Nama Barang',
+      accessorKey: 'nama',
+      isSortable: true,
+      cell: (row) => (
+        <span className="font-medium text-text-main truncate max-w-[220px]">
+          {row.nama}
+        </span>
+      ),
+    },
+    {
+      id: 'kategori',
+      header: 'Kategori',
+      accessorKey: 'kategori',
+      isSortable: true,
+      cell: (row) => (
+        <span className="text-text-muted text-[11px]">{row.kategori || 'Lainnya'}</span>
+      ),
+    },
+    {
+      id: 'satuan',
+      header: 'Satuan',
+      accessorKey: 'satuan',
+      cell: (row) => <span className="text-text-muted text-xs">{row.satuan}</span>,
+    },
+    {
+      id: 'stok',
+      header: 'Stok',
+      accessorKey: 'stok',
+      isNumeric: true,
+      isSortable: true,
+      cell: (row) => {
+        const isLow = row.stok <= row.stok_minimum;
+        const isZero = row.stok === 0;
+        return (
+          <span
+            className={`tabular-nums font-bold ${
+              isZero ? 'text-danger' : isLow ? 'text-danger' : 'text-text-main'
+            }`}
+          >
+            {row.stok}
+          </span>
+        );
+      },
+    },
+    {
+      id: 'stok_minimum',
+      header: 'Min. Stok',
+      accessorKey: 'stok_minimum',
+      isNumeric: true,
+      isSortable: true,
+      cell: (row) => (
+        <span className="tabular-nums text-text-muted text-xs">
+          {row.stok_minimum}
+        </span>
+      ),
+    },
+    {
+      id: 'harga_satuan',
+      header: 'Harga Satuan',
+      accessorKey: 'harga_satuan',
+      isNumeric: true,
+      isSortable: true,
+      cell: (row) => (
+        <span className="tabular-nums text-text-main text-xs">
+          {row.harga_satuan ? formatRupiah(row.harga_satuan) : '-'}
+        </span>
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Status Stok',
+      cell: (row) => {
+        if (row.stok === 0) return <Badge variant="habis" />;
+        if (row.stok <= row.stok_minimum) return <Badge variant="menipis" />;
+        return <Badge variant="normal" />;
+      },
+    },
+    {
+      id: 'actions',
+      header: 'Aksi',
+      isNumeric: true,
+      cell: (row) => (
+        <div className="inline-flex items-center gap-1 justify-end">
+          {/* Tambah Stok */}
+          <button
+            type="button"
+            title="Tambah Stok"
+            onClick={(e) => {
+              e.stopPropagation();
+              setAdjustItem(row);
+              setAdjustMode('tambah');
+            }}
+            className="w-7 h-7 rounded-control border border-border bg-surface hover:bg-bg text-text-main flex items-center justify-center transition-colors cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
 
-    if (isNaN(minStok) || minStok < 0) {
-      setFormError('Stok minimum minimal 0.');
-      return;
-    }
+          {/* Kurangi Stok */}
+          <button
+            type="button"
+            title="Kurangi Stok"
+            disabled={row.stok <= 0}
+            onClick={(e) => {
+              e.stopPropagation();
+              setAdjustItem(row);
+              setAdjustMode('kurangi');
+            }}
+            className="w-7 h-7 rounded-control border border-border bg-surface hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed text-text-main flex items-center justify-center transition-colors cursor-pointer"
+          >
+            <Minus className="w-3.5 h-3.5" />
+          </button>
 
-    setIsSubmitting(true);
-    setFormError(null);
-    try {
-      const { data, error } = await supabase
-        .from('items')
-        .insert({
-          nama: newNama.trim(),
-          satuan: newSatuan.trim().toLowerCase() || 'pcs',
-          stok: stok,
-          stok_minimum: minStok,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        if (error.code === '23505') {
-          setFormError('Barang dengan nama ini sudah terdaftar.');
-        } else {
-          setFormError(error.message);
-        }
-        return;
-      }
-
-      showToast(`Barang ${newNama} berhasil ditambahkan ke katalog.`, 'success');
-      setItems((prev) => [data as Item, ...prev].sort((a, b) => a.nama.localeCompare(b.nama)));
-      closeModal();
-    } catch {
-      setFormError('Gagal menyimpan barang baru.');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const closeModal = () => {
-    setActiveItem(null);
-    setModalType(null);
-    setAdjustAmount('1');
-    setFormError(null);
-    setNewNama('');
-    setNewSatuan('pcs');
-    setNewStokAwal('0');
-    setNewStokMinimum('5');
-  };
+          {/* Ubah Barang */}
+          <button
+            type="button"
+            title="Ubah Data Barang"
+            onClick={(e) => {
+              e.stopPropagation();
+              setItemToEdit(row);
+              setIsUpsertOpen(true);
+            }}
+            className="w-7 h-7 rounded-control border border-border bg-surface hover:bg-bg text-text-muted hover:text-text-main flex items-center justify-center transition-colors cursor-pointer"
+          >
+            <Edit className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ),
+    },
+  ];
 
   return (
-    <div>
-      <AdminToolbar
-        title="Persediaan ATK"
-        subtitle="Kelola katalog barang, pantau ketersediaan, dan catat perubahan stok"
-        actions={
-          <Button
-            variant="primary"
-            onClick={() => {
-              closeModal();
-              setModalType('baru');
-            }}
-          >
-            <PackagePlus className="w-4 h-4 mr-1.5" strokeWidth={1.5} />
-            <span>Tambah Barang</span>
-          </Button>
-        }
-      />
-
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-8 py-6 space-y-4">
-        {/* Search Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="relative w-full sm:w-80">
-            <Search className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={1.5} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari barang atau satuan..."
-              className="w-full rounded-control border border-border bg-surface pl-9 pr-3 py-2 text-base sm:text-xs text-text-main placeholder:text-text-muted/60 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary min-h-[44px] sm:min-h-[36px] transition-colors"
-            />
-          </div>
-
-          <div className="text-xs text-text-muted">
-            Total terdaftar: <strong className="text-text-main tabular-nums">{filteredItems.length}</strong> jenis
-          </div>
-        </div>
-
-        {/* Inventory List */}
-        <div className="bg-surface rounded-card border border-border shadow-subtle overflow-hidden">
-          {isLoading ? (
-            <div className="p-5 space-y-3">
-              {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-12 w-full" />
-              ))}
-            </div>
-          ) : filteredItems.length === 0 ? (
-            <div className="p-8">
-              <EmptyState
-                icon={Boxes}
-                title="Barang tidak ditemukan"
-                description={
-                  searchQuery
-                    ? `Tidak ada barang yang cocok dengan kata kunci "${searchQuery}".`
-                    : 'Belum ada barang ATK terdaftar di sistem.'
-                }
-                action={
-                  searchQuery ? (
-                    <Button variant="secondary" size="sm" onClick={() => setSearchQuery('')}>
-                      Hapus Pencarian
-                    </Button>
-                  ) : null
-                }
-              />
-            </div>
-          ) : (
-            <div>
-              {/* Desktop Table View (>= md) */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-bg text-text-muted border-b border-border font-medium">
-                    <tr>
-                      <th className="py-3 px-4">Nama Barang</th>
-                      <th className="py-3 px-4">Satuan</th>
-                      <th className="py-3 px-4 text-right">Stok Saat Ini</th>
-                      <th className="py-3 px-4 text-right">Stok Minimum</th>
-                      <th className="py-3 px-4 text-center">Status Stok</th>
-                      <th className="py-3 px-4 text-right">Aksi Stok</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/60">
-                    {filteredItems.map((item) => {
-                      const low = isLowStock(item.stok, item.stok_minimum);
-                      return (
-                        <tr
-                          key={item.id}
-                          className={`transition-colors ${
-                            low ? 'bg-danger-soft/20 hover:bg-danger-soft/35' : 'hover:bg-bg/60'
-                          }`}
-                        >
-                          <td className="py-3 px-4 font-medium text-text-main">
-                            {item.nama}
-                          </td>
-                          <td className="py-3 px-4 text-text-muted">{item.satuan}</td>
-                          <td
-                            className={`py-3 px-4 text-right font-bold tabular-nums whitespace-nowrap ${
-                              low ? 'text-danger' : 'text-text-main'
-                            }`}
-                          >
-                            {item.stok}
-                          </td>
-                          <td className="py-3 px-4 text-right text-text-muted tabular-nums whitespace-nowrap">
-                            {item.stok_minimum}
-                          </td>
-                          <td className="py-3 px-4 text-center whitespace-nowrap">
-                            <Badge variant={low ? 'menipis' : 'normal'}>
-                              {low ? 'Stok Menipis' : 'Normal'}
-                            </Badge>
-                          </td>
-                          <td className="py-3 px-4 text-right whitespace-nowrap">
-                            <div className="inline-flex items-center gap-1.5">
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => {
-                                  setActiveItem(item);
-                                  setAdjustAmount('1');
-                                  setFormError(null);
-                                  setModalType('tambah');
-                                }}
-                                title="Tambah stok"
-                              >
-                                <Plus className="w-3.5 h-3.5 mr-1 text-primary" strokeWidth={1.5} />
-                                Tambah
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                onClick={() => {
-                                  setActiveItem(item);
-                                  setAdjustAmount('1');
-                                  setFormError(null);
-                                  setModalType('kurangi');
-                                }}
-                                title="Kurangi stok"
-                                disabled={item.stok === 0}
-                              >
-                                <Minus className="w-3.5 h-3.5 mr-1 text-danger" strokeWidth={1.5} />
-                                Kurang
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile Card View (< md) */}
-              <div className="md:hidden divide-y divide-border/60">
-                {filteredItems.map((item) => {
-                  const low = isLowStock(item.stok, item.stok_minimum);
-                  return (
-                    <div
-                      key={item.id}
-                      className={`p-4 space-y-3 transition-colors ${
-                        low ? 'bg-danger-soft/20' : ''
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="text-sm font-semibold text-text-main leading-tight">
-                          {item.nama}
-                        </span>
-                        <Badge variant={low ? 'menipis' : 'normal'}>
-                          {low ? 'Stok Menipis' : 'Normal'}
-                        </Badge>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-xs bg-bg/60 p-2.5 rounded-control">
-                        <div>
-                          <span className="block text-[11px] text-text-muted">Stok Saat Ini:</span>
-                          <span
-                            className={`text-base font-bold tabular-nums ${
-                              low ? 'text-danger' : 'text-text-main'
-                            }`}
-                          >
-                            {item.stok} <span className="text-xs font-normal text-text-muted">{item.satuan}</span>
-                          </span>
-                        </div>
-                        <div>
-                          <span className="block text-[11px] text-text-muted">Batas Minimum:</span>
-                          <span className="text-base font-semibold text-text-muted tabular-nums">
-                            {item.stok_minimum} <span className="text-xs font-normal">{item.satuan}</span>
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 pt-1">
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="flex-1"
-                          onClick={() => {
-                            setActiveItem(item);
-                            setAdjustAmount('1');
-                            setFormError(null);
-                            setModalType('tambah');
-                          }}
-                        >
-                          <Plus className="w-4 h-4 mr-1 text-primary" strokeWidth={1.5} />
-                          Tambah Stok
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          className="flex-1"
-                          onClick={() => {
-                            setActiveItem(item);
-                            setAdjustAmount('1');
-                            setFormError(null);
-                            setModalType('kurangi');
-                          }}
-                          disabled={item.stok === 0}
-                        >
-                          <Minus className="w-4 h-4 mr-1 text-danger" strokeWidth={1.5} />
-                          Kurangi Stok
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
+    <div className="p-3 sm:p-5 max-w-[1440px] mx-auto space-y-4 select-none">
+      <div>
+        <h2 className="text-sm font-semibold text-text-main tracking-tight">
+          Katalog Persediaan ATK
+        </h2>
+        <p className="text-[11px] text-text-muted mt-0.5">
+          Kelola stok fisik, sesuaikan kuantitas manual, dan daftarkan jenis alat tulis kantor
+        </p>
       </div>
 
-      {/* Modal Tambah Stok */}
-      <Dialog
-        isOpen={modalType === 'tambah' && !!activeItem}
-        onClose={closeModal}
-        title="Tambah Stok Barang"
-        description="Pencatatan penambahan stok akibat pembelian atau pasokan baru."
-        footer={
-          <>
-            <Button variant="secondary" onClick={closeModal} disabled={isSubmitting}>
-              Batal
-            </Button>
-            <Button variant="primary" onClick={handleTambahStok} isLoading={isSubmitting}>
-              Simpan Penambahan
-            </Button>
-          </>
-        }
-      >
-        {activeItem && (
-          <div className="space-y-4 text-xs">
-            <div className="p-3 bg-bg rounded-control border border-border space-y-1">
-              <div className="text-xs text-text-muted">Barang yang dipilih:</div>
-              <div className="text-sm font-semibold text-text-main">{activeItem.nama}</div>
-              <div className="text-xs text-text-muted pt-1">
-                Stok saat ini: <strong className="text-text-main tabular-nums">{activeItem.stok} {activeItem.satuan}</strong>
-              </div>
+      {/* Summary metric strip */}
+      <InventorySummaryStrip items={items} isLoading={isLoading} />
+
+      {/* Main DataTable */}
+      <DataTable
+        columns={columns}
+        data={paginatedItems}
+        totalCount={filteredItems.length}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
+        onPageSizeChange={setPageSize}
+        sortColumn={sortColumn}
+        sortDirection={sortDirection}
+        onSortChange={(col, dir) => {
+          setSortColumn(col);
+          setSortDirection(dir);
+        }}
+        searchValue={searchQuery}
+        onSearchChange={(val) => {
+          setSearchQuery(val);
+          setPage(1);
+        }}
+        searchPlaceholder="Cari kode, nama barang, atau satuan..."
+        filterControls={
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {/* Kategori Filter Dropdown */}
+            <select
+              value={categoryFilter}
+              onChange={(e) => {
+                setCategoryFilter(e.target.value);
+                setPage(1);
+              }}
+              className="px-2 py-1 text-xs rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[32px] cursor-pointer"
+            >
+              <option value="semua">Semua Kategori</option>
+              {ATK_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+
+            {/* Status Stok Filter Buttons */}
+            <div className="inline-flex p-0.5 rounded-control bg-bg border border-border text-xs">
+              {[
+                { key: 'semua', label: 'Semua Stok' },
+                { key: 'menipis', label: 'Menipis' },
+                { key: 'habis', label: 'Habis (0)' },
+              ].map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => {
+                    setStockStatusFilter(opt.key as typeof stockStatusFilter);
+                    setPage(1);
+                  }}
+                  className={`px-2 py-0.5 rounded-badge text-[11px] transition-colors cursor-pointer ${
+                    stockStatusFilter === opt.key
+                      ? 'bg-surface text-text-main shadow-xs font-semibold'
+                      : 'text-text-muted hover:text-text-main'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
-
-            <Input
-              id="tambah-jumlah"
-              type="number"
-              min="1"
-              label={`Jumlah Penambahan (${activeItem.satuan})`}
-              value={adjustAmount}
-              onChange={(e) => setAdjustAmount(e.target.value)}
-              error={formError || undefined}
-              required
-            />
           </div>
-        )}
-      </Dialog>
-
-      {/* Modal Kurangi Stok */}
-      <Dialog
-        isOpen={modalType === 'kurangi' && !!activeItem}
-        onClose={closeModal}
-        title="Kurangi Stok Barang"
-        description="Pencatatan pengurangan stok saat barang diberikan ke divisi pemohon."
-        footer={
-          <>
-            <Button variant="secondary" onClick={closeModal} disabled={isSubmitting}>
-              Batal
-            </Button>
-            <Button variant="danger" onClick={handleKurangiStok} isLoading={isSubmitting}>
-              Konfirmasi Pengurangan
-            </Button>
-          </>
         }
-      >
-        {activeItem && (
-          <div className="space-y-4 text-xs">
-            <div className="p-3 bg-bg rounded-control border border-border space-y-1">
-              <div className="text-xs text-text-muted">Barang yang dipilih:</div>
-              <div className="text-sm font-semibold text-text-main">{activeItem.nama}</div>
-              <div className="text-xs text-text-muted pt-1">
-                Stok saat ini: <strong className="text-text-main tabular-nums">{activeItem.stok} {activeItem.satuan}</strong>
-              </div>
-            </div>
-
-            <Input
-              id="kurang-jumlah"
-              type="number"
-              min="1"
-              max={activeItem.stok}
-              label={`Jumlah Pengurangan (${activeItem.satuan})`}
-              value={adjustAmount}
-              onChange={(e) => setAdjustAmount(e.target.value)}
-              error={formError || undefined}
-              required
-            />
-
-            <p className="text-[11px] text-text-muted">
-              Perhatian: Pengurangan tidak dapat melebihi stok yang tersedia saat ini.
-            </p>
-          </div>
-        )}
-      </Dialog>
-
-      {/* Modal Tambah Barang Baru */}
-      <Dialog
-        isOpen={modalType === 'baru'}
-        onClose={closeModal}
-        title="Tambah Barang Baru"
-        description="Mendaftarkan barang ATK baru ke dalam basis data persediaan."
-        footer={
-          <>
-            <Button variant="secondary" onClick={closeModal} disabled={isSubmitting}>
-              Batal
-            </Button>
-            <Button variant="primary" onClick={handleTambahBarangBaru} isLoading={isSubmitting}>
-              Daftarkan Barang
-            </Button>
-          </>
+        actionControls={
+          <button
+            type="button"
+            onClick={() => {
+              setItemToEdit(null);
+              setIsUpsertOpen(true);
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-control bg-primary hover:bg-primary-dark text-white shadow-xs transition-colors cursor-pointer min-h-[32px]"
+          >
+            <PackagePlus className="w-3.5 h-3.5" />
+            <span>Tambah Barang</span>
+          </button>
         }
-      >
-        <form onSubmit={handleTambahBarangBaru} className="space-y-3.5 text-xs">
-          {formError && (
-            <div className="p-2.5 rounded-control bg-danger-soft border border-danger/20 text-danger text-xs">
-              {formError}
-            </div>
-          )}
+        isLoading={isLoading}
+        emptyMessage="Tidak ada barang ATK yang sesuai filter."
+        csvFilename="katalog_persediaan_atk.csv"
+      />
 
-          <Input
-            id="nama-barang"
-            label="Nama Barang ATK"
-            placeholder="Contoh: Kertas HVS F4 70gr"
-            value={newNama}
-            onChange={(e) => setNewNama(e.target.value)}
-            required
-          />
+      {/* Stock adjustment modal (Tambah/Kurangi Stok) */}
+      <StockAdjustModal
+        item={adjustItem}
+        mode={adjustMode}
+        onClose={() => {
+          setAdjustItem(null);
+          setAdjustMode(null);
+        }}
+        onSuccess={(updated) => {
+          setItems((prev) => prev.map((it) => (it.id === updated.id ? updated : it)));
+        }}
+      />
 
-          <Input
-            id="satuan-barang"
-            label="Satuan Barang"
-            placeholder="Contoh: pcs, rim, kotak, rol, lusin"
-            value={newSatuan}
-            onChange={(e) => setNewSatuan(e.target.value)}
-            required
-          />
-
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              id="stok-awal"
-              type="number"
-              min="0"
-              label="Stok Awal"
-              value={newStokAwal}
-              onChange={(e) => setNewStokAwal(e.target.value)}
-              required
-            />
-            <Input
-              id="stok-minimum"
-              type="number"
-              min="0"
-              label="Batas Stok Minimum"
-              value={newStokMinimum}
-              onChange={(e) => setNewStokMinimum(e.target.value)}
-              required
-            />
-          </div>
-        </form>
-      </Dialog>
+      {/* Item creation & edit modal */}
+      <ItemUpsertModal
+        itemToEdit={itemToEdit}
+        isOpen={isUpsertOpen}
+        onClose={() => {
+          setIsUpsertOpen(false);
+          setItemToEdit(null);
+        }}
+        existingItems={items}
+        onSuccess={(savedItem, isNew) => {
+          if (isNew) {
+            setItems((prev) => [...prev, savedItem]);
+          } else {
+            setItems((prev) => prev.map((it) => (it.id === savedItem.id ? savedItem : it)));
+          }
+        }}
+      />
     </div>
   );
 }

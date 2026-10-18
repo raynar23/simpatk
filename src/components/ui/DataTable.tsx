@@ -46,7 +46,7 @@ interface DataTableProps<T> {
   className?: string;
 }
 
-export function DataTable<T extends Record<string, unknown>>({
+export function DataTable<T extends object>({
   columns,
   data,
   totalCount,
@@ -59,13 +59,13 @@ export function DataTable<T extends Record<string, unknown>>({
   onSortChange,
   searchValue,
   onSearchChange,
-  searchPlaceholder = 'Search records...',
+  searchPlaceholder = 'Cari data...',
   filterControls,
   actionControls,
   onRowClick,
   isLoading = false,
-  emptyMessage = 'No records found',
-  csvFilename = 'simpatk_export.csv',
+  emptyMessage = 'Tidak ada data yang ditemukan',
+  csvFilename = 'simpatk_ekspor.csv',
   enableDynamicHeight = false,
   className = '',
 }: DataTableProps<T>) {
@@ -110,7 +110,9 @@ export function DataTable<T extends Record<string, unknown>>({
     const rows = data.map((row) =>
       columns
         .map((col) => {
-          let val = col.accessorKey ? row[col.accessorKey] : '';
+          let val = col.accessorKey
+            ? (row as Record<string, unknown>)[col.accessorKey as string]
+            : '';
           if (val === null || val === undefined) val = '';
           return `"${String(val).replace(/"/g, '""')}"`;
         })
@@ -162,11 +164,11 @@ export function DataTable<T extends Record<string, unknown>>({
               type="button"
               onClick={handleExportCsv}
               disabled={data.length === 0}
-              title="Export to CSV"
+              title="Ekspor ke CSV"
               className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-control border border-border bg-surface hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-text-main cursor-pointer min-h-[32px]"
             >
               <Download className="w-3.5 h-3.5 text-text-muted" strokeWidth={1.5} />
-              <span>Export CSV</span>
+              <span>Ekspor CSV</span>
             </button>
           </div>
         </div>

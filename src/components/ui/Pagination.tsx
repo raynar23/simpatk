@@ -29,21 +29,21 @@ export function Pagination({
     >
       {/* Item count summary */}
       <div className="tabular-nums">
-        Showing <span className="font-semibold text-text-main">{startItem}</span>-
-        <span className="font-semibold text-text-main">{endItem}</span> of{' '}
+        Menampilkan <span className="font-semibold text-text-main">{startItem}</span>-
+        <span className="font-semibold text-text-main">{endItem}</span> dari{' '}
         <span className="font-semibold text-text-main">{totalCount}</span>
       </div>
 
       {/* Navigation buttons */}
       <div className="flex items-center gap-1.5">
         <span className="text-[11px] mr-1 tabular-nums">
-          Page {page} of {totalPages}
+          Halaman {page} dari {totalPages}
         </span>
         <button
           type="button"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1}
-          aria-label="Previous page"
+          aria-label="Halaman sebelumnya"
           className="inline-flex items-center justify-center w-7 h-7 rounded-control border border-border bg-surface hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-text-main cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4" strokeWidth={1.5} />
@@ -52,7 +52,7 @@ export function Pagination({
           type="button"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
-          aria-label="Next page"
+          aria-label="Halaman berikutnya"
           className="inline-flex items-center justify-center w-7 h-7 rounded-control border border-border bg-surface hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-text-main cursor-pointer"
         >
           <ChevronRight className="w-4 h-4" strokeWidth={1.5} />
