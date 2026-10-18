@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Pagination } from '@/components/ui/Pagination';
 import { useToast } from '@/components/ui/Toast';
+import { getItemRak, getSavedRakOverrides, type RakKey } from '@/lib/rakUtils';
 import type { Item } from '@/lib/types';
 
 const CATEGORIES = [
@@ -46,6 +47,8 @@ function UserKatalogContent() {
   // Pagination: limited to 3 items per page
   const [page, setPage] = useState(1);
   const pageSize = 3;
+
+  const [rakOverrides, setRakOverrides] = useState<Record<string, RakKey>>({});
 
   // Reset to first page whenever search or filter changes
   useEffect(() => {
@@ -79,9 +82,14 @@ function UserKatalogContent() {
     }
 
     fetchItems();
+    setRakOverrides(getSavedRakOverrides());
+
+    const handleRakUpdate = () => setRakOverrides(getSavedRakOverrides());
+    window.addEventListener('simpatk-rak-updated', handleRakUpdate);
 
     return () => {
       ignore = true;
+      window.removeEventListener('simpatk-rak-updated', handleRakUpdate);
     };
   }, [supabase, showToast]);
 
@@ -341,9 +349,15 @@ function UserKatalogContent() {
                         <span className="font-mono text-[11px] font-semibold text-text-muted bg-bg px-2 py-0.5 rounded-control border border-border/60">
                           {item.kode || 'ATK-000'}
                         </span>
-                        <span className="text-[11px] text-text-muted font-medium">
-                          {item.kategori || 'Umum'}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[11px] text-text-muted font-medium">
+                            {item.kategori || 'Umum'}
+                          </span>
+                          <span className="text-text-muted/40">&bull;</span>
+                          <span className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.2 rounded">
+                            {getItemRak(item, rakOverrides)}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Item Name */}

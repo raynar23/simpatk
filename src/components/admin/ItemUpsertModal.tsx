@@ -6,6 +6,7 @@ import { Loader2, AlertCircle, ChevronDown } from 'lucide-react';
 import { Dialog } from '@/components/ui/Dialog';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
+import { RAK_DEFINITIONS, type RakKey, getItemRak, getDefaultRak, saveRakPlacement } from '@/lib/rakUtils';
 import type { Item } from '@/lib/types';
 
 export const ATK_CATEGORIES = [
@@ -58,6 +59,7 @@ function ItemUpsertForm({
   const [kode, setKode] = useState(itemToEdit?.kode || generateNextKode());
   const [nama, setNama] = useState(itemToEdit?.nama || '');
   const [kategori, setKategori] = useState<string>(itemToEdit?.kategori || 'Kertas');
+  const [rak, setRak] = useState<RakKey>(itemToEdit ? getItemRak(itemToEdit) : getDefaultRak('Kertas'));
   const [satuan, setSatuan] = useState(itemToEdit?.satuan || 'buah');
   const [stokAwal, setStokAwal] = useState<string>(String(itemToEdit?.stok ?? 10));
   const [stokMinimum, setStokMinimum] = useState<string>(String(itemToEdit?.stok_minimum ?? 5));
@@ -108,6 +110,7 @@ function ItemUpsertForm({
           return;
         }
 
+        saveRakPlacement(data.id, rak);
         showToast(`Data ${data.nama} berhasil diperbarui.`, 'success');
         onSuccess(data as Item, false);
         onClose();
@@ -139,6 +142,7 @@ function ItemUpsertForm({
           return;
         }
 
+        saveRakPlacement(data.id, rak);
         showToast(`Barang baru ${data.nama} (${data.kode}) berhasil ditambahkan.`, 'success');
         onSuccess(data as Item, true);
         onClose();
@@ -208,6 +212,31 @@ function ItemUpsertForm({
           className="w-full px-2.5 py-1.5 rounded-control border border-border bg-bg text-text-main text-xs focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary"
           required
         />
+      </div>
+
+      {/* Penempatan Rak ATK */}
+      <div>
+        <label htmlFor="item_rak" className="block text-xs font-semibold text-text-main mb-1">
+          Penempatan Rak Penyimpanan
+        </label>
+        <div className="relative">
+          <select
+            id="item_rak"
+            value={rak}
+            onChange={(e) => setRak(e.target.value as RakKey)}
+            className="w-full appearance-none pl-3 pr-8.5 py-1.5 rounded-control border border-border bg-bg text-text-main text-xs focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+          >
+            {RAK_DEFINITIONS.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.nama} ({r.zona})
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted"
+            strokeWidth={1.5}
+          />
+        </div>
       </div>
 
       {/* Satuan & Harga Satuan */}

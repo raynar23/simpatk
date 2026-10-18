@@ -22,6 +22,8 @@ import {
   X,
   ChevronsLeft,
   ChevronsRight,
+  ArrowUpDown,
+  Layers,
   type LucideIcon,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
@@ -243,6 +245,16 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
           icon: Boxes,
           count: lowStockCount,
           countDanger: true,
+        },
+        {
+          label: 'Pembaruan Stok',
+          href: '/admin/pembaruan-stok',
+          icon: ArrowUpDown,
+        },
+        {
+          label: 'Penempatan ATK',
+          href: '/admin/penempatan',
+          icon: Layers,
         },
         {
           label: 'Daftar Belanja',

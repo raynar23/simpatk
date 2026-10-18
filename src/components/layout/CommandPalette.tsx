@@ -17,6 +17,8 @@ import {
   ArrowRight,
   Package,
   FileSpreadsheet,
+  ArrowUpDown,
+  Layers,
 } from 'lucide-react';
 import { useShell } from './ShellContext';
 import { createClient } from '@/lib/supabase/client';
@@ -106,6 +108,8 @@ function CommandPaletteModal({
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { label: 'Permintaan', href: '/admin/permintaan', icon: ClipboardList },
     { label: 'Persediaan', href: '/admin/persediaan', icon: Boxes },
+    { label: 'Pembaruan Stok', href: '/admin/pembaruan-stok', icon: ArrowUpDown },
+    { label: 'Penempatan ATK', href: '/admin/penempatan', icon: Layers },
     { label: 'Daftar Belanja', href: '/admin/daftar-belanja', icon: ShoppingCart },
     { label: 'Laporan', href: '/admin/laporan', icon: FileText },
     { label: 'Pengguna', href: '/admin/pengguna', icon: Users },

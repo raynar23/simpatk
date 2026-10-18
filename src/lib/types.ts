@@ -21,6 +21,7 @@ export interface Item {
   stok: number;
   stok_minimum: number;
   harga_satuan?: number | null;
+  rak?: string;
   created_at?: string;
   [key: string]: unknown;
 }

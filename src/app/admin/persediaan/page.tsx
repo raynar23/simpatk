@@ -10,6 +10,8 @@ import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
 import { InventorySummaryStrip } from '@/components/admin/InventorySummaryStrip';
 import { StockAdjustModal } from '@/components/admin/StockAdjustModal';
 import { ItemUpsertModal, ATK_CATEGORIES } from '@/components/admin/ItemUpsertModal';
+import { RakBadge } from '@/components/admin/RakBadge';
+import { getItemRak, getSavedRakOverrides, type RakKey } from '@/lib/rakUtils';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
 import { formatRupiah, isLowStock, formatDateShort, formatDate } from '@/lib/utils';
@@ -41,6 +43,8 @@ export default function AdminPersediaanPage() {
   const [sortColumn, setSortColumn] = useState<string>('kode');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+  const [rakOverrides, setRakOverrides] = useState<Record<string, RakKey>>({});
+
   // Load items from Supabase
   useEffect(() => {
     let ignore = false;
@@ -67,9 +71,14 @@ export default function AdminPersediaanPage() {
     }
 
     fetchItems();
+    setRakOverrides(getSavedRakOverrides());
+
+    const handleRakUpdate = () => setRakOverrides(getSavedRakOverrides());
+    window.addEventListener('simpatk-rak-updated', handleRakUpdate);
 
     return () => {
       ignore = true;
+      window.removeEventListener('simpatk-rak-updated', handleRakUpdate);
     };
   }, [supabase, showToast]);
 
@@ -202,6 +211,15 @@ export default function AdminPersediaanPage() {
       csvValue: (row) => row.kategori || 'Lainnya',
       cell: (row) => (
         <span className="text-text-muted text-[11px] whitespace-nowrap">{row.kategori || 'Lainnya'}</span>
+      ),
+    },
+    {
+      id: 'lokasi_rak',
+      header: 'Lokasi Rak',
+      className: 'min-w-[110px]',
+      csvValue: (row) => getItemRak(row, rakOverrides),
+      cell: (row) => (
+        <RakBadge rak={getItemRak(row, rakOverrides)} size="sm" />
       ),
     },
     {

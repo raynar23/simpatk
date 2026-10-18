@@ -27,6 +27,8 @@ export function PageContainer({
       if (lower.includes('laporan')) suffix = 'Laporan';
       else if (lower.includes('daftar belanja')) suffix = 'Daftar Belanja';
       else if (lower.includes('persediaan')) suffix = 'Persediaan';
+      else if (lower.includes('penempatan')) suffix = 'Penempatan ATK';
+      else if (lower.includes('pembaruan stok')) suffix = 'Pembaruan Stok';
       else if (lower.includes('permintaan')) suffix = 'Permintaan';
       else if (lower.includes('pengguna')) suffix = 'Pengguna';
       else if (lower.includes('katalog')) suffix = 'Katalog';
