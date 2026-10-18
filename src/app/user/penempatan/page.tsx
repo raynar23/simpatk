@@ -9,6 +9,7 @@ import {
   Package,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Loader2,
   Send,
   BookOpen,
@@ -207,8 +208,8 @@ export default function UserPenempatanPage() {
       contentClassName="space-y-4"
     >
       <div className="h-full flex flex-col gap-3 min-h-0">
-        {/* Informative Guidance Banner for Division Users */}
-        <div className="rounded-control bg-primary-soft/30 border border-primary/20 p-3 sm:p-3.5 flex items-start gap-3 shrink-0">
+        {/* Informative Guidance Banner for Division Users (Hidden on mobile) */}
+        <div className="hidden sm:flex rounded-control bg-primary-soft/30 border border-primary/20 p-3 sm:p-3.5 items-start gap-3 shrink-0">
           <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center shrink-0 mt-0.5">
             <Info className="w-3.5 h-3.5" />
           </div>
@@ -230,7 +231,7 @@ export default function UserPenempatanPage() {
             <button
               type="button"
               onClick={() => handleSelectRak('semua')}
-              className={`px-3 py-1.5 rounded-control text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-control text-[11px] sm:text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                 selectedRakTab === 'semua'
                   ? 'bg-primary text-white shadow-xs'
                   : 'bg-surface border border-border text-text-muted hover:text-text-main hover:bg-bg'
@@ -246,7 +247,7 @@ export default function UserPenempatanPage() {
                   key={k}
                   type="button"
                   onClick={() => handleSelectRak(k)}
-                  className={`px-3 py-1.5 rounded-control text-xs font-medium whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-control text-[11px] sm:text-xs font-medium whitespace-nowrap transition-colors cursor-pointer flex items-center gap-1.5 ${
                     isActive
                       ? 'bg-primary text-white font-semibold shadow-xs'
                       : 'bg-surface border border-border text-text-muted hover:text-text-main hover:bg-bg'
@@ -254,7 +255,7 @@ export default function UserPenempatanPage() {
                 >
                   <span>{k}</span>
                   <span
-                    className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    className={`text-[9px] sm:text-[10px] px-1.5 py-0.2 rounded-full ${
                       isActive ? 'bg-white/20 text-white' : 'bg-bg text-text-muted'
                     }`}
                   >
@@ -267,26 +268,33 @@ export default function UserPenempatanPage() {
 
           {/* Search Bar & Stock Filter */}
           <div className="flex items-center gap-2">
-            <div className="relative flex-1 sm:w-56">
+            <div className="relative flex-1 sm:w-72 md:w-80 lg:w-96">
               <Search className="w-3.5 h-3.5 text-text-muted absolute left-2.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari nama atau kode..."
-                className="w-full pl-8 pr-3 py-1.5 text-xs rounded-control border border-border bg-surface text-text-main placeholder:text-text-muted/60 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
+                className="w-full pl-8 pr-3 py-1.5 text-[11px] sm:text-xs rounded-control border border-border bg-surface text-text-main placeholder:text-text-muted/60 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary min-h-[32px] sm:min-h-[34px]"
               />
             </div>
 
-            <select
-              value={stockFilter}
-              onChange={(e) => setStockFilter(e.target.value as any)}
-              className="px-2.5 py-1.5 text-xs rounded-control border border-border bg-surface text-text-main focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer shrink-0"
-            >
-              <option value="semua">Semua Status</option>
-              <option value="aman">Stok Aman</option>
-              <option value="perhatian">Perhatian (Menipis/Habis)</option>
-            </select>
+            {/* Custom Dropdown with Clean Right Icon Spacing and Adjusted Mobile Font */}
+            <div className="relative inline-flex items-center shrink-0">
+              <select
+                value={stockFilter}
+                onChange={(e) => setStockFilter(e.target.value as any)}
+                className="appearance-none pl-3 pr-8.5 py-1.5 text-[11px] sm:text-xs font-medium rounded-control border border-border bg-surface text-text-main focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary cursor-pointer min-h-[32px] sm:min-h-[34px]"
+              >
+                <option value="semua">Semua Status</option>
+                <option value="aman">Stok Aman</option>
+                <option value="perhatian">Perhatian (Menipis/Habis)</option>
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-2.5 w-3.5 h-3.5 text-text-muted"
+                strokeWidth={1.5}
+              />
+            </div>
           </div>
         </div>
 
