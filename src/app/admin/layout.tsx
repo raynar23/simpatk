@@ -28,7 +28,7 @@ export default async function AdminLayout({
       role="admin"
       divisionName={divisionName}
       userId={user?.id}
-      title="Admin Portal"
+      title="Portal General Affairs (GA)"
     >
       {children}
     </AppShell>

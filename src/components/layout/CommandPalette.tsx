@@ -120,6 +120,7 @@ function CommandPaletteModal({
     { label: 'Dashboard', href: '/user', icon: LayoutDashboard },
     { label: 'Riwayat Permintaan', href: '/user/riwayat', icon: Clock },
     { label: 'Katalog ATK', href: '/user/katalog', icon: BookOpen },
+    { label: 'Penempatan ATK', href: '/user/penempatan', icon: Layers },
     { label: 'Pengaturan', href: '/user/pengaturan', icon: Settings },
   ];
 

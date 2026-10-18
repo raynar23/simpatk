@@ -63,10 +63,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 Ikuti panduan langkah demi langkah yang terdapat pada berkas [supabase/README.md](supabase/README.md):
 1. Jalankan `supabase/schema.sql` di SQL Editor Supabase.
 2. Buat akun demo di Authentication > Users:
-   - Admin GA: `admin@tps.co.id`
-   - User Divisi: `ga@tps.co.id`
+   - General Affairs (Admin GA - Akses 4 Fitur Utama): `admin@tps.co.id`
+   - User Divisi Pemohon: `ga@tps.co.id` (atau buat user baru seperti `divisi.a@tps.co.id`)
+   *(Tips: Jika akun `ga@tps.co.id` ingin dijadikan role General Affairs, jalankan query: `UPDATE public.profiles SET role = 'admin', nama_divisi = 'General Affairs' WHERE id IN (SELECT id FROM auth.users WHERE email = 'ga@tps.co.id');`)*
 3. Isi tabel `profiles` sesuai instruksi di README supabase.
-4. Jalankan `supabase/seed.sql` untuk memuat 12 data barang ATK dan 6 contoh permintaan.
+4. Jalankan `supabase/seed_v2.sql` untuk memuat data inventaris barang ATK dan riwayat permintaan.
 
 ### 5. Jalankan Aplikasi
 ```bash

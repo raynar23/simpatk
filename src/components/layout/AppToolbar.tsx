@@ -67,7 +67,7 @@ export function AppToolbar({
 
         {/* Portal Title / Role */}
         <h1 className="text-sm font-semibold text-text-main tracking-tight truncate">
-          {title || (role === 'admin' ? 'Portal Admin' : 'Portal Pemohon')}
+          {title || (role === 'admin' ? 'Portal General Affairs (GA)' : 'Portal Pemohon')}
         </h1>
       </div>
 
@@ -92,7 +92,7 @@ export function AppToolbar({
                 {divisionName || (role === 'admin' ? 'General Affairs' : 'Divisi Pemohon')}
               </p>
               <p className="text-[10px] text-text-muted truncate capitalize">
-                {role === 'admin' ? 'Admin GA' : 'Pemohon'}
+                {role === 'admin' ? 'General Affairs (GA)' : 'Pemohon'}
               </p>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-text-muted" strokeWidth={1.5} />
@@ -106,7 +106,7 @@ export function AppToolbar({
                   {divisionName || (role === 'admin' ? 'General Affairs' : 'Divisi Pemohon')}
                 </p>
                 <p className="text-[11px] text-text-muted">
-                  {role === 'admin' ? 'Akun Admin GA' : 'Akun Divisi Pemohon'}
+                  {role === 'admin' ? 'Akun General Affairs (GA)' : 'Akun Divisi Pemohon'}
                 </p>
               </div>
 

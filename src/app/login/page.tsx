@@ -229,6 +229,63 @@ export default function LoginPage() {
               </p>
             </div>
 
+            {/* Quick Demo Role Selector */}
+            <div className="mb-4 p-2.5 rounded-control bg-bg border border-border/80">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-semibold text-text-main">
+                  Pilih Role Akun Masuk:
+                </span>
+                <span className="text-[10px] text-text-muted">Isi cepat demo</span>
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('admin@tps.co.id');
+                    setErrorMessage(null);
+                  }}
+                  className={`text-left p-2 rounded-control border transition-all cursor-pointer ${
+                    email === 'admin@tps.co.id'
+                      ? 'bg-primary-soft/40 border-primary text-primary-dark font-medium shadow-2xs ring-1 ring-primary/30'
+                      : 'bg-surface border-border text-text-main hover:border-primary/40'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-text-main">General Affairs</span>
+                    <span className="text-[9px] bg-primary text-white px-1.5 py-0.2 rounded font-semibold uppercase">
+                      Role GA
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-text-muted mt-0.5 leading-tight truncate">
+                    4 Fitur Utama GA
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('ga@tps.co.id');
+                    setErrorMessage(null);
+                  }}
+                  className={`text-left p-2 rounded-control border transition-all cursor-pointer ${
+                    email === 'ga@tps.co.id'
+                      ? 'bg-primary-soft/40 border-primary text-primary-dark font-medium shadow-2xs ring-1 ring-primary/30'
+                      : 'bg-surface border-border text-text-main hover:border-primary/40'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-text-main">Divisi Pemohon</span>
+                    <span className="text-[9px] bg-gray-200 text-text-muted px-1.5 py-0.2 rounded font-semibold uppercase">
+                      User
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-text-muted mt-0.5 leading-tight truncate">
+                    Pengajuan ATK
+                  </p>
+                </button>
+              </div>
+            </div>
+
             {/* Login Form */}
             <form onSubmit={handleLogin} className="space-y-4 sm:space-y-5">
               {/* Email Field */}

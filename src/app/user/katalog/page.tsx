@@ -10,6 +10,7 @@ import {
   Send,
   Loader2,
   ChevronDown,
+  Layers,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -169,6 +170,13 @@ function UserKatalogContent() {
       subtitle="Daftar inventaris alat tulis kantor operasional yang tersedia untuk pengajuan divisi."
       actions={
         <div className="flex items-center gap-2">
+          <Link
+            href="/user/penempatan"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-medium text-text-main bg-surface border border-border hover:bg-bg transition-colors"
+          >
+            <Layers className="w-3.5 h-3.5 text-text-muted" />
+            <span>Denah Rak ATK</span>
+          </Link>
           <Link
             href="/user"
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-control text-xs font-semibold text-white bg-primary hover:bg-primary-dark transition-colors shadow-subtle"

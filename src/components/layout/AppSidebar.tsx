@@ -266,20 +266,20 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
       ],
     },
     {
-      groupLabel: 'OPERASIONAL',
+      groupLabel: '4 FITUR UTAMA GA',
       items: [
-        {
-          label: 'Permintaan',
-          href: '/admin/permintaan',
-          icon: ClipboardList,
-          count: pendingRequestsCount,
-        },
         {
           label: 'Persediaan',
           href: '/admin/persediaan',
           icon: Boxes,
           count: lowStockCount,
           countDanger: true,
+        },
+        {
+          label: 'Permintaan',
+          href: '/admin/permintaan',
+          icon: ClipboardList,
+          count: pendingRequestsCount,
         },
         {
           label: 'Pembaruan Stok',
@@ -291,16 +291,16 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
           href: '/admin/penempatan',
           icon: Layers,
         },
+      ],
+    },
+    {
+      groupLabel: 'PENGADAAN & ANALISIS',
+      items: [
         {
           label: 'Daftar Belanja',
           href: '/admin/daftar-belanja',
           icon: ShoppingCart,
         },
-      ],
-    },
-    {
-      groupLabel: 'ANALISIS',
-      items: [
         { label: 'Laporan', href: '/admin/laporan', icon: FileText },
       ],
     },
@@ -330,6 +330,7 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
           count: userUpdatesCount,
         },
         { label: 'Katalog ATK', href: '/user/katalog', icon: BookOpen },
+        { label: 'Penempatan ATK', href: '/user/penempatan', icon: Layers },
       ],
     },
     {
@@ -525,7 +526,7 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
                     {divisionName || (role === 'admin' ? 'General Affairs' : 'Divisi Pemohon')}
                   </p>
                   <p className="text-[10px] text-white/65 truncate uppercase tracking-wider font-mono mt-0.5 leading-tight">
-                    {role === 'admin' ? 'Admin GA' : 'Divisi Pemohon'}
+                    {role === 'admin' ? 'Pengelola ATK (Role GA)' : 'Divisi Pemohon (User)'}
                   </p>
                 </div>
               </div>
@@ -638,7 +639,7 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
                   {divisionName || (role === 'admin' ? 'General Affairs' : 'Divisi Pemohon')}
                 </p>
                 <p className="text-[10px] text-white/65 truncate uppercase tracking-wider font-mono mt-0.5 leading-tight">
-                  {role === 'admin' ? 'Admin GA' : 'Divisi Pemohon'}
+                  {role === 'admin' ? 'Pengelola ATK (Role GA)' : 'Divisi Pemohon (User)'}
                 </p>
               </div>
             </div>

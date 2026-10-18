@@ -11,6 +11,7 @@ import {
   ExternalLink,
   BookOpen,
   Clock,
+  Layers,
   Loader2,
   AlertCircle,
   ChevronDown,
@@ -331,6 +332,13 @@ function UserDashboardContent() {
           >
             <BookOpen className="w-3.5 h-3.5 text-text-muted" />
             <span>Katalog ATK</span>
+          </Link>
+          <Link
+            href="/user/penempatan"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-medium text-text-main bg-surface border border-border hover:bg-bg transition-colors"
+          >
+            <Layers className="w-3.5 h-3.5 text-text-muted" />
+            <span>Denah Rak ATK</span>
           </Link>
           <Link
             href="/user/riwayat"
