@@ -1,177 +1,247 @@
-// Bottom row panels for Admin GA Dashboard: Recent Requests table & Stock Health overview
+// Two paginated DataTable panels for the Aktivitas tab: Permintaan Terbaru and Barang Stok Menipis
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/Badge';
 import { formatDateShort } from '@/lib/utils';
 import type { RequestWithDetails, Item } from '@/lib/types';
 
 interface DashboardPanelsProps {
   recentRequests: RequestWithDetails[];
-  criticalItems: Item[];
+  allItems: Item[];
   isLoading: boolean;
 }
 
 export function DashboardPanels({
   recentRequests,
-  criticalItems,
+  allItems,
   isLoading,
 }: DashboardPanelsProps) {
+  // Panel 1: Permintaan Terbaru pagination state
+  const [reqPage, setReqPage] = useState(1);
+  const [reqPageSize, setReqPageSize] = useState(5);
+
+  // Panel 2: Barang Menipis pagination state
+  const [itemPage, setItemPage] = useState(1);
+  const [itemPageSize, setItemPageSize] = useState(5);
+
+  // Filter low stock items: stok <= stok_minimum (including 0)
+  const lowStockItems = useMemo(() => {
+    return allItems
+      .filter((it) => it.stok <= it.stok_minimum)
+      .sort((a, b) => a.stok - b.stok);
+  }, [allItems]);
+
+  // Paginated requests slice
+  const paginatedRequests = useMemo(() => {
+    const start = (reqPage - 1) * reqPageSize;
+    return recentRequests.slice(start, start + reqPageSize);
+  }, [recentRequests, reqPage, reqPageSize]);
+
+  // Paginated low stock items slice
+  const paginatedLowStock = useMemo(() => {
+    const start = (itemPage - 1) * itemPageSize;
+    return lowStockItems.slice(start, start + itemPageSize);
+  }, [lowStockItems, itemPage, itemPageSize]);
+
+  // Columns for Permintaan Terbaru
+  const requestColumns: ColumnDef<RequestWithDetails>[] = [
+    {
+      id: 'nomor',
+      header: 'Nomor',
+      accessorKey: 'nomor',
+      cell: (row) => (
+        <span className="font-mono font-semibold text-primary text-[11px]">
+          {row.nomor || 'REQ'}
+        </span>
+      ),
+    },
+    {
+      id: 'created_at',
+      header: 'Tanggal',
+      cell: (row) => (
+        <span className="text-text-muted tabular-nums whitespace-nowrap">
+          {formatDateShort(row.created_at)}
+        </span>
+      ),
+    },
+    {
+      id: 'profiles',
+      header: 'Divisi',
+      cell: (row) => (
+        <span className="truncate max-w-[130px] font-medium text-text-main">
+          {row.profiles?.nama_divisi || 'Divisi'}
+        </span>
+      ),
+    },
+    {
+      id: 'items',
+      header: 'Barang',
+      cell: (row) => (
+        <span className="truncate max-w-[140px] text-text-main">
+          {row.items?.nama || '-'}
+        </span>
+      ),
+    },
+    {
+      id: 'jumlah',
+      header: 'Jumlah',
+      isNumeric: true,
+      cell: (row) => (
+        <span className="tabular-nums font-semibold text-text-main">
+          {row.jumlah} {row.items?.satuan}
+        </span>
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      isNumeric: true,
+      cell: (row) => <Badge variant={row.status as 'diproses' | 'selesai'} />,
+    },
+  ];
+
+  // Columns for Barang Stok Menipis
+  const stockColumns: ColumnDef<Item>[] = [
+    {
+      id: 'kode',
+      header: 'Kode',
+      accessorKey: 'kode',
+      cell: (row) => (
+        <span className="font-mono font-semibold text-primary text-[11px]">
+          {row.kode || 'ATK'}
+        </span>
+      ),
+    },
+    {
+      id: 'nama',
+      header: 'Nama Barang',
+      accessorKey: 'nama',
+      cell: (row) => (
+        <span className="truncate max-w-[180px] font-medium text-text-main">
+          {row.nama}
+        </span>
+      ),
+    },
+    {
+      id: 'kategori',
+      header: 'Kategori',
+      accessorKey: 'kategori',
+      cell: (row) => <span className="text-text-muted">{row.kategori}</span>,
+    },
+    {
+      id: 'stok',
+      header: 'Stok Fisik',
+      isNumeric: true,
+      cell: (row) => (
+        <span
+          className={`tabular-nums font-bold ${
+            row.stok === 0 ? 'text-danger' : 'text-danger'
+          }`}
+        >
+          {row.stok === 0 ? 'Habis (0)' : `${row.stok} ${row.satuan}`}
+        </span>
+      ),
+    },
+    {
+      id: 'stok_minimum',
+      header: 'Batas Minimum',
+      isNumeric: true,
+      cell: (row) => (
+        <span className="tabular-nums text-text-muted">
+          {row.stok_minimum} {row.satuan}
+        </span>
+      ),
+    },
+    {
+      id: 'saran',
+      header: 'Saran Beli',
+      isNumeric: true,
+      cell: (row) => {
+        const saran = Math.max(1, row.stok_minimum * 2 - row.stok);
+        return (
+          <span className="tabular-nums font-semibold text-primary">
+            +{saran} {row.satuan}
+          </span>
+        );
+      },
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-      {/* 1. Permintaan Terbaru Panel */}
-      <div className="bg-surface rounded-card border border-border flex flex-col overflow-hidden select-none">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-full min-h-0">
+      {/* Panel 1: Permintaan Terbaru */}
+      <div className="bg-surface rounded-card border border-border flex flex-col min-h-0 overflow-hidden">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0 bg-surface">
           <div>
             <h3 className="text-xs font-semibold text-text-main tracking-tight">
               Permintaan Terbaru
             </h3>
             <p className="text-[11px] text-text-muted mt-0.5">
-              5 transaksi permintaan terakhir dari divisi
+              Antrean transaksi permohonan terkini seluruh divisi
             </p>
           </div>
           <Link
             href="/admin/permintaan"
-            className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline cursor-pointer"
+            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer"
           >
-            <span>Lihat Semua</span>
-            <ArrowRight className="w-3 h-3" />
+            <span>Semua Permintaan</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        <div className="flex-1 overflow-x-auto">
-          {isLoading ? (
-            <div className="p-4 space-y-2">
-              {Array.from({ length: 5 }).map((_, idx) => (
-                <div key={idx} className="h-8 bg-border/40 rounded-badge animate-pulse" />
-              ))}
-            </div>
-          ) : recentRequests.length === 0 ? (
-            <div className="p-8 text-center text-xs text-text-muted">
-              Belum ada permintaan diajukan
-            </div>
-          ) : (
-            <table className="w-full text-left text-xs border-collapse">
-              <thead className="bg-bg text-text-muted text-[11px] uppercase border-b border-border">
-                <tr>
-                  <th className="py-2 px-3 font-semibold">Nomor</th>
-                  <th className="py-2 px-3 font-semibold">Tanggal</th>
-                  <th className="py-2 px-3 font-semibold">Barang</th>
-                  <th className="py-2 px-3 font-semibold text-right">Jumlah</th>
-                  <th className="py-2 px-3 font-semibold text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {recentRequests.slice(0, 5).map((req) => (
-                  <tr key={req.id} className="hover:bg-bg/40 transition-colors">
-                    <td className="py-2 px-3 font-mono font-medium text-text-main text-[11px]">
-                      {req.nomor || 'REQ'}
-                    </td>
-                    <td className="py-2 px-3 text-text-muted tabular-nums whitespace-nowrap">
-                      {formatDateShort(req.created_at)}
-                    </td>
-                    <td className="py-2 px-3 text-text-main truncate max-w-[150px]">
-                      {req.items?.nama || '-'}
-                    </td>
-                    <td className="py-2 px-3 text-right font-medium tabular-nums text-text-main">
-                      {req.jumlah} {req.items?.satuan}
-                    </td>
-                    <td className="py-2 px-3 text-right">
-                      <Badge variant={req.status as 'diproses' | 'selesai'} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <DataTable
+            columns={requestColumns}
+            data={paginatedRequests}
+            totalCount={recentRequests.length}
+            page={reqPage}
+            pageSize={reqPageSize}
+            onPageChange={setReqPage}
+            onPageSizeChange={setReqPageSize}
+            isLoading={isLoading}
+            emptyMessage="Belum ada transaksi permintaan diajukan."
+            className="border-none rounded-none shadow-none flex-1 min-h-0"
+          />
         </div>
       </div>
 
-      {/* 2. Kesehatan Stok Panel */}
-      <div className="bg-surface rounded-card border border-border flex flex-col overflow-hidden select-none">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface">
+      {/* Panel 2: Barang Stok Menipis */}
+      <div className="bg-surface rounded-card border border-border flex flex-col min-h-0 overflow-hidden">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between shrink-0 bg-surface">
           <div>
             <h3 className="text-xs font-semibold text-text-main tracking-tight">
-              Kesehatan Stok Fisik
+              Barang Stok Menipis
             </h3>
             <p className="text-[11px] text-text-muted mt-0.5">
-              Kondisi 6 barang paling kritis mendekati atau di bawah batas minimum
+              Daftar barang dengan stok fisik pada atau di bawah batas minimum
             </p>
           </div>
           <Link
             href="/admin/persediaan"
-            className="inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline cursor-pointer"
+            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline cursor-pointer"
           >
-            <span>Kelola</span>
-            <ArrowRight className="w-3 h-3" />
+            <span>Kelola Persediaan</span>
+            <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
-        <div className="p-4 flex-1 flex flex-col justify-around space-y-2.5">
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 6 }).map((_, idx) => (
-                <div key={idx} className="h-6 bg-border/40 rounded-badge animate-pulse" />
-              ))}
-            </div>
-          ) : criticalItems.length === 0 ? (
-            <div className="py-8 text-center text-xs text-text-muted flex flex-col items-center gap-1">
-              <CheckCircle2 className="w-6 h-6 text-success mb-1" />
-              <span>Semua stok barang dalam kondisi aman di atas batas minimum.</span>
-            </div>
-          ) : (
-            criticalItems.slice(0, 6).map((item) => {
-              const isLow = item.stok <= item.stok_minimum;
-              const isOut = item.stok === 0;
-              const maxScale = Math.max(item.stok_minimum * 2, item.stok, 10);
-              const stockPercent = Math.min(100, Math.round((item.stok / maxScale) * 100));
-              const minPercent = Math.min(100, Math.round((item.stok_minimum / maxScale) * 100));
-
-              return (
-                <div key={item.id} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 truncate max-w-[240px]">
-                      <span className="font-mono text-[10px] text-primary font-semibold">
-                        {item.kode}
-                      </span>
-                      <span className="truncate text-text-main font-medium">
-                        {item.nama}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0 tabular-nums text-[11px]">
-                      <span className={isLow ? 'text-danger font-semibold' : 'text-text-main'}>
-                        {item.stok} {item.satuan}
-                      </span>
-                      <span className="text-text-muted">/ min {item.stok_minimum}</span>
-                    </div>
-                  </div>
-
-                  {/* Stock progress track */}
-                  <div className="relative h-2 w-full bg-bg rounded-full overflow-hidden border border-border/50">
-                    {/* Minimum stock marker */}
-                    <div
-                      className="absolute top-0 bottom-0 w-0.5 bg-slate-400 z-10"
-                      style={{ left: `${minPercent}%` }}
-                      title={`Batas Minimum: ${item.stok_minimum}`}
-                    />
-                    {/* Current stock bar */}
-                    <div
-                      className={`h-full transition-all duration-300 rounded-full ${
-                        isOut
-                          ? 'bg-danger'
-                          : isLow
-                          ? 'bg-danger'
-                          : 'bg-primary'
-                      }`}
-                      style={{ width: `${Math.max(4, stockPercent)}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })
-          )}
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <DataTable
+            columns={stockColumns}
+            data={paginatedLowStock}
+            totalCount={lowStockItems.length}
+            page={itemPage}
+            pageSize={itemPageSize}
+            onPageChange={setItemPage}
+            onPageSizeChange={setItemPageSize}
+            isLoading={isLoading}
+            emptyMessage="Semua stok barang dalam kondisi aman di atas batas minimum."
+            className="border-none rounded-none shadow-none flex-1 min-h-0"
+          />
         </div>
       </div>
     </div>

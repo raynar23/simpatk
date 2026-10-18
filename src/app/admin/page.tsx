@@ -1,8 +1,9 @@
-// Admin Overview Dashboard with single-screen layout, responsive segmented control, and analytical RPCs
+// Admin GA Dashboard with 100% synchronized date filtering, 3 flat charts, and uniform PageContainer
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { DashboardKpis, type DashboardKpiData } from '@/components/admin/DashboardKpis';
 import {
   DashboardCharts,
@@ -11,58 +12,78 @@ import {
   type StatusBreakdownPoint,
 } from '@/components/admin/DashboardCharts';
 import { DashboardPanels } from '@/components/admin/DashboardPanels';
+import {
+  DashboardDateFilter,
+  type DateFilterRange,
+  getPresetRange,
+} from '@/components/admin/DashboardDateFilter';
+import { calculateDashboardAnalytics } from '@/lib/analytics';
 import type { RequestWithDetails, Item } from '@/lib/types';
 
 export default function AdminDashboardPage() {
   const supabase = createClient();
 
-  const [period, setPeriod] = useState<number>(30); // 7, 30, 180
-  const [activeTab, setActiveTab] = useState<'ringkasan' | 'analitik' | 'permintaan'>('ringkasan');
+  // Active date range state (defaults to 30 days)
+  const [dateRange, setDateRange] = useState<DateFilterRange>(() => getPresetRange('30d'));
+  const [activeTab, setActiveTab] = useState<'ringkasan' | 'aktivitas'>('ringkasan');
   const [isLoading, setIsLoading] = useState(true);
 
+  // Synchronized analytical state
   const [kpiData, setKpiData] = useState<DashboardKpiData | null>(null);
   const [trendData, setTrendData] = useState<TrendDataPoint[]>([]);
   const [topItemsData, setTopItemsData] = useState<TopItemDataPoint[]>([]);
   const [statusData, setStatusData] = useState<StatusBreakdownPoint[]>([]);
   const [recentRequests, setRecentRequests] = useState<RequestWithDetails[]>([]);
-  const [criticalItems, setCriticalItems] = useState<Item[]>([]);
+  const [allItems, setAllItems] = useState<Item[]>([]);
 
+  // Fetch and calculate dashboard data based on active date range
   useEffect(() => {
     let ignore = false;
 
     async function loadData() {
       try {
-        const [kpiRes, trendRes, topRes, statusRes, reqRes, itemsRes] = await Promise.all([
-          supabase.rpc('dashboard_kpi', { p_days: period }),
-          supabase.rpc('request_trend', { p_days: period }),
-          supabase.rpc('top_items', { p_days: period, p_limit: 5 }),
-          supabase.rpc('status_breakdown', { p_days: period }),
+        const durationMs = dateRange.endDate.getTime() - dateRange.startDate.getTime() + 1;
+        const prevEndDate = new Date(dateRange.startDate.getTime() - 1);
+        const prevStartDate = new Date(prevEndDate.getTime() - durationMs + 1);
+
+        // Fetch requests across both current and comparative period, items catalog, and latest 20 overall queue
+        const [reqRes, itemsRes, recentOverallRes] = await Promise.all([
+          supabase
+            .from('requests')
+            .select('*, items(*), profiles(*)')
+            .gte('created_at', prevStartDate.toISOString())
+            .lte('created_at', dateRange.endDate.toISOString())
+            .order('created_at', { ascending: false })
+            .limit(5000),
+          supabase.from('items').select('*').order('stok', { ascending: true }),
           supabase
             .from('requests')
             .select('*, items(*), profiles(*)')
             .order('created_at', { ascending: false })
-            .limit(5),
-          supabase.from('items').select('*').order('stok', { ascending: true }).limit(10),
+            .limit(20),
         ]);
 
         if (ignore) return;
 
-        if (kpiRes.data) setKpiData(kpiRes.data as unknown as DashboardKpiData);
-        if (trendRes.data) setTrendData(trendRes.data as unknown as TrendDataPoint[]);
-        if (topRes.data) setTopItemsData(topRes.data as unknown as TopItemDataPoint[]);
-        if (statusRes.data) setStatusData(statusRes.data as unknown as StatusBreakdownPoint[]);
-        if (reqRes.data) setRecentRequests(reqRes.data as RequestWithDetails[]);
+        const requestsList = (reqRes.data || []) as RequestWithDetails[];
+        const itemsList = (itemsRes.data || []) as Item[];
 
-        if (itemsRes.data) {
-          const sorted = (itemsRes.data as Item[]).sort((a, b) => {
-            const aRatio = a.stok / Math.max(1, a.stok_minimum);
-            const bRatio = b.stok / Math.max(1, b.stok_minimum);
-            return aRatio - bRatio;
-          });
-          setCriticalItems(sorted.slice(0, 6));
-        }
+        // Compute analytical metrics strictly matching the date window
+        const analytics = calculateDashboardAnalytics(
+          dateRange.startDate,
+          dateRange.endDate,
+          requestsList,
+          itemsList
+        );
+
+        setKpiData(analytics.kpiData);
+        setTrendData(analytics.trendData);
+        setStatusData(analytics.statusData);
+        setTopItemsData(analytics.topItemsData);
+        setAllItems(itemsList);
+        setRecentRequests((recentOverallRes.data || []) as RequestWithDetails[]);
       } catch {
-        // Silent catch
+        // Fallback gracefully
       } finally {
         if (!ignore) {
           setIsLoading(false);
@@ -75,143 +96,108 @@ export default function AdminDashboardPage() {
     return () => {
       ignore = true;
     };
-  }, [supabase, period]);
+  }, [supabase, dateRange]);
 
-  const handlePeriodChange = (days: number) => {
+  const handleRangeChange = (newRange: DateFilterRange) => {
     setIsLoading(true);
-    setPeriod(days);
+    setDateRange(newRange);
   };
 
-  const periodLabel = period === 7 ? '7 Hari' : period === 30 ? '30 Hari' : '6 Bulan';
+  // 8 critical items for the Paired Bar Chart
+  const criticalItems = useMemo(() => {
+    return [...allItems]
+      .sort((a, b) => {
+        const ratioA = a.stok / Math.max(1, a.stok_minimum);
+        const ratioB = b.stok / Math.max(1, b.stok_minimum);
+        return ratioA - ratioB;
+      })
+      .slice(0, 8);
+  }, [allItems]);
+
+  // Duration in days for chart sub-labeling
+  const activeDurationDays = useMemo(() => {
+    const diff = dateRange.endDate.getTime() - dateRange.startDate.getTime() + 1;
+    return Math.max(1, Math.round(diff / 86400000));
+  }, [dateRange]);
+
+  // Header tabs
+  const tabList: { key: 'ringkasan' | 'aktivitas'; label: string }[] = [
+    { key: 'ringkasan', label: 'Ringkasan' },
+    { key: 'aktivitas', label: 'Aktivitas' },
+  ];
+
+  // Header controls for PageContainer: Segmented View + Comprehensive Date Filter
+  const headerActions = (
+    <div className="flex items-center gap-2.5 flex-wrap">
+      {/* Segmented Control for Views */}
+      <div className="inline-flex p-0.5 rounded-control bg-bg border border-border text-xs">
+        {tabList.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setActiveTab(tab.key)}
+            className={`px-3 py-1 rounded-badge text-xs font-medium transition-colors cursor-pointer ${
+              activeTab === tab.key
+                ? 'bg-surface text-text-main shadow-xs font-semibold'
+                : 'text-text-muted hover:text-text-main'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Expanded Date Filter & Navigation Toolbar */}
+      <DashboardDateFilter
+        currentRange={dateRange}
+        onChangeRange={handleRangeChange}
+        isLoading={isLoading}
+      />
+    </div>
+  );
 
   return (
-    <div className="p-3 sm:p-5 space-y-4 max-w-[1440px] mx-auto select-none">
-      {/* Page Toolbar with Period Selector and Mobile Segmented Control */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/80 pb-3">
-        <div>
-          <h2 className="text-sm font-semibold text-text-main tracking-tight">
-            Dashboard Pemantauan GA
-          </h2>
-          <p className="text-[11px] text-text-muted mt-0.5">
-            Metrik operasional permintaan dan inventaris fisik alat tulis kantor
-          </p>
-        </div>
+    <PageContainer
+      title="Dashboard"
+      subtitle="Pemantauan metrik operasional dan visualisasi data inventaris ATK"
+      actions={headerActions}
+      contentClassName="space-y-3.5"
+    >
+      {/* 1. Tab Ringkasan */}
+      {activeTab === 'ringkasan' && (
+        <div className="space-y-3.5 flex-1 flex flex-col min-h-0">
+          {/* Row 1: 5 KPI Cards (no icons, pure flat metrics, strict period comparison) */}
+          <DashboardKpis
+            data={kpiData}
+            isLoading={isLoading}
+            periodLabel={dateRange.periodComparisonLabel}
+          />
 
-        <div className="flex items-center gap-3">
-          {/* Segmented Control for screens < 1280px */}
-          <div className="xl:hidden inline-flex p-0.5 rounded-control bg-bg border border-border text-xs">
-            <button
-              type="button"
-              onClick={() => setActiveTab('ringkasan')}
-              className={`px-2.5 py-1 rounded-badge text-[11px] font-medium transition-colors cursor-pointer ${
-                activeTab === 'ringkasan'
-                  ? 'bg-surface text-text-main shadow-xs font-semibold'
-                  : 'text-text-muted hover:text-text-main'
-              }`}
-            >
-              Ringkasan
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('analitik')}
-              className={`px-2.5 py-1 rounded-badge text-[11px] font-medium transition-colors cursor-pointer ${
-                activeTab === 'analitik'
-                  ? 'bg-surface text-text-main shadow-xs font-semibold'
-                  : 'text-text-muted hover:text-text-main'
-              }`}
-            >
-              Analitik
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('permintaan')}
-              className={`px-2.5 py-1 rounded-badge text-[11px] font-medium transition-colors cursor-pointer ${
-                activeTab === 'permintaan'
-                  ? 'bg-surface text-text-main shadow-xs font-semibold'
-                  : 'text-text-muted hover:text-text-main'
-              }`}
-            >
-              Permintaan & Stok
-            </button>
-          </div>
-
-          {/* Period Selector (7 Hari | 30 Hari | 6 Bulan) */}
-          <div className="inline-flex p-0.5 rounded-control bg-bg border border-border text-xs">
-            {[
-              { days: 7, label: '7 Hari' },
-              { days: 30, label: '30 Hari' },
-              { days: 180, label: '6 Bulan' },
-            ].map((opt) => (
-              <button
-                key={opt.days}
-                type="button"
-                onClick={() => handlePeriodChange(opt.days)}
-                className={`px-2.5 py-1 rounded-badge text-[11px] font-medium transition-colors cursor-pointer ${
-                  period === opt.days
-                    ? 'bg-surface text-primary shadow-xs font-semibold'
-                    : 'text-text-muted hover:text-text-main'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Screen Viewport >= 1280px: Renders all 3 rows together to fit one screen */}
-      <div className="hidden xl:space-y-3 xl:block">
-        {/* Row 1: 5 KPI Cards */}
-        <DashboardKpis data={kpiData} isLoading={isLoading} periodLabel={periodLabel} />
-
-        {/* Row 2: 3 Recharts Visualizations */}
-        <DashboardCharts
-          trendData={trendData}
-          topItemsData={topItemsData}
-          statusData={statusData}
-          isLoading={isLoading}
-          periodDays={period}
-        />
-
-        {/* Row 3: Recent Requests & Stock Health */}
-        <DashboardPanels
-          recentRequests={recentRequests}
-          criticalItems={criticalItems}
-          isLoading={isLoading}
-        />
-      </div>
-
-      {/* Screen Viewport < 1280px: Controlled by Segmented Control tabs */}
-      <div className="xl:hidden">
-        {activeTab === 'ringkasan' && (
-          <div className="space-y-4">
-            <DashboardKpis data={kpiData} isLoading={isLoading} periodLabel={periodLabel} />
-            <DashboardPanels
-              recentRequests={recentRequests}
+          {/* Row 2: 3 Charts (Row 1: Line + Pie, Row 2: Full-width Top 5 Bar) */}
+          <div className="flex-1 min-h-0">
+            <DashboardCharts
+              trendData={trendData}
+              topItemsData={topItemsData}
+              statusData={statusData}
               criticalItems={criticalItems}
               isLoading={isLoading}
+              periodDays={activeDurationDays}
+              chartVariant="all"
             />
           </div>
-        )}
+        </div>
+      )}
 
-        {activeTab === 'analitik' && (
-          <DashboardCharts
-            trendData={trendData}
-            topItemsData={topItemsData}
-            statusData={statusData}
-            isLoading={isLoading}
-            periodDays={period}
-          />
-        )}
-
-        {activeTab === 'permintaan' && (
+      {/* 2. Tab Aktivitas: Two Paginated DataTable Panels */}
+      {activeTab === 'aktivitas' && (
+        <div className="flex-1 flex flex-col min-h-0">
           <DashboardPanels
             recentRequests={recentRequests}
-            criticalItems={criticalItems}
+            allItems={allItems}
             isLoading={isLoading}
           />
-        )}
-      </div>
-    </div>
+        </div>
+      )}
+    </PageContainer>
   );
 }

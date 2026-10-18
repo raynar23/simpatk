@@ -2,15 +2,8 @@
 'use client';
 
 import React from 'react';
-import {
-  ClipboardList,
-  Clock,
-  Hourglass,
-  AlertTriangle,
-  Banknote,
-} from 'lucide-react';
 import { KpiCard } from '@/components/ui/KpiCard';
-import { formatRupiah } from '@/lib/utils';
+import { formatRupiah, formatNumber, formatDuration } from '@/lib/utils';
 
 export interface DashboardKpiData {
   total_permintaan: number;
@@ -67,20 +60,12 @@ export function DashboardKpis({ data, isLoading, periodLabel }: DashboardKpisPro
       ? Math.round(((currentTime - prevTime) / prevTime) * 100)
       : 0;
 
-  // Format turnaround time
-  const formatDuration = (hours: number) => {
-    if (hours < 1) return `${Math.round(hours * 60)} mnt`;
-    if (hours < 24) return `${hours.toFixed(1)} jam`;
-    return `${(hours / 24).toFixed(1)} hari`;
-  };
-
   return (
     <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
       {/* 1. Total Permintaan */}
       <KpiCard
         label="Total Permintaan"
-        value={data.total_permintaan.toLocaleString('id-ID')}
-        icon={ClipboardList}
+        value={formatNumber(data.total_permintaan)}
         change={requestChange}
         sublabel={`vs ${periodLabel} sebelumnya`}
       />
@@ -88,8 +73,7 @@ export function DashboardKpis({ data, isLoading, periodLabel }: DashboardKpisPro
       {/* 2. Menunggu Penyelesaian */}
       <KpiCard
         label="Menunggu Penyelesaian"
-        value={data.permintaan_diproses.toLocaleString('id-ID')}
-        icon={Hourglass}
+        value={formatNumber(data.permintaan_diproses)}
         invertTrend={true}
         sublabel="Permintaan status diproses"
       />
@@ -98,7 +82,6 @@ export function DashboardKpis({ data, isLoading, periodLabel }: DashboardKpisPro
       <KpiCard
         label="Rata-rata Waktu"
         value={formatDuration(data.rata_rata_waktu_jam)}
-        icon={Clock}
         change={timeChange !== 0 ? timeChange : undefined}
         invertTrend={true}
         sublabel={`Tingkat selesai ${data.tingkat_penyelesaian_persen}%`}
@@ -107,17 +90,15 @@ export function DashboardKpis({ data, isLoading, periodLabel }: DashboardKpisPro
       {/* 4. Stok Menipis */}
       <KpiCard
         label="Barang Menipis"
-        value={data.barang_menipis.toLocaleString('id-ID')}
-        icon={AlertTriangle}
+        value={formatNumber(data.barang_menipis)}
         invertTrend={true}
-        sublabel={`${data.barang_habis} barang stok habis (0)`}
+        sublabel={`${data.barang_habis} barang habis`}
       />
 
       {/* 5. Nilai Persediaan */}
       <KpiCard
         label="Nilai Persediaan"
         value={formatRupiah(data.nilai_persediaan)}
-        icon={Banknote}
         sublabel="Estimasi aset fisik ATK"
         className="col-span-2 sm:col-span-1"
       />
