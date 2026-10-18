@@ -1,153 +1,141 @@
-// User division workspace featuring request submission form and realtime request history
+// User Dashboard: Requisition submission workspace, KPI summary strip, and latest requests ledger
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   Send,
-  ClipboardList,
-  Building2,
-  Package,
+  Plus,
+  Minus,
+  ExternalLink,
+  BookOpen,
+  Clock,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Textarea } from '@/components/ui/Textarea';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
+import { Inspector } from '@/components/ui/Inspector';
+import { Timeline } from '@/components/ui/Timeline';
 import { Badge } from '@/components/ui/Badge';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/components/ui/Toast';
 import { formatDate } from '@/lib/utils';
-import type { Item, Profile, RequestWithDetails } from '@/lib/types';
+import type { Item, RequestWithDetails } from '@/lib/types';
 
-export default function UserDashboardPage() {
+function UserDashboardContent() {
+  const searchParams = useSearchParams();
   const supabase = createClient();
   const { showToast } = useToast();
 
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [items, setItems] = useState<Item[]>([]);
-  const [myRequests, setMyRequests] = useState<RequestWithDetails[]>([]);
-  const [isLoadingRequests, setIsLoadingRequests] = useState(true);
+  const itemParam = searchParams.get('item') || '';
+  const qtyParam = searchParams.get('qty');
+  const reasonParam = searchParams.get('reason') || '';
 
-  // Form states
-  const [selectedItemId, setSelectedItemId] = useState<string>('');
-  const [jumlah, setJumlah] = useState<string>('1');
-  const [keperluan, setKeperluan] = useState<string>('');
+  const [userId, setUserId] = useState<string | null>(null);
+  const [items, setItems] = useState<Item[]>([]);
+  const [requests, setRequests] = useState<RequestWithDetails[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Form states initialized directly from search parameters if present
+  const [selectedItemId, setSelectedItemId] = useState<string>(itemParam);
+  const [jumlah, setJumlah] = useState<number>(() =>
+    qtyParam && !isNaN(Number(qtyParam)) ? Math.max(1, Number(qtyParam)) : 1
+  );
+  const [keperluan, setKeperluan] = useState<string>(reasonParam);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const loadRequests = useCallback(async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+  // Mobile active tab ('form' | 'table')
+  const [mobileTab, setMobileTab] = useState<'form' | 'table'>('form');
 
-      const { data, error } = await supabase
-        .from('requests')
-        .select('*, items(*)')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+  // Selected request for inspector
+  const [selectedRequest, setSelectedRequest] = useState<RequestWithDetails | null>(null);
 
-      if (error) {
-        showToast('Gagal memuat riwayat permintaan.', 'error');
-        return;
-      }
+  // Table pagination
+  const [page, setPage] = useState(1);
+  const pageSize = 5;
 
-      setMyRequests((data as RequestWithDetails[]) || []);
-    } catch {
-      showToast('Gagal memuat riwayat permintaan.', 'error');
-    } finally {
-      setIsLoadingRequests(false);
-    }
-  }, [supabase, showToast]);
+  // Selected item reference
+  const selectedItem = useMemo(() => {
+    return items.find((it) => it.id === selectedItemId) || null;
+  }, [items, selectedItemId]);
 
-  // Initial data loading on mount
+  // Load items and user requests asynchronously after mount
   useEffect(() => {
-    let isMounted = true;
+    let ignore = false;
 
-    async function init() {
+    async function loadInitialData() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user || !isMounted) return;
+        const { data: authData } = await supabase.auth.getUser();
+        if (!authData?.user || ignore) return;
+        setUserId(authData.user.id);
 
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
+        const [itemsRes, reqRes] = await Promise.all([
+          supabase.from('items').select('*').order('nama', { ascending: true }),
+          supabase
+            .from('requests')
+            .select('*, items(*)')
+            .eq('user_id', authData.user.id)
+            .order('created_at', { ascending: false }),
+        ]);
 
-        if (isMounted && profileData) {
-          setProfile(profileData as Profile);
-        }
-
-        const { data: itemsData } = await supabase
-          .from('items')
-          .select('*')
-          .order('nama', { ascending: true });
-
-        if (isMounted && itemsData && itemsData.length > 0) {
-          setItems(itemsData as Item[]);
-          setSelectedItemId(itemsData[0].id);
-        }
-
-        const { data: requestsData, error: reqError } = await supabase
-          .from('requests')
-          .select('*, items(*)')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (!reqError && isMounted) {
-          setMyRequests((requestsData as RequestWithDetails[]) || []);
+        if (!ignore) {
+          if (itemsRes.data) {
+            setItems(itemsRes.data as Item[]);
+          }
+          if (reqRes.data) {
+            setRequests(reqRes.data as RequestWithDetails[]);
+          }
         }
       } catch {
-        if (isMounted) showToast('Gagal memuat data pengguna.', 'error');
+        if (!ignore) showToast('Terjadi kesalahan saat memuat data.', 'error');
       } finally {
-        if (isMounted) {
-          setIsLoadingProfile(false);
-          setIsLoadingRequests(false);
-        }
+        if (!ignore) setIsLoading(false);
       }
     }
 
-    init();
+    loadInitialData();
 
     return () => {
-      isMounted = false;
+      ignore = true;
     };
   }, [supabase, showToast]);
 
-  // Realtime subscription for request updates (e.g. status changes marked by admin)
+  // Realtime subscription for request updates (e.g. GA marks as completed)
   useEffect(() => {
-    if (!profile) return;
+    if (!userId) return;
 
     const channel = supabase
-      .channel('user-requests-channel')
+      .channel('user_requests_realtime')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'requests',
-          filter: `user_id=eq.${profile.id}`,
+          filter: `user_id=eq.${userId}`,
         },
         async (payload) => {
           if (payload.eventType === 'UPDATE') {
-            setMyRequests((prev) =>
-              prev.map((req) =>
-                req.id === payload.new.id
-                  ? {
-                      ...req,
-                      status: payload.new.status,
-                      completed_at: payload.new.completed_at,
-                    }
-                  : req
-              )
-            );
-            if (payload.new.status === 'selesai') {
-              showToast('Permintaan ATK Anda telah ditandai Selesai oleh GA.', 'success');
+            const updated = payload.new as RequestWithDetails;
+            if (updated.status === 'selesai') {
+              showToast(
+                `Permintaan ${updated.nomor || ''} telah diselesaikan oleh GA.`,
+                'success'
+              );
             }
-          } else if (payload.eventType === 'INSERT') {
-            loadRequests();
+          }
+          // Refresh list asynchronously
+          const { data } = await supabase
+            .from('requests')
+            .select('*, items(*)')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+          if (data) {
+            setRequests(data as RequestWithDetails[]);
           }
         }
       )
@@ -156,266 +144,586 @@ export default function UserDashboardPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, profile, loadRequests, showToast]);
+  }, [supabase, userId, showToast]);
 
-  // Submit new request
-  const handleSubmitRequest = async (e: React.FormEvent) => {
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile) return;
+    setFormError(null);
 
-    const parsedJumlah = parseInt(jumlah, 10);
-    if (isNaN(parsedJumlah) || parsedJumlah <= 0) {
-      setFormError('Jumlah barang harus lebih dari 0.');
+    if (!selectedItemId) {
+      setFormError('Silakan pilih barang ATK terlebih dahulu.');
+      return;
+    }
+
+    if (!jumlah || jumlah < 1) {
+      setFormError('Jumlah permintaan minimal 1.');
       return;
     }
 
     if (!keperluan.trim()) {
-      setFormError('Keperluan permintaan wajib diisi.');
+      setFormError('Harap cantumkan keperluan pengajuan ATK.');
       return;
     }
 
-    if (!selectedItemId) {
-      setFormError('Silakan pilih jenis barang ATK.');
+    if (!userId) {
+      setFormError('Sesi pengguna tidak valid. Silakan muat ulang halaman.');
       return;
     }
 
     setIsSubmitting(true);
-    setFormError(null);
 
     try {
       const { data, error } = await supabase
         .from('requests')
         .insert({
-          user_id: profile.id,
+          user_id: userId,
           item_id: selectedItemId,
-          jumlah: parsedJumlah,
+          jumlah,
           keperluan: keperluan.trim(),
           status: 'diproses',
-          completed_at: null,
         })
         .select('*, items(*)')
         .single();
 
       if (error) {
-        setFormError(error.message);
+        setFormError('Gagal mengirimkan permintaan: ' + error.message);
         return;
       }
 
-      showToast('Permintaan ATK berhasil dikirim ke General Affairs.', 'success');
+      showToast('Permintaan ATK berhasil diajukan.', 'success');
 
-      // Update state and reset form
+      // Prepend to requests list
       if (data) {
-        setMyRequests((prev) => [data as RequestWithDetails, ...prev]);
+        setRequests((prev) => [data as RequestWithDetails, ...prev]);
       }
-      setJumlah('1');
+
+      // Reset form
+      setSelectedItemId('');
+      setJumlah(1);
       setKeperluan('');
+      setPage(1);
+
+      // On mobile switch to table view to see the new request
+      setMobileTab('table');
     } catch {
-      setFormError('Gagal mengirimkan permintaan. Silakan coba kembali.');
+      setFormError('Terjadi kesalahan jaringan saat mengirim permintaan.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const selectedItem = items.find((i) => i.id === selectedItemId);
+  // Stepper handlers
+  const handleIncrement = () => setJumlah((prev) => prev + 1);
+  const handleDecrement = () => setJumlah((prev) => Math.max(1, prev - 1));
 
-  return (
-    <div className="space-y-6">
-      {/* Section 1: Request Submission Card */}
-      <section className="bg-surface rounded-card border border-border p-5 sm:p-6 shadow-subtle">
-        <div className="border-b border-border pb-4 mb-5">
-          <h1 className="text-lg font-semibold text-text-main tracking-tight">
-            Pengajuan Permintaan ATK
-          </h1>
-          <p className="text-xs text-text-muted mt-1">
-            Permintaan otomatis disetujui dan langsung masuk ke antrean pemrosesan tim General Affairs.
+  // Compute KPI metrics for current calendar month
+  const metrics = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    let totalMonth = 0;
+    let pendingCount = 0;
+    let completedMonth = 0;
+
+    requests.forEach((req) => {
+      const d = new Date(req.created_at);
+      const isThisMonth = d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+
+      if (isThisMonth) {
+        totalMonth += 1;
+      }
+
+      if (req.status === 'diproses') {
+        pendingCount += 1;
+      }
+
+      if (req.status === 'selesai') {
+        const compDate = req.completed_at ? new Date(req.completed_at) : d;
+        if (compDate.getMonth() === currentMonth && compDate.getFullYear() === currentYear) {
+          completedMonth += 1;
+        }
+      }
+    });
+
+    return { totalMonth, pendingCount, completedMonth };
+  }, [requests]);
+
+  // Paginated requests for compact table
+  const paginatedRequests = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return requests.slice(start, start + pageSize);
+  }, [requests, page, pageSize]);
+
+  // DataTable columns
+  const columns: ColumnDef<RequestWithDetails>[] = [
+    {
+      id: 'nomor',
+      header: 'Nomor Tiket',
+      cell: (row) => (
+        <span className="font-semibold text-primary tracking-tight">
+          {row.nomor || `REQ-${row.id.slice(0, 8)}`}
+        </span>
+      ),
+    },
+    {
+      id: 'tanggal',
+      header: 'Waktu Pengajuan',
+      cell: (row) => (
+        <span className="text-xs text-text-muted">
+          {formatDate(row.created_at)}
+        </span>
+      ),
+    },
+    {
+      id: 'barang',
+      header: 'Barang & Kuantitas',
+      cell: (row) => (
+        <div className="min-w-0">
+          <p className="font-medium text-text-main text-xs truncate">
+            {row.items?.nama || 'Barang Dihapus'}
+          </p>
+          <p className="text-[11px] text-text-muted">
+            {row.jumlah} {row.items?.satuan || 'unit'}
           </p>
         </div>
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      cell: (row) => (
+        <Badge variant={row.status === 'selesai' ? 'selesai' : 'diproses'}>
+          {row.status === 'selesai' ? 'Selesai' : 'Diproses'}
+        </Badge>
+      ),
+    },
+  ];
 
-        {formError && (
-          <div className="mb-4 p-3 rounded-control bg-danger-soft border border-danger/20 text-danger text-xs leading-relaxed">
-            {formError}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmitRequest} className="space-y-4">
-          {/* Readonly Division */}
-          <div>
-            <label className="block text-xs font-medium text-text-main mb-1.5 flex items-center gap-1.5">
-              <Building2 className="w-3.5 h-3.5 text-text-muted" strokeWidth={1.5} />
-              <span>Divisi Pemohon</span>
-            </label>
-            <input
-              type="text"
-              readOnly
-              disabled
-              value={isLoadingProfile ? 'Memuat profil...' : profile?.nama_divisi || 'Divisi Operasional & Komersial'}
-              className="w-full rounded-control border border-border bg-bg/80 px-3 py-2 text-base sm:text-xs text-text-main font-medium min-h-[44px] sm:min-h-[36px] sm:h-9 cursor-not-allowed select-none"
-            />
-          </div>
-
-          {/* Item Selector */}
-          <div>
-            <label htmlFor="atk-select" className="block text-xs font-medium text-text-main mb-1.5 flex items-center gap-1.5">
-              <Package className="w-3.5 h-3.5 text-text-muted" strokeWidth={1.5} />
-              <span>Pilih Barang ATK</span>
-            </label>
-            <Select
-              id="atk-select"
-              value={selectedItemId}
-              onChange={(e) => setSelectedItemId(e.target.value)}
-              disabled={items.length === 0}
-            >
-              {items.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.nama} ({item.satuan})
-                </option>
-              ))}
-            </Select>
-          </div>
-
-          {/* Quantity & Purpose Grid (1 col on mobile, 2 cols on md) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-1">
-              <Input
-                id="jumlah"
-                type="number"
-                min="1"
-                label={`Jumlah (${selectedItem?.satuan || 'satuan'})`}
-                value={jumlah}
-                onChange={(e) => setJumlah(e.target.value)}
-                required
-              />
-            </div>
-            <div className="md:col-span-2">
-              <Textarea
-                id="keperluan"
-                label="Keperluan Penggunaan"
-                placeholder="Contoh: Operasional gate pass peti kemas shift malam"
-                rows={2}
-                value={keperluan}
-                onChange={(e) => setKeperluan(e.target.value)}
-                required
-              />
+  return (
+    <PageContainer
+      title="Dashboard Permintaan"
+      subtitle="Pengajuan dan pemantauan status alat tulis kantor divisi operasional."
+      actions={
+        <div className="flex items-center gap-2">
+          <Link
+            href="/user/katalog"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-medium text-text-main bg-surface border border-border hover:bg-bg transition-colors"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-text-muted" />
+            <span>Katalog ATK</span>
+          </Link>
+          <Link
+            href="/user/riwayat"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-medium text-text-main bg-surface border border-border hover:bg-bg transition-colors"
+          >
+            <Clock className="w-3.5 h-3.5 text-text-muted" />
+            <span>Riwayat Lengkap</span>
+          </Link>
+        </div>
+      }
+    >
+      <div className="h-full flex flex-col gap-3.5 min-h-0">
+        {/* Strip 3 KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
+          <div className="bg-surface rounded-card border border-border px-4 py-3 flex flex-col justify-between">
+            <span className="text-xs font-medium text-text-muted">
+              Total Diajukan Bulan Ini
+            </span>
+            <div className="mt-1 flex items-baseline justify-between">
+              <span className="text-2xl font-bold text-text-main tabular-nums">
+                {isLoading ? '-' : metrics.totalMonth}
+              </span>
+              <span className="text-[11px] text-text-muted font-normal">
+                tiket pengajuan
+              </span>
             </div>
           </div>
 
-          {/* Submit Action */}
-          <div className="pt-2 flex justify-end">
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={isSubmitting}
-              className="w-full sm:w-auto px-6 cursor-pointer"
-            >
-              <Send className="w-4 h-4 mr-2" strokeWidth={1.5} />
-              <span>Kirim Permintaan</span>
-            </Button>
+          <div className="bg-surface rounded-card border border-border px-4 py-3 flex flex-col justify-between">
+            <span className="text-xs font-medium text-text-muted">
+              Sedang Diproses
+            </span>
+            <div className="mt-1 flex items-baseline justify-between">
+              <span className="text-2xl font-bold text-warning tabular-nums">
+                {isLoading ? '-' : metrics.pendingCount}
+              </span>
+              <span className="text-[11px] text-text-muted font-normal">
+                disiapkan GA
+              </span>
+            </div>
           </div>
-        </form>
-      </section>
 
-      {/* Section 2: Request History Card & Table */}
-      <section className="bg-surface rounded-card border border-border shadow-subtle overflow-hidden">
-        <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-text-main">
-              Riwayat Permintaan Saya
-            </h2>
-            <p className="text-xs text-text-muted mt-0.5">
-              Daftar pengajuan ATK oleh divisi Anda beserta status pemrosesan
-            </p>
+          <div className="bg-surface rounded-card border border-border px-4 py-3 flex flex-col justify-between">
+            <span className="text-xs font-medium text-text-muted">
+              Selesai Bulan Ini
+            </span>
+            <div className="mt-1 flex items-baseline justify-between">
+              <span className="text-2xl font-bold text-success tabular-nums">
+                {isLoading ? '-' : metrics.completedMonth}
+              </span>
+              <span className="text-[11px] text-text-muted font-normal">
+                serah terima selesai
+              </span>
+            </div>
           </div>
-          <span className="text-xs text-text-muted">
-            Total: <strong className="text-text-main tabular-nums">{myRequests.length}</strong>
-          </span>
         </div>
 
-        {isLoadingRequests ? (
-          <div className="p-5 space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-11 w-full" />
-            ))}
-          </div>
-        ) : myRequests.length === 0 ? (
-          <div className="p-8">
-            <EmptyState
-              icon={ClipboardList}
-              title="Belum ada riwayat permintaan"
-              description="Formulir di atas dapat digunakan untuk mengajukan barang ATK pertama Anda."
-            />
-          </div>
-        ) : (
-          <div>
-            {/* Desktop Table View (>= md) */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-bg text-text-muted border-b border-border font-medium">
-                  <tr>
-                    <th className="py-3 px-4">Tanggal Pengajuan</th>
-                    <th className="py-3 px-4">Nama Barang</th>
-                    <th className="py-3 px-4 text-right">Jumlah</th>
-                    <th className="py-3 px-4">Keperluan</th>
-                    <th className="py-3 px-4 text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/60">
-                  {myRequests.map((req) => (
-                    <tr key={req.id} className="hover:bg-bg/60 transition-colors">
-                      <td className="py-3 px-4 text-text-muted whitespace-nowrap">
-                        {formatDate(req.created_at)}
-                      </td>
-                      <td className="py-3 px-4 font-semibold text-text-main">
-                        {req.items?.nama || 'Barang ATK'}
-                      </td>
-                      <td className="py-3 px-4 text-right font-medium text-text-main tabular-nums whitespace-nowrap">
-                        {req.jumlah} {req.items?.satuan || 'pcs'}
-                      </td>
-                      <td className="py-3 px-4 text-text-muted max-w-[240px] truncate">
-                        {req.keperluan}
-                      </td>
-                      <td className="py-3 px-4 text-center whitespace-nowrap">
-                        <Badge variant={req.status === 'selesai' ? 'selesai' : 'diproses'}>
-                          {req.status === 'selesai' ? 'Selesai' : 'Diproses'}
-                        </Badge>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        {/* Mobile View Toggle Segmented Control (hidden on lg+) */}
+        <div className="lg:hidden flex rounded-control bg-bg p-0.5 border border-border shrink-0">
+          <button
+            type="button"
+            onClick={() => setMobileTab('form')}
+            className={`flex-1 py-1.5 text-xs font-medium rounded-control transition-all ${
+              mobileTab === 'form'
+                ? 'bg-surface text-text-main shadow-subtle'
+                : 'text-text-muted hover:text-text-main'
+            }`}
+          >
+            Form Pengajuan
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab('table')}
+            className={`flex-1 py-1.5 text-xs font-medium rounded-control transition-all ${
+              mobileTab === 'table'
+                ? 'bg-surface text-text-main shadow-subtle'
+                : 'text-text-muted hover:text-text-main'
+            }`}
+          >
+            Permintaan Terbaru ({requests.length})
+          </button>
+        </div>
+
+        {/* Two-Column Responsive Workspace */}
+        <div className="flex-1 flex flex-col lg:flex-row gap-4 min-h-0 overflow-y-auto lg:overflow-hidden">
+          {/* Left Column: Form Permintaan ATK */}
+          <div
+            className={`w-full lg:w-[420px] xl:w-[460px] shrink-0 bg-surface rounded-card border border-border p-4 sm:p-5 flex flex-col min-h-0 overflow-y-auto ${
+              mobileTab === 'table' ? 'hidden lg:flex' : 'flex'
+            }`}
+          >
+            <div className="pb-3 border-b border-border/70 mb-4 shrink-0">
+              <h2 className="text-sm font-semibold text-text-main tracking-tight">
+                Form Permintaan ATK
+              </h2>
+              <p className="text-xs text-text-muted mt-0.5">
+                Pilih barang inventaris dan cantumkan jumlah keperluan.
+              </p>
             </div>
 
-            {/* Mobile Card View (< md) */}
-            <div className="md:hidden divide-y divide-border/60">
-              {myRequests.map((req) => (
-                <div key={req.id} className="p-4 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <span className="text-sm font-semibold text-text-main leading-snug">
-                      {req.items?.nama || 'Barang ATK'}
-                    </span>
-                    <Badge variant={req.status === 'selesai' ? 'selesai' : 'diproses'}>
-                      {req.status === 'selesai' ? 'Selesai' : 'Diproses'}
-                    </Badge>
-                  </div>
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between space-y-4">
+              <div className="space-y-3.5">
+                {/* Item Selection */}
+                <div>
+                  <label htmlFor="item-select" className="block text-xs font-medium text-text-main mb-1.5">
+                    Pilih Barang ATK <span className="text-danger">*</span>
+                  </label>
+                  <select
+                    id="item-select"
+                    value={selectedItemId}
+                    onChange={(e) => {
+                      setSelectedItemId(e.target.value);
+                      setFormError(null);
+                    }}
+                    className="w-full rounded-control border border-border bg-bg px-3 py-2 text-xs text-text-main transition-colors focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  >
+                    <option value="">-- Pilih Barang dari Katalog --</option>
+                    {items.map((it) => (
+                      <option key={it.id} value={it.id}>
+                        {it.kode ? `[${it.kode}] ` : ''}{it.nama} ({it.satuan}) {it.stok === 0 ? '- [Stok Kosong]' : it.stok <= it.stok_minimum ? '- [Stok Terbatas]' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                  <div className="flex items-center justify-between text-xs text-text-muted">
-                    <span>
-                      Jumlah: <strong className="text-text-main tabular-nums">{req.jumlah} {req.items?.satuan || 'pcs'}</strong>
-                    </span>
-                    <span className="text-[11px] text-text-muted">
-                      {formatDate(req.created_at)}
-                    </span>
-                  </div>
+                {/* Stock Context Notice */}
+                {selectedItem && (
+                  <div className="rounded-control bg-bg/80 border border-border p-2.5 text-xs space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-text-muted">Kategori:</span>
+                      <span className="font-medium text-text-main">{selectedItem.kategori || 'Umum'}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-text-muted">Kondisi Persediaan Fisik:</span>
+                      <span
+                        className={`font-semibold ${
+                          selectedItem.stok === 0
+                            ? 'text-danger'
+                            : selectedItem.stok <= selectedItem.stok_minimum
+                            ? 'text-warning'
+                            : 'text-text-muted'
+                        }`}
+                      >
+                        {selectedItem.stok === 0
+                          ? 'Stok Fisik Kosong'
+                          : selectedItem.stok <= selectedItem.stok_minimum
+                          ? `Stok Terbatas (${selectedItem.stok} ${selectedItem.satuan})`
+                          : `Tersedia (${selectedItem.stok} ${selectedItem.satuan})`}
+                      </span>
+                    </div>
 
-                  <div className="text-xs text-text-muted bg-bg/70 p-2 rounded-control">
-                    <span className="font-medium text-text-main">Keperluan: </span>
-                    {req.keperluan}
+                    {selectedItem.stok === 0 && (
+                      <div className="pt-1.5 mt-1 border-t border-border/60 flex items-start gap-1.5 text-text-muted text-[11px] leading-relaxed">
+                        <AlertCircle className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                        <span>
+                          Permintaan tetap diterima dan diproses. Tim GA akan segera melakukan pembelian persediaan.
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Quantity with Interactive Stepper */}
+                <div>
+                  <label htmlFor="jumlah-input" className="block text-xs font-medium text-text-main mb-1.5">
+                    Jumlah Permintaan <span className="text-danger">*</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <div className="inline-flex items-center rounded-control border border-border bg-bg overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={handleDecrement}
+                        disabled={jumlah <= 1}
+                        className="px-3 py-2 text-text-muted hover:text-text-main hover:bg-surface disabled:opacity-40 transition-colors"
+                        aria-label="Kurangi jumlah"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                      <input
+                        id="jumlah-input"
+                        type="number"
+                        min="1"
+                        value={jumlah}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          setJumlah(isNaN(val) ? 1 : Math.max(1, val));
+                        }}
+                        className="w-16 text-center bg-transparent text-xs font-semibold text-text-main focus:outline-none tabular-nums"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleIncrement}
+                        className="px-3 py-2 text-text-muted hover:text-text-main hover:bg-surface transition-colors"
+                        aria-label="Tambah jumlah"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <span className="text-xs text-text-muted font-medium px-2.5 py-1.5 bg-bg rounded-control border border-border/60">
+                      {selectedItem?.satuan || 'Unit'}
+                    </span>
                   </div>
                 </div>
-              ))}
+
+                {/* Keperluan / Purpose */}
+                <div>
+                  <label htmlFor="keperluan-input" className="block text-xs font-medium text-text-main mb-1.5">
+                    Keperluan Pengajuan <span className="text-danger">*</span>
+                  </label>
+                  <textarea
+                    id="keperluan-input"
+                    rows={3}
+                    required
+                    value={keperluan}
+                    onChange={(e) => {
+                      setKeperluan(e.target.value);
+                      setFormError(null);
+                    }}
+                    placeholder="Contoh: Kebutuhan administrasi operasional loket gerbang dermaga..."
+                    className="w-full rounded-control border border-border bg-bg p-3 text-xs text-text-main placeholder:text-text-muted/60 transition-colors focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
+                  />
+                </div>
+
+                {/* Error Banner */}
+                {formError && (
+                  <div className="rounded-control bg-danger-soft border border-danger/20 p-2.5 text-xs text-danger leading-relaxed">
+                    {formError}
+                  </div>
+                )}
+              </div>
+
+              {/* Action Button */}
+              <div className="pt-2">
+                <button
+                  type="submit"
+                  disabled={isSubmitting || isLoading}
+                  className="w-full inline-flex items-center justify-center rounded-control bg-primary hover:bg-primary-dark text-white px-4 py-2.5 text-xs font-semibold shadow-subtle transition-all disabled:opacity-60 cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                      <span>Mengirim Permintaan...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5 mr-2" />
+                      <span>Kirim Permintaan</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Right Column: Tabel Permintaan Terbaru Saya */}
+          <div
+            className={`flex-1 min-w-0 bg-surface rounded-card border border-border flex flex-col min-h-0 overflow-hidden ${
+              mobileTab === 'form' ? 'hidden lg:flex' : 'flex'
+            }`}
+          >
+            <div className="px-4 py-3 border-b border-border/70 flex items-center justify-between shrink-0">
+              <div>
+                <h2 className="text-sm font-semibold text-text-main tracking-tight">
+                  Permintaan Terbaru Saya
+                </h2>
+                <p className="text-xs text-text-muted">
+                  Pelacakan real-time serah terima barang operasional.
+                </p>
+              </div>
+
+              <Link
+                href="/user/riwayat"
+                className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary-dark transition-colors"
+              >
+                <span>Lihat Semua</span>
+                <ExternalLink className="w-3 h-3" />
+              </Link>
+            </div>
+
+            <div className="flex-1 min-h-0 flex flex-col">
+              <DataTable
+                columns={columns}
+                data={paginatedRequests}
+                totalCount={requests.length}
+                page={page}
+                pageSize={pageSize}
+                onPageChange={setPage}
+                isLoading={isLoading}
+                emptyMessage="Belum ada riwayat pengajuan ATK."
+                onRowClick={(row) => setSelectedRequest(row)}
+                className="h-full border-0"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Inspector Panel for Selected Request */}
+      <Inspector
+        isOpen={!!selectedRequest}
+        onClose={() => setSelectedRequest(null)}
+        title={selectedRequest?.nomor || 'Rincian Permintaan'}
+        subtitle={`Diajukan pada ${selectedRequest ? formatDate(selectedRequest.created_at) : ''}`}
+        footer={
+          selectedRequest && (
+            <div className="flex items-center gap-2 w-full">
+              <button
+                type="button"
+                onClick={() => {
+                  const req = selectedRequest;
+                  setSelectedRequest(null);
+                  if (req.items?.id) {
+                    setSelectedItemId(req.items.id);
+                    setJumlah(req.jumlah);
+                    setKeperluan(req.keperluan);
+                    setMobileTab('form');
+                    showToast('Data pengajuan telah disalin ke formulir.', 'info');
+                  }
+                }}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-control bg-primary hover:bg-primary-dark text-white text-xs font-semibold transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Ajukan Ulang</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedRequest(null)}
+                className="px-3 py-2 rounded-control border border-border hover:bg-bg text-text-main text-xs font-medium transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
+          )
+        }
+      >
+        {selectedRequest && (
+          <div className="space-y-5 text-xs">
+            {/* Status & Item Headline */}
+            <div className="rounded-control bg-bg p-3 border border-border/80 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-text-muted font-medium">Status Pengajuan</span>
+                <Badge variant={selectedRequest.status === 'selesai' ? 'selesai' : 'diproses'}>
+                  {selectedRequest.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'}
+                </Badge>
+              </div>
+              <div className="flex items-center justify-between pt-1 border-t border-border/50">
+                <span className="text-text-muted">Barang</span>
+                <span className="font-semibold text-text-main text-right">
+                  {selectedRequest.items?.nama}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-text-muted">Kuantitas</span>
+                <span className="font-semibold text-text-main">
+                  {selectedRequest.jumlah} {selectedRequest.items?.satuan || 'unit'}
+                </span>
+              </div>
+            </div>
+
+            {/* Purpose */}
+            <div>
+              <span className="block text-text-muted font-medium mb-1">
+                Keperluan
+              </span>
+              <p className="rounded-control bg-bg border border-border/60 p-2.5 text-text-main leading-relaxed">
+                {selectedRequest.keperluan}
+              </p>
+            </div>
+
+            {/* GA Follow-up Notes (if any) */}
+            {selectedRequest.catatan_ga && (
+              <div>
+                <span className="block text-text-muted font-medium mb-1">
+                  Catatan General Affairs
+                </span>
+                <div className="rounded-control bg-primary-soft/40 border border-primary/20 p-2.5 text-text-main leading-relaxed">
+                  {selectedRequest.catatan_ga}
+                </div>
+              </div>
+            )}
+
+            {/* Timeline progression */}
+            <div>
+              <span className="block text-text-muted font-medium mb-2">
+                Kronologi & Riwayat Status
+              </span>
+              <Timeline
+                createdAt={selectedRequest.created_at}
+                status={selectedRequest.status}
+                completedAt={selectedRequest.completed_at}
+                catatanGa={selectedRequest.catatan_ga}
+              />
             </div>
           </div>
         )}
-      </section>
-    </div>
+      </Inspector>
+    </PageContainer>
+  );
+}
+
+export default function UserDashboardPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full h-full flex items-center justify-center p-8">
+          <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <UserDashboardContent />
+    </Suspense>
   );
 }
