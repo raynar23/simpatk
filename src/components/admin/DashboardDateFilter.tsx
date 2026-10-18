@@ -328,7 +328,7 @@ export function DashboardDateFilter({
         >
           <Calendar className="w-3.5 h-3.5 shrink-0" strokeWidth={1.5} />
           <span className="tabular-nums">
-            {formatDisplayDateShort(currentRange.startDate)} – {formatDisplayDate(currentRange.endDate)}
+            {formatDisplayDateShort(currentRange.startDate)} - {formatDisplayDate(currentRange.endDate)}
           </span>
           <ChevronDown className="w-3 h-3 text-text-muted shrink-0" strokeWidth={1.5} />
         </button>
@@ -432,14 +432,14 @@ export function DashboardDateFilter({
                 onClick={() => handleModalShift('prev')}
                 className="px-2 py-1 rounded-badge border border-border text-[11px] text-text-main hover:bg-surface transition-colors cursor-pointer"
               >
-                ← Periode Lalu
+                &lt; Periode Lalu
               </button>
               <button
                 type="button"
                 onClick={() => handleModalShift('next')}
                 className="px-2 py-1 rounded-badge border border-border text-[11px] text-text-main hover:bg-surface transition-colors cursor-pointer"
               >
-                Periode Maju →
+                Periode Maju &gt;
               </button>
             </div>
           </div>

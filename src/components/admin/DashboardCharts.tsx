@@ -247,7 +247,7 @@ export function DashboardCharts({
                   return (
                     <div className="bg-surface border border-border p-2.5 rounded-control shadow-modal text-xs select-none">
                       <p className="font-semibold text-text-main">{item.nama}</p>
-                      <p className="text-[11px] text-text-muted font-mono">{item.kode} • {item.kategori}</p>
+                      <p className="text-[11px] text-text-muted font-mono">{item.kode} - {item.kategori}</p>
                       <div className="mt-1.5 pt-1.5 border-t border-border flex items-center justify-between gap-4 text-text-main">
                         <span>Total Diminta:</span>
                         <span className="font-semibold tabular-nums">{item.total_diminta} {item.satuan}</span>
@@ -442,7 +442,7 @@ export function DashboardCharts({
       <div className="flex items-center justify-center gap-5 text-xs text-text-muted pt-2.5 border-t border-border/40 select-none">
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-xs bg-[#1175BB]" />
-          <span>Stok Fisik (Merah jika ≤ Minimum)</span>
+          <span>Stok Fisik (Merah jika &lt;= Minimum)</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2.5 h-2.5 rounded-xs bg-[#94A3B8]" />

@@ -277,12 +277,12 @@ export default function AdminPengaturanPage() {
                 <span className="font-semibold text-text-main">Bahasa Indonesia (id-ID)</span>
               </div>
               <div className="flex items-center justify-between py-1 border-b border-border/50">
-                <span className="text-text-muted">Arsitektur Basis Data</span>
-                <span className="font-semibold text-text-main">PostgreSQL 15 + RLS</span>
+                <span className="text-text-muted">Status Layanan</span>
+                <span className="font-semibold text-success">Operasional Normal</span>
               </div>
               <div className="flex items-center justify-between py-1">
-                <span className="text-text-muted">Keamanan Akses Klien</span>
-                <span className="font-semibold text-success">Aktif (Role Definer)</span>
+                <span className="text-text-muted">Keamanan Akses</span>
+                <span className="font-semibold text-text-main">Standar Korporat Terproteksi</span>
               </div>
             </div>
           </div>

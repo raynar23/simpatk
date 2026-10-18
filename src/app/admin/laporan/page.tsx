@@ -154,6 +154,38 @@ export default function AdminLaporanPage() {
   const [inspectedItem, setInspectedItem] = useState<ItemConsumptionRow | null>(null);
   const [inspectedStock, setInspectedStock] = useState<StockAuditRow | null>(null);
 
+  // Print mode detection for full table export and document title
+  const [isPrinting, setIsPrinting] = useState(false);
+
+  useEffect(() => {
+    const pageTitle = 'SIMPATK - Pelindo Terminal Petikemas Laporan';
+    document.title = pageTitle;
+
+    const handleBeforePrint = () => {
+      document.title = pageTitle;
+      setIsPrinting(true);
+    };
+    const handleAfterPrint = () => {
+      document.title = pageTitle;
+      setIsPrinting(false);
+    };
+
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, []);
+
+  const handlePrint = () => {
+    document.title = 'SIMPATK - Pelindo Terminal Petikemas Laporan';
+    setIsPrinting(true);
+    setTimeout(() => {
+      window.print();
+    }, 50);
+  };
+
   // Load report data matching active date filter
   useEffect(() => {
     let ignore = false;
@@ -439,8 +471,8 @@ export default function AdminLaporanPage() {
       r.durasiJam !== null ? r.durasiJam.toFixed(1) : '-',
       r.keperluan || '-',
     ]);
-    downloadCsv(`laporan_transaksi_permintaan_${formatDateShort(new Date())}.csv`, headers, rows);
-    showToast('Laporan riwayat transaksi berhasil diunduh.', 'success');
+    downloadCsv(`laporan_riwayat_permintaan_${formatDateShort(new Date())}.csv`, headers, rows);
+    showToast('Laporan riwayat permintaan berhasil diunduh.', 'success');
   };
 
   const handleExportMonthly = () => {
@@ -551,7 +583,7 @@ export default function AdminLaporanPage() {
       cell: (row) => (
         <div>
           <p className="text-xs font-medium text-text-main leading-tight">{row.namaBarang}</p>
-          <p className="text-[10px] text-text-muted font-mono">{row.kodeBarang} • {row.kategoriBarang}</p>
+          <p className="text-[10px] text-text-muted font-mono">{row.kodeBarang} - {row.kategoriBarang}</p>
         </div>
       ),
     },
@@ -589,6 +621,7 @@ export default function AdminLaporanPage() {
     {
       id: 'aksi',
       header: 'Aksi',
+      className: 'print:hidden',
       excludeFromCsv: true,
       isNumeric: true,
       cell: (row) => (
@@ -753,6 +786,7 @@ export default function AdminLaporanPage() {
     {
       id: 'aksi',
       header: 'Aksi',
+      className: 'print:hidden',
       excludeFromCsv: true,
       isNumeric: true,
       cell: (row) => (
@@ -849,6 +883,7 @@ export default function AdminLaporanPage() {
     {
       id: 'aksi',
       header: 'Aksi',
+      className: 'print:hidden',
       excludeFromCsv: true,
       isNumeric: true,
       cell: (row) => (
@@ -866,7 +901,7 @@ export default function AdminLaporanPage() {
 
   // Header controls for PageContainer: Comprehensive Date Filter (7d to 2y) & Print Action
   const headerActions = (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto justify-end">
+    <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto justify-end print:hidden">
       <div className="w-full sm:w-auto">
         <DashboardDateFilter
           currentRange={dateRange}
@@ -878,7 +913,7 @@ export default function AdminLaporanPage() {
 
       <button
         type="button"
-        onClick={() => window.print()}
+        onClick={handlePrint}
         className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control bg-primary hover:bg-primary/90 text-white shadow-xs transition-colors cursor-pointer min-h-[32px] w-full sm:w-auto shrink-0"
       >
         <Printer className="w-3.5 h-3.5" strokeWidth={1.5} />
@@ -890,7 +925,7 @@ export default function AdminLaporanPage() {
   return (
     <PageContainer
       title="Laporan Operasional"
-      subtitle="Pusat pelaporan berkala, analisis riwayat transaksi, konsumsi ATK, dan posisi aset persediaan"
+      subtitle="Pusat pelaporan berkala, analisis riwayat permintaan, konsumsi ATK, dan posisi aset persediaan"
       actions={headerActions}
       className="print:p-0 print:m-0"
       contentClassName="space-y-3"
@@ -908,7 +943,13 @@ export default function AdminLaporanPage() {
             />
           </div>
           <h1 className="text-base font-bold text-text-main uppercase tracking-tight">
-            Laporan Operasional Alat Tulis Kantor (SIMPATK)
+            {activeReport === 'transaksi'
+              ? 'Laporan Riwayat Permintaan Alat Tulis Kantor'
+              : activeReport === 'rekapitulasi'
+              ? 'Laporan Rekapitulasi Kinerja Bulanan Alat Tulis Kantor'
+              : activeReport === 'konsumsi'
+              ? 'Laporan Konsumsi & Distribusi Barang Alat Tulis Kantor'
+              : 'Laporan Posisi Persediaan & Valuasi Fisik Alat Tulis Kantor'}
           </h1>
           <p className="text-xs text-text-muted">General Affairs - PT Pelindo Terminal Petikemas</p>
         </div>
@@ -927,7 +968,7 @@ export default function AdminLaporanPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border pb-2.5 gap-2.5 print:hidden w-full">
         <div className="grid grid-cols-2 sm:flex sm:flex-row p-1 rounded-control bg-bg border border-border text-xs gap-1 w-full sm:w-auto">
           {[
-            { key: 'transaksi' as const, label: 'Riwayat Transaksi', icon: ClipboardList },
+            { key: 'transaksi' as const, label: 'Riwayat Permintaan', icon: ClipboardList },
             { key: 'rekapitulasi' as const, label: 'Rekapitulasi Kinerja', icon: BarChart3 },
             { key: 'konsumsi' as const, label: 'Konsumsi Barang', icon: FileText },
             { key: 'persediaan' as const, label: 'Posisi Persediaan', icon: Boxes },
@@ -972,7 +1013,7 @@ export default function AdminLaporanPage() {
             <span>
               Unduh CSV{' '}
               {activeReport === 'transaksi'
-                ? 'Transaksi'
+                ? 'Permintaan'
                 : activeReport === 'rekapitulasi'
                 ? 'Rekapitulasi'
                 : activeReport === 'konsumsi'
@@ -1022,7 +1063,7 @@ export default function AdminLaporanPage() {
           {/* Table Container */}
           <DataTable
             columns={columnsTx}
-            data={filteredTransactionRows.slice((pageTx - 1) * 10, pageTx * 10)}
+            data={isPrinting ? filteredTransactionRows : filteredTransactionRows.slice((pageTx - 1) * 10, pageTx * 10)}
             exportData={filteredTransactionRows}
             totalCount={filteredTransactionRows.length}
             page={pageTx}
@@ -1102,7 +1143,7 @@ export default function AdminLaporanPage() {
 
           <DataTable
             columns={columnsMonthly}
-            data={monthlyRows.slice((pageMonthly - 1) * 10, pageMonthly * 10)}
+            data={isPrinting ? monthlyRows : monthlyRows.slice((pageMonthly - 1) * 10, pageMonthly * 10)}
             exportData={monthlyRows}
             totalCount={monthlyRows.length}
             page={pageMonthly}
@@ -1155,7 +1196,7 @@ export default function AdminLaporanPage() {
 
           <DataTable
             columns={columnsConsumption}
-            data={consumptionRows.slice((pageConsumption - 1) * 10, pageConsumption * 10)}
+            data={isPrinting ? consumptionRows : consumptionRows.slice((pageConsumption - 1) * 10, pageConsumption * 10)}
             exportData={consumptionRows}
             totalCount={consumptionRows.length}
             page={pageConsumption}
@@ -1210,7 +1251,7 @@ export default function AdminLaporanPage() {
 
           <DataTable
             columns={columnsStock}
-            data={stockAuditRows.slice((pageStock - 1) * 10, pageStock * 10)}
+            data={isPrinting ? stockAuditRows : stockAuditRows.slice((pageStock - 1) * 10, pageStock * 10)}
             exportData={stockAuditRows}
             totalCount={stockAuditRows.length}
             page={pageStock}
@@ -1298,7 +1339,7 @@ export default function AdminLaporanPage() {
               <span className="text-text-muted block text-[11px]">Barang yang Diajukan</span>
               <p className="font-semibold text-text-main text-sm">{inspectedTx.namaBarang}</p>
               <div className="flex items-center justify-between pt-1 text-text-muted font-mono">
-                <span>{inspectedTx.kodeBarang} • {inspectedTx.kategoriBarang}</span>
+                <span>{inspectedTx.kodeBarang} - {inspectedTx.kategoriBarang}</span>
                 <span className="font-bold text-primary tabular-nums">
                   {inspectedTx.jumlah} {inspectedTx.satuan}
                 </span>

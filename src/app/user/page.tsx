@@ -444,7 +444,7 @@ function UserDashboardContent() {
                       <option value="">-- Pilih Barang dari Katalog --</option>
                       {items.map((it) => (
                         <option key={it.id} value={it.id}>
-                          {it.kode ? `[${it.kode}] ` : ''}{it.nama} ({it.satuan}) {it.stok === 0 ? '- [Stok Kosong]' : it.stok <= it.stok_minimum ? '- [Stok Terbatas]' : ''}
+                          {it.kode ? `[${it.kode}] ` : ''}{it.nama} ({it.satuan}) - Stok: {it.stok}
                         </option>
                       ))}
                     </select>
@@ -455,40 +455,25 @@ function UserDashboardContent() {
                   </div>
                 </div>
 
-                {/* Stock Context Notice */}
+                {/* Stock Context Notice: Informational only, all requests accepted */}
                 {selectedItem && (
-                  <div className="rounded-control bg-bg/80 border border-border p-2.5 text-xs space-y-1">
+                  <div className="rounded-control bg-bg/80 border border-border p-2.5 text-xs space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-text-muted">Kategori:</span>
                       <span className="font-medium text-text-main">{selectedItem.kategori || 'Umum'}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-text-muted">Kondisi Persediaan Fisik:</span>
-                      <span
-                        className={`font-semibold ${
-                          selectedItem.stok === 0
-                            ? 'text-danger'
-                            : selectedItem.stok <= selectedItem.stok_minimum
-                            ? 'text-warning'
-                            : 'text-text-muted'
-                        }`}
-                      >
-                        {selectedItem.stok === 0
-                          ? 'Stok Fisik Kosong'
-                          : selectedItem.stok <= selectedItem.stok_minimum
-                          ? `Stok Terbatas (${selectedItem.stok} ${selectedItem.satuan})`
-                          : `Tersedia (${selectedItem.stok} ${selectedItem.satuan})`}
+                      <span className="text-text-muted">Jumlah Stok Fisik:</span>
+                      <span className="font-semibold text-text-main tabular-nums">
+                        {selectedItem.stok} {selectedItem.satuan}
                       </span>
                     </div>
-
-                    {selectedItem.stok === 0 && (
-                      <div className="pt-1.5 mt-1 border-t border-border/60 flex items-start gap-1.5 text-text-muted text-[11px] leading-relaxed">
-                        <AlertCircle className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                        <span>
-                          Permintaan tetap diterima dan diproses. Tim GA akan segera melakukan pembelian persediaan.
-                        </span>
-                      </div>
-                    )}
+                    <div className="pt-1.5 mt-0.5 border-t border-border/60 flex items-start gap-1.5 text-text-muted text-[11px] leading-relaxed">
+                      <AlertCircle className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                      <span>
+                        Stok saat ini: {selectedItem.stok} {selectedItem.satuan}. Permintaan tetap diterima.
+                      </span>
+                    </div>
                   </div>
                 )}
 

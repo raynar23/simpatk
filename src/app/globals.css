@@ -58,3 +58,87 @@ body {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* Official Print & PDF Document Export Styles (Standard Corporate RKS/RAB) */
+@media print {
+  @page {
+    size: auto;
+    margin: 12mm 10mm 12mm 10mm;
+  }
+
+  html, body {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    font-size: 11px !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Hide app shell navigation, sidebar, toolbars, buttons, search inputs, pagination, tabs */
+  aside,
+  header,
+  nav,
+  .print-hidden,
+  [data-print-hidden="true"],
+  button,
+  input,
+  select,
+  [role="tablist"] {
+    display: none !important;
+  }
+
+  /* Force content container to natural flow without screen height limits */
+  main,
+  [role="main"],
+  .flex-1,
+  .overflow-hidden,
+  .overflow-y-auto,
+  .overflow-x-auto {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+  }
+
+  /* Remove elevation and card shadows */
+  .rounded-card,
+  .rounded-sheet,
+  .shadow-subtle,
+  .shadow-modal,
+  .shadow-xs {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+
+  /* Tables: full width, clean borders, no clipping */
+  table {
+    width: 100% !important;
+    min-width: 0 !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  th, td {
+    border: 1px solid #d1d5db !important;
+    padding: 6px 8px !important;
+    color: #111827 !important;
+    white-space: normal !important;
+  }
+
+  th {
+    background-color: #f3f4f6 !important;
+    font-weight: 600 !important;
+    font-size: 10px !important;
+  }
+}

@@ -281,7 +281,7 @@ function CommandPaletteModal({
 
           {!isLoading && query.trim() && filteredNav.length === 0 && displayedItems.length === 0 && displayedRequests.length === 0 && (
             <div className="py-8 text-center text-text-muted text-xs">
-              Tidak ditemukan hasil untuk &ldquo;{query}&rdquo;
+              Tidak ditemukan hasil untuk "{query}"
             </div>
           )}
         </div>

@@ -2,14 +2,14 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { Plus, Eye, EyeOff, Loader2, ChevronDown } from 'lucide-react';
+import { Plus, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
 import { formatDate } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
-import type { Profile, AppRole } from '@/lib/types';
+import type { Profile } from '@/lib/types';
 
 interface UserAccount extends Profile {
   email: string;
@@ -32,7 +32,6 @@ export default function AdminPenggunaPage() {
   const [namaDivisi, setNamaDivisi] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<AppRole>('user');
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -55,12 +54,22 @@ export default function AdminPenggunaPage() {
         // Direct database query fallback
         const { data: profs } = await supabase
           .from('profiles')
-          .select('*')
-          .order('created_at', { ascending: false });
+          .select('id, role, nama_divisi');
 
         if (!ignore) {
           if (profs && profs.length > 0) {
-            setUsers(profs as UserAccount[]);
+            const mapped: UserAccount[] = profs.map((p) => ({
+              id: p.id,
+              role: p.role,
+              nama_divisi: p.nama_divisi || 'Divisi Pemohon',
+              email:
+                (p as any).email ||
+                (p.role === 'admin'
+                  ? 'ga@tps.co.id'
+                  : `${(p.nama_divisi || 'user').toLowerCase().replace(/[^a-z0-9]/g, '')}@tps.co.id`),
+              created_at: (p as any).created_at,
+            }));
+            setUsers(mapped);
           } else {
             setUsers([]);
           }
@@ -69,10 +78,20 @@ export default function AdminPenggunaPage() {
         if (!ignore) {
           const { data: profs } = await supabase
             .from('profiles')
-            .select('*')
-            .order('created_at', { ascending: false });
+            .select('id, role, nama_divisi');
           if (profs && profs.length > 0) {
-            setUsers(profs as UserAccount[]);
+            const mapped: UserAccount[] = profs.map((p) => ({
+              id: p.id,
+              role: p.role,
+              nama_divisi: p.nama_divisi || 'Divisi Pemohon',
+              email:
+                (p as any).email ||
+                (p.role === 'admin'
+                  ? 'ga@tps.co.id'
+                  : `${(p.nama_divisi || 'user').toLowerCase().replace(/[^a-z0-9]/g, '')}@tps.co.id`),
+              created_at: (p as any).created_at,
+            }));
+            setUsers(mapped);
           } else {
             setUsers([]);
           }
@@ -105,10 +124,20 @@ export default function AdminPenggunaPage() {
       }
       const { data: profs } = await supabase
         .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('id, role, nama_divisi');
       if (profs) {
-        setUsers(profs as UserAccount[]);
+        const mapped: UserAccount[] = profs.map((p) => ({
+          id: p.id,
+          role: p.role,
+          nama_divisi: p.nama_divisi || 'Divisi Pemohon',
+          email:
+            (p as any).email ||
+            (p.role === 'admin'
+              ? 'ga@tps.co.id'
+              : `${(p.nama_divisi || 'user').toLowerCase().replace(/[^a-z0-9]/g, '')}@tps.co.id`),
+          created_at: (p as any).created_at,
+        }));
+        setUsers(mapped);
       }
     } catch {
       showToast('Gagal memuat daftar pengguna.', 'error');
@@ -125,9 +154,10 @@ export default function AdminPenggunaPage() {
   // Filtered users
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
-      const matchSearch =
-        u.nama_divisi.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (u.email && u.email.toLowerCase().includes(searchQuery.toLowerCase()));
+      const divName = (u.nama_divisi || '').toLowerCase();
+      const userMail = (u.email || '').toLowerCase();
+      const q = searchQuery.toLowerCase();
+      const matchSearch = divName.includes(q) || userMail.includes(q);
       const matchRole = roleFilter === 'all' || u.role === roleFilter;
       return matchSearch && matchRole;
     });
@@ -159,6 +189,23 @@ export default function AdminPenggunaPage() {
       return;
     }
 
+    // Client constraint: 1 Divisi 1 Akun
+    const divExists = users.some(
+      (u) => u.nama_divisi?.trim().toLowerCase() === namaDivisi.trim().toLowerCase()
+    );
+    if (divExists) {
+      setFormError(`Divisi "${namaDivisi.trim()}" sudah memiliki akun terdaftar (1 divisi 1 akun).`);
+      return;
+    }
+
+    const emailExists = users.some(
+      (u) => u.email?.trim().toLowerCase() === email.trim().toLowerCase()
+    );
+    if (emailExists) {
+      setFormError(`Alamat email "${email.trim()}" sudah terdaftar.`);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const res = await fetch('/api/admin/users', {
@@ -168,7 +215,7 @@ export default function AdminPenggunaPage() {
           nama_divisi: namaDivisi.trim(),
           email: email.trim().toLowerCase(),
           password,
-          role,
+          role: 'user',
         }),
       });
 
@@ -184,7 +231,6 @@ export default function AdminPenggunaPage() {
       setNamaDivisi('');
       setEmail('');
       setPassword('');
-      setRole('user');
       refreshUsers();
     } catch {
       setFormError('Terjadi kesalahan jaringan saat menyimpan data.');
@@ -440,26 +486,20 @@ export default function AdminPenggunaPage() {
                 </div>
               </div>
 
-              {/* Hak Akses / Peran */}
+              {/* Hak Akses / Peran: Khusus akun user (admin tidak dapat dibuat dari UI) */}
               <div>
-                <label htmlFor="modal_role" className="block text-xs font-semibold text-text-main mb-1">
+                <span className="block text-xs font-semibold text-text-main mb-1">
                   Hak Akses Sistem
-                </label>
-                <div className="relative">
-                  <select
-                    id="modal_role"
-                    value={role}
-                    onChange={(e) => setRole(e.target.value as AppRole)}
-                    className="w-full appearance-none pl-3 pr-8.5 py-2 rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[36px] cursor-pointer"
-                  >
-                    <option value="user">Divisi Pemohon (Permintaan ATK)</option>
-                    <option value="admin">Administrator GA (Kelola Lengkap)</option>
-                  </select>
-                  <ChevronDown
-                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted"
-                    strokeWidth={1.5}
-                  />
+                </span>
+                <div className="w-full px-3 py-2 rounded-control border border-border bg-bg/70 text-xs flex items-center justify-between min-h-[36px]">
+                  <span className="font-medium text-text-main">Divisi Pemohon (Permintaan ATK)</span>
+                  <span className="text-[10px] font-semibold font-mono uppercase bg-primary-soft text-primary px-2 py-0.5 rounded-badge border border-primary/20">
+                    Role: User
+                  </span>
                 </div>
+                <p className="text-[11px] text-text-muted mt-1 leading-relaxed">
+                  Sesuai kebijakan SIMPATK, akun baru yang dibuat melalui sistem ini selalu berhak akses Divisi Pemohon (1 divisi 1 akun).
+                </p>
               </div>
 
               {formError && (

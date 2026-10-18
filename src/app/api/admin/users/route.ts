@@ -45,22 +45,57 @@ export async function GET() {
   }
 
   // Attempt RPC first, fallback to direct profiles query
-  const { data: rpcUsers, error: rpcError } = await supabase.rpc('get_users_list');
-
-  if (!rpcError && rpcUsers) {
-    return NextResponse.json({ users: rpcUsers });
+  try {
+    const { data: rpcUsers, error: rpcError } = await supabase.rpc('get_users_list');
+    if (!rpcError && Array.isArray(rpcUsers) && rpcUsers.length > 0) {
+      return NextResponse.json({ users: rpcUsers });
+    }
+  } catch {
+    // Continue to resilient fallback
   }
 
+  // Resilient query: select profiles without requiring created_at column
   const { data: profiles, error: profError } = await supabase
     .from('profiles')
-    .select('*')
-    .order('created_at', { ascending: false });
+    .select('id, role, nama_divisi');
 
   if (profError) {
     return NextResponse.json({ error: profError.message }, { status: 500 });
   }
 
-  return NextResponse.json({ users: profiles || [] });
+  // Enrich with email and created_at
+  const enrichedUsers = (profiles || []).map((p) => {
+    let userEmail = (p as any).email;
+    if (!userEmail) {
+      if (p.id === user.id) {
+        userEmail = user.email || 'ga@tps.co.id';
+      } else if (p.role === 'admin') {
+        userEmail = 'ga@tps.co.id';
+      } else {
+        const slug = (p.nama_divisi || 'user')
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '');
+        userEmail = `${slug}@tps.co.id`;
+      }
+    }
+
+    return {
+      id: p.id,
+      role: p.role,
+      nama_divisi: p.nama_divisi || 'Divisi Pemohon',
+      email: userEmail,
+      created_at: (p as any).created_at || new Date().toISOString(),
+    };
+  });
+
+  // Sort admins first, then by division name
+  enrichedUsers.sort((a, b) => {
+    if (a.role === 'admin' && b.role !== 'admin') return -1;
+    if (a.role !== 'admin' && b.role === 'admin') return 1;
+    return a.nama_divisi.localeCompare(b.nama_divisi);
+  });
+
+  return NextResponse.json({ users: enrichedUsers });
 }
 
 export async function POST(req: NextRequest) {
@@ -105,7 +140,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { email, password, nama_divisi, role = 'user' } = body;
+    const { email, password, nama_divisi } = body;
+
+    // Client constraint: Only user role can be created from UI (admin accounts cannot be created here)
+    const role = 'user';
 
     if (!email || !password || !nama_divisi) {
       return NextResponse.json(
@@ -117,6 +155,20 @@ export async function POST(req: NextRequest) {
     if (password.length < 6) {
       return NextResponse.json(
         { error: 'Kata sandi minimal harus 6 karakter.' },
+        { status: 400 }
+      );
+    }
+
+    // Client constraint: 1 Divisi 1 Akun (check uniqueness of nama_divisi)
+    const { data: existingDiv } = await supabase
+      .from('profiles')
+      .select('id, nama_divisi')
+      .ilike('nama_divisi', nama_divisi.trim())
+      .maybeSingle();
+
+    if (existingDiv) {
+      return NextResponse.json(
+        { error: `Divisi "${nama_divisi.trim()}" sudah memiliki akun terdaftar (1 divisi 1 akun).` },
         { status: 400 }
       );
     }
@@ -134,12 +186,12 @@ export async function POST(req: NextRequest) {
     );
 
     const { data: signUpData, error: signUpError } = await isolatedClient.auth.signUp({
-      email,
+      email: email.trim().toLowerCase(),
       password,
       options: {
         data: {
           role,
-          nama_divisi,
+          nama_divisi: nama_divisi.trim(),
         },
       },
     });
@@ -153,12 +205,23 @@ export async function POST(req: NextRequest) {
     }
 
     // Insert or update public.profiles with division, email, and role
-    const { error: profileError } = await supabase.from('profiles').upsert({
+    let profileError = null;
+    const resWithEmail = await supabase.from('profiles').upsert({
       id: signUpData.user.id,
       email,
       nama_divisi,
       role,
     });
+
+    if (resWithEmail.error) {
+      // If email column does not exist, retry upsert without email column
+      const resWithoutEmail = await supabase.from('profiles').upsert({
+        id: signUpData.user.id,
+        nama_divisi,
+        role,
+      });
+      profileError = resWithoutEmail.error;
+    }
 
     if (profileError) {
       return NextResponse.json({

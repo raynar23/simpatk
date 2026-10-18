@@ -443,12 +443,12 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
                   <span>Cari atau pindah ke...</span>
                 </div>
                 <kbd className="text-[10px] font-mono text-white/70 bg-white/10 px-1.5 py-0.5 rounded-badge border border-white/10">
-                  ⌘K
+                  Ctrl+K
                 </kbd>
               </button>
             ) : (
               <div className="flex justify-center">
-                <Tooltip content="Cari atau pindah ke... (⌘K)" side="right">
+                <Tooltip content="Cari atau pindah ke... (Ctrl+K)" side="right">
                   <button
                     type="button"
                     onClick={openCommandPalette}
@@ -575,7 +575,7 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
                   <span>Cari atau pindah ke...</span>
                 </div>
                 <kbd className="text-[10px] font-mono text-white/70 bg-white/10 px-1.5 py-0.5 rounded-badge border border-white/10">
-                  ⌘K
+                  Ctrl+K
                 </kbd>
               </button>
             </div>

@@ -151,7 +151,28 @@ export default function AdminDaftarBelanjaPage() {
     URL.revokeObjectURL(url);
   };
 
+  // Set official page document title for browser save as PDF filename
+  useEffect(() => {
+    const pageTitle = 'SIMPATK - Pelindo Terminal Petikemas Daftar Belanja';
+    document.title = pageTitle;
+
+    const handleBeforePrint = () => {
+      document.title = pageTitle;
+    };
+    const handleAfterPrint = () => {
+      document.title = pageTitle;
+    };
+
+    window.addEventListener('beforeprint', handleBeforePrint);
+    window.addEventListener('afterprint', handleAfterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', handleBeforePrint);
+      window.removeEventListener('afterprint', handleAfterPrint);
+    };
+  }, []);
+
   const handlePrint = () => {
+    document.title = 'SIMPATK - Pelindo Terminal Petikemas Daftar Belanja';
     window.print();
   };
 
@@ -160,7 +181,7 @@ export default function AdminDaftarBelanjaPage() {
       title="Daftar Belanja"
       subtitle="Rekomendasi otomatis untuk barang yang telah mencapai atau di bawah batas minimum stok"
       actions={
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap print:hidden">
           <button
             type="button"
             onClick={handleExportCsv}
@@ -184,11 +205,11 @@ export default function AdminDaftarBelanjaPage() {
       className="print:p-0 print:m-0"
     >
       {/* Printable Sheet Container */}
-      <div className="bg-surface rounded-card border border-border flex-1 min-h-0 flex flex-col overflow-hidden print:border-none print:shadow-none">
-        {/* Printable Official Header: Shown ONLY when printing */}
-        <div className="hidden print:flex p-4 sm:p-6 border-b border-border bg-surface items-start justify-between">
+      <div className="bg-surface rounded-card border border-border flex-1 min-h-0 flex flex-col overflow-hidden print:border-none print:shadow-none print:bg-white print:overflow-visible">
+        {/* Printable Official Header: Shown ONLY when printing (Standard Dokumen RKS / RAB Pelindo) */}
+        <div className="hidden print:flex pb-4 mb-3 border-b-2 border-black bg-white items-start justify-between">
           <div className="space-y-1">
-            <div className="relative h-9 w-44 mb-1">
+            <div className="relative h-10 w-48 mb-1.5">
               <Image
                 src="/logo/pelindo-color.png"
                 alt="Logo Pelindo Terminal Petikemas"
@@ -198,15 +219,15 @@ export default function AdminDaftarBelanjaPage() {
               />
             </div>
             <h1 className="text-base font-bold text-text-main tracking-tight uppercase">
-              Rekomendasi Pengadaan Alat Tulis Kantor
+              Daftar Belanja Pengadaan Alat Tulis Kantor
             </h1>
             <p className="text-xs text-text-muted">
-              Departemen General Affairs - PT Pelindo Terminal Petikemas
+              Departemen General Affairs - PT Pelindo Terminal Petikemas TPS
             </p>
           </div>
-          <div className="text-right text-xs text-text-muted space-y-0.5">
+          <div className="text-right text-xs text-text-muted space-y-1">
             <p>
-              Tanggal:{' '}
+              Tanggal Cetak:{' '}
               <span className="font-semibold text-text-main">
                 {new Intl.DateTimeFormat('id-ID', {
                   day: '2-digit',
@@ -216,7 +237,7 @@ export default function AdminDaftarBelanjaPage() {
                 }).format(new Date())}
               </span>
             </p>
-            <p>Formula Beli: (Min. Stok × 2) - Stok Saat Ini</p>
+            <p>Formula Beli: (Min. Stok * 2) - Stok Saat Ini</p>
           </div>
         </div>
 

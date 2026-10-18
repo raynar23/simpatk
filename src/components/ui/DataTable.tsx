@@ -278,7 +278,7 @@ export function DataTable<T extends object>({
     >
       {/* Top Toolbar: Search, Filters, and Actions */}
       {(onSearchChange || filterControls || actionControls) && (
-        <div className="p-3 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-2.5 bg-surface">
+        <div className="p-3 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-2.5 bg-surface print:hidden">
           {/* Left: Search input (full width on mobile, w-72 on desktop) and Filter controls */}
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1 w-full">
             {onSearchChange && (
@@ -321,8 +321,8 @@ export function DataTable<T extends object>({
       )}
 
       {/* Table Content Area with Sticky Header */}
-      <div className="flex-1 overflow-x-auto overflow-y-auto min-h-[360px] lg:min-h-0">
-        <table className={`w-full min-w-[760px] text-left border-collapse text-xs ${tableClassName}`}>
+      <div className="flex-1 overflow-x-auto overflow-y-auto min-h-[360px] lg:min-h-0 print:overflow-visible print:min-h-0 print:h-auto">
+        <table className={`w-full min-w-[760px] text-left border-collapse text-xs ${tableClassName} print:min-w-0 print:w-full`}>
           <thead className="sticky top-0 z-10 bg-bg border-b border-border">
             <tr>
               {columns.map((col) => {
