@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle, ChevronDown } from 'lucide-react';
 import { Dialog } from '@/components/ui/Dialog';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
@@ -173,18 +173,24 @@ function ItemUpsertForm({
           <label htmlFor="item_kategori" className="block text-xs font-semibold text-text-main mb-1">
             Kategori
           </label>
-          <select
-            id="item_kategori"
-            value={kategori}
-            onChange={(e) => setKategori(e.target.value)}
-            className="w-full px-2.5 py-1.5 rounded-control border border-border bg-bg text-text-main text-xs focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-          >
-            {ATK_CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id="item_kategori"
+              value={kategori}
+              onChange={(e) => setKategori(e.target.value)}
+              className="w-full appearance-none pl-3 pr-8.5 py-1.5 rounded-control border border-border bg-bg text-text-main text-xs focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+            >
+              {ATK_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted"
+              strokeWidth={1.5}
+            />
+          </div>
         </div>
       </div>
 

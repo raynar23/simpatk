@@ -25,7 +25,7 @@ export function Pagination({
 
   return (
     <div
-      className={`flex items-center justify-between gap-3 text-xs text-text-muted select-none px-3 py-2 border-t border-border bg-surface ${className}`}
+      className={`flex items-center justify-between gap-2 sm:gap-3 text-[11px] sm:text-xs text-text-muted select-none px-3 py-2 border-t border-border bg-surface flex-wrap sm:flex-nowrap ${className}`}
     >
       {/* Item count summary */}
       <div className="tabular-nums">

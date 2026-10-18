@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { Plus, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Plus, Eye, EyeOff, Loader2, ChevronDown } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/Badge';
@@ -414,15 +414,21 @@ export default function AdminPenggunaPage() {
                 <label htmlFor="modal_role" className="block text-xs font-semibold text-text-main mb-1">
                   Hak Akses Sistem
                 </label>
-                <select
-                  id="modal_role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as AppRole)}
-                  className="w-full px-3 py-2 rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[36px] cursor-pointer"
-                >
-                  <option value="user">Divisi Pemohon (Permintaan ATK)</option>
-                  <option value="admin">Administrator GA (Kelola Lengkap)</option>
-                </select>
+                <div className="relative">
+                  <select
+                    id="modal_role"
+                    value={role}
+                    onChange={(e) => setRole(e.target.value as AppRole)}
+                    className="w-full appearance-none pl-3 pr-8.5 py-2 rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[36px] cursor-pointer"
+                  >
+                    <option value="user">Divisi Pemohon (Permintaan ATK)</option>
+                    <option value="admin">Administrator GA (Kelola Lengkap)</option>
+                  </select>
+                  <ChevronDown
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted"
+                    strokeWidth={1.5}
+                  />
+                </div>
               </div>
 
               {formError && (

@@ -44,6 +44,7 @@ interface DataTableProps<T> {
   csvFilename?: string;
   enableDynamicHeight?: boolean;
   className?: string;
+  tableClassName?: string;
 }
 
 export function DataTable<T extends object>({
@@ -68,6 +69,7 @@ export function DataTable<T extends object>({
   csvFilename = 'simpatk_ekspor.csv',
   enableDynamicHeight = false,
   className = '',
+  tableClassName = '',
 }: DataTableProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -182,7 +184,7 @@ export function DataTable<T extends object>({
 
       {/* Table Content Area with Sticky Header */}
       <div className="flex-1 overflow-x-auto overflow-y-auto">
-        <table className="w-full text-left border-collapse text-xs">
+        <table className={`w-full min-w-[760px] text-left border-collapse text-xs ${tableClassName}`}>
           <thead className="sticky top-0 z-10 bg-bg border-b border-border">
             <tr>
               {columns.map((col) => {

@@ -29,7 +29,7 @@ export function PageContainer({
             {title}
           </h1>
           {subtitle && (
-            <p className="text-xs text-text-muted mt-0.5 line-clamp-1 sm:truncate">
+            <p className="text-xs text-text-muted mt-0.5 line-clamp-2 sm:truncate">
               {subtitle}
             </p>
           )}

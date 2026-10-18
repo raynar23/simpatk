@@ -13,6 +13,7 @@ import {
   Clock,
   Loader2,
   AlertCircle,
+  ChevronDown,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -420,22 +421,28 @@ function UserDashboardContent() {
                   <label htmlFor="item-select" className="block text-xs font-medium text-text-main mb-1.5">
                     Pilih Barang ATK <span className="text-danger">*</span>
                   </label>
-                  <select
-                    id="item-select"
-                    value={selectedItemId}
-                    onChange={(e) => {
-                      setSelectedItemId(e.target.value);
-                      setFormError(null);
-                    }}
-                    className="w-full rounded-control border border-border bg-bg px-3 py-2 text-xs text-text-main transition-colors focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  >
-                    <option value="">-- Pilih Barang dari Katalog --</option>
-                    {items.map((it) => (
-                      <option key={it.id} value={it.id}>
-                        {it.kode ? `[${it.kode}] ` : ''}{it.nama} ({it.satuan}) {it.stok === 0 ? '- [Stok Kosong]' : it.stok <= it.stok_minimum ? '- [Stok Terbatas]' : ''}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="item-select"
+                      value={selectedItemId}
+                      onChange={(e) => {
+                        setSelectedItemId(e.target.value);
+                        setFormError(null);
+                      }}
+                      className="w-full appearance-none pl-3 pr-8.5 py-2 text-xs rounded-control border border-border bg-bg text-text-main transition-colors focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer min-h-[38px]"
+                    >
+                      <option value="">-- Pilih Barang dari Katalog --</option>
+                      {items.map((it) => (
+                        <option key={it.id} value={it.id}>
+                          {it.kode ? `[${it.kode}] ` : ''}{it.nama} ({it.satuan}) {it.stok === 0 ? '- [Stok Kosong]' : it.stok <= it.stok_minimum ? '- [Stok Terbatas]' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown
+                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted"
+                      strokeWidth={1.5}
+                    />
+                  </div>
                 </div>
 
                 {/* Stock Context Notice */}

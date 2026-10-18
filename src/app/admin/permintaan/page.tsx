@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { ChevronDown, Calendar } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
@@ -316,20 +317,31 @@ export default function AdminPermintaanPage() {
               ))}
             </div>
 
-            {/* Date Range Filter */}
-            <select
-              value={dateRangeFilter}
-              onChange={(e) => {
-                setDateRangeFilter(e.target.value as typeof dateRangeFilter);
-                setPage(1);
-              }}
-              className="px-2 py-1 text-xs rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[32px] cursor-pointer"
-            >
-              <option value="semua">Semua Waktu</option>
-              <option value="7">7 Hari Terakhir</option>
-              <option value="30">30 Hari Terakhir</option>
-              <option value="month">Bulan Ini</option>
-            </select>
+            {/* Date Range Filter with balanced chevron and calendar icon */}
+            <div className="relative inline-flex items-center">
+              <Calendar
+                className="pointer-events-none absolute left-2.5 w-3.5 h-3.5 text-text-muted"
+                strokeWidth={1.5}
+              />
+              <select
+                value={dateRangeFilter}
+                onChange={(e) => {
+                  setDateRangeFilter(e.target.value as typeof dateRangeFilter);
+                  setPage(1);
+                }}
+                className="appearance-none pl-8 pr-8.5 py-1.5 text-xs rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[32px] cursor-pointer"
+                title="Filter rentang waktu permintaan"
+              >
+                <option value="semua">Semua Waktu</option>
+                <option value="7">7 Hari Terakhir</option>
+                <option value="30">30 Hari Terakhir</option>
+                <option value="month">Bulan Ini</option>
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-3 w-3.5 h-3.5 text-text-muted"
+                strokeWidth={1.5}
+              />
+            </div>
           </div>
         }
         onRowClick={handleRowClick}

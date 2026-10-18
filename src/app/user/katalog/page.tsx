@@ -9,6 +9,7 @@ import {
   Plus,
   Send,
   Loader2,
+  ChevronDown,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { PageContainer } from '@/components/layout/PageContainer';
@@ -216,17 +217,23 @@ function UserKatalogContent() {
 
           {/* Category Dropdown and Availability Pills */}
           <div className="flex items-center gap-2 flex-wrap">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="rounded-control border border-border bg-bg px-3 py-2 text-xs text-text-main transition-colors focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+            <div className="relative inline-flex items-center">
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="appearance-none pl-3 pr-8.5 py-2 text-xs rounded-control border border-border bg-bg text-text-main transition-colors focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer min-h-[36px]"
+              >
+                {CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                className="pointer-events-none absolute right-3 w-3.5 h-3.5 text-text-muted"
+                strokeWidth={1.5}
+              />
+            </div>
 
             <div className="inline-flex rounded-control bg-bg p-0.5 border border-border">
               <button
