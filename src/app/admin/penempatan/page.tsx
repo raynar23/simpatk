@@ -47,6 +47,12 @@ export default function AdminPenempatanPage() {
   // Active filters and views
   const [selectedRakTab, setSelectedRakTab] = useState<'semua' | RakKey>('semua');
   const [mobileRakIndex, setMobileRakIndex] = useState<number>(0);
+  const [desktopRakPages, setDesktopRakPages] = useState<Record<RakKey, number>>({
+    'Rak 1': 1,
+    'Rak 2': 1,
+    'Rak 3': 1,
+    'Rak 4': 1,
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [stockFilter, setStockFilter] = useState<'semua' | 'aman' | 'perhatian'>('semua');
   const [viewMode, setViewMode] = useState<'visual' | 'table'>('visual');
@@ -667,7 +673,7 @@ export default function AdminPenempatanPage() {
                 })()}
               </div>
 
-              {/* Desktop View: Multi-Rak Layout */}
+              {/* Desktop View: Multi-Rak Layout (Max 8 cards per rack per page) */}
               <div className="hidden sm:block space-y-4">
                 {RAK_DEFINITIONS.filter((r) =>
                   selectedRakTab === 'semua' ? true : r.id === selectedRakTab
@@ -675,10 +681,17 @@ export default function AdminPenempatanPage() {
                   const rackItems = filteredItems.filter((it) => it.resolvedRak === rakDef.id);
                   if (rackItems.length === 0 && selectedRakTab === 'semua') return null;
 
+                  const DESKTOP_CARDS_PER_PAGE = 8;
+                  const totalPages = Math.ceil(rackItems.length / DESKTOP_CARDS_PER_PAGE) || 1;
+                  const currentPage = desktopRakPages[rakDef.id] || 1;
+                  const safeCurrentPage = Math.max(1, Math.min(currentPage, totalPages));
+                  const startIndex = (safeCurrentPage - 1) * DESKTOP_CARDS_PER_PAGE;
+                  const displayedCards = rackItems.slice(startIndex, startIndex + DESKTOP_CARDS_PER_PAGE);
+
                   return (
                     <div
                       key={rakDef.id}
-                      className="bg-surface rounded-card border border-border overflow-hidden shadow-xs"
+                      className="bg-surface rounded-card border border-border overflow-hidden shadow-xs flex flex-col"
                     >
                       {/* Shelf Header */}
                       <div
@@ -694,6 +707,11 @@ export default function AdminPenempatanPage() {
                               <span className="text-[11px] font-semibold text-text-muted">
                                 ({rackItems.length} jenis ATK)
                               </span>
+                              {totalPages > 1 && (
+                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                  Halaman {safeCurrentPage} dari {totalPages}
+                                </span>
+                              )}
                             </div>
                             <p className="text-[11px] text-text-muted">{rakDef.deskripsi}</p>
                           </div>
@@ -706,10 +724,10 @@ export default function AdminPenempatanPage() {
                         </div>
                       </div>
 
-                      {/* Shelf Slots Grid */}
-                      <div className="p-3.5 bg-bg/40">
+                      {/* Shelf Slots Grid (Max 8 cards per page on desktop) */}
+                      <div className="p-3.5 bg-bg/40 flex-1">
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-                          {rackItems.map((item) => {
+                          {displayedCards.map((item) => {
                             const isOutOfStock = item.stok === 0;
                             const isLowStock = !isOutOfStock && item.stok <= item.stok_minimum;
 
@@ -769,6 +787,69 @@ export default function AdminPenempatanPage() {
                           })}
                         </div>
                       </div>
+
+                      {/* Desktop Rack Pagination Footer (Only if > 8 cards) */}
+                      {totalPages > 1 && (
+                        <div className="px-4 py-2.5 bg-surface border-t border-border flex items-center justify-between text-xs">
+                          <div className="text-[11px] text-text-muted">
+                            Menampilkan <span className="font-semibold text-text-main tabular-nums">{startIndex + 1} - {Math.min(startIndex + DESKTOP_CARDS_PER_PAGE, rackItems.length)}</span> dari <span className="font-semibold text-text-main tabular-nums">{rackItems.length}</span> barang
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setDesktopRakPages((prev) => ({
+                                  ...prev,
+                                  [rakDef.id]: Math.max(1, safeCurrentPage - 1),
+                                }))
+                              }
+                              disabled={safeCurrentPage <= 1}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                            >
+                              <ChevronLeft className="w-3.5 h-3.5" />
+                              <span>Sebelumnya</span>
+                            </button>
+
+                            <div className="flex items-center gap-1">
+                              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                                <button
+                                  key={p}
+                                  type="button"
+                                  onClick={() =>
+                                    setDesktopRakPages((prev) => ({
+                                      ...prev,
+                                      [rakDef.id]: p,
+                                    }))
+                                  }
+                                  className={`w-7 h-7 rounded-control text-xs font-semibold flex items-center justify-center transition-colors cursor-pointer ${
+                                    safeCurrentPage === p
+                                      ? 'bg-primary text-white border border-primary shadow-subtle'
+                                      : 'text-text-muted hover:text-text-main bg-bg border border-border hover:bg-surface'
+                                  }`}
+                                >
+                                  {p}
+                                </button>
+                              ))}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setDesktopRakPages((prev) => ({
+                                  ...prev,
+                                  [rakDef.id]: Math.min(totalPages, safeCurrentPage + 1),
+                                }))
+                              }
+                              disabled={safeCurrentPage >= totalPages}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                            >
+                              <span>Selanjutnya</span>
+                              <ChevronRight className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
