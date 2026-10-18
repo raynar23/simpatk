@@ -66,9 +66,9 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-dvh w-full flex flex-col lg:flex-row bg-[#0B2E50]">
-      {/* Left column: Full-bleed Photo Panel with right side drop shadow */}
-      <section className="hidden lg:flex relative w-1/2 xl:w-[52%] min-h-dvh select-none overflow-hidden flex-col justify-between p-12 shrink-0 z-20 shadow-[14px_0_40px_rgba(0,0,0,0.18),4px_0_12px_rgba(0,0,0,0.08)] border-r border-black/10">
+    <main className="min-h-dvh w-full flex flex-col lg:flex-row bg-[#0B5A94]">
+      {/* Left column: Full-bleed Photo Panel with right side drop shadow (50% equal width) */}
+      <section className="hidden lg:flex relative w-full lg:w-1/2 min-h-dvh select-none overflow-hidden flex-col justify-between p-12 shrink-0 z-20 shadow-[14px_0_40px_rgba(0,0,0,0.18),4px_0_12px_rgba(0,0,0,0.08)] border-r border-black/10">
         {/* Terminal background image with object-position 62% 50% */}
         <Image
           src="/images/tps-terminal.jpg"
@@ -76,7 +76,7 @@ export default function LoginPage() {
           fill
           priority
           quality={85}
-          sizes="52vw"
+          sizes="50vw"
           className="object-cover"
           style={{ objectPosition: '62% 50%' }}
         />
@@ -125,17 +125,17 @@ export default function LoginPage() {
         </div>
       </section>
 
-      {/* Right column: Form Area with Elevated Blue Background & Refined Card */}
-      <section className="flex-1 flex flex-col justify-between items-center px-6 xs:px-8 sm:px-10 lg:px-12 min-h-dvh bg-gradient-to-br from-[#0B2E50] via-[#0E477A] to-[#071D33] pb-[calc(env(safe-area-inset-bottom,0px)+20px)] pt-[calc(env(safe-area-inset-top,0px)+20px)] relative z-10 overflow-hidden">
-        {/* Ambient subtle light glows for rich corporate depth */}
-        <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-[#1175BB]/25 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-[#00A3E0]/15 blur-3xl pointer-events-none" />
+      {/* Right column: Form Area (50% equal width) with vibrant Pelindo Primary Blue Gradient */}
+      <section className="w-full lg:w-1/2 flex flex-col justify-between items-center px-6 xs:px-8 sm:px-10 lg:px-12 min-h-dvh bg-gradient-to-br from-[#0E63A1] via-[#1175BB] to-[#0B5288] pb-[calc(env(safe-area-inset-bottom,0px)+20px)] pt-[calc(env(safe-area-inset-top,0px)+20px)] relative z-10 overflow-hidden">
+        {/* Ambient subtle light glows for vibrant Pelindo blue corporate depth */}
+        <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-white/15 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-[#38BDF8]/25 blur-3xl pointer-events-none" />
 
         <div className="w-full max-w-[340px] xs:max-w-[360px] sm:max-w-[400px] my-auto relative z-10">
           {/* Form Card Container with multi-layered border, ring & elevation shadow */}
-          <div className="relative bg-gradient-to-b from-white via-white to-[#F6FAFE] rounded-2xl border border-white/80 ring-1 ring-blue-900/10 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.40),0_12px_24px_-6px_rgba(7,32,56,0.35),0_0_0_1px_rgba(255,255,255,0.3)] p-6 sm:p-8 transition-all overflow-hidden">
+          <div className="relative bg-gradient-to-b from-white via-white to-[#F6FAFE] rounded-2xl border border-white/85 ring-1 ring-blue-900/10 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.28),0_10px_20px_-5px_rgba(11,90,148,0.25),0_0_0_1px_rgba(255,255,255,0.5)] p-6 sm:p-8 transition-all overflow-hidden">
             {/* Top decorative primary gradient line */}
-            <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-primary via-[#2997E6] to-primary" />
+            <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-primary-dark via-[#38BDF8] to-primary-dark" />
 
             {/* Header with Color Pelindo Logo and Generous Spacing */}
             <div className="mb-6">
@@ -257,7 +257,7 @@ export default function LoginPage() {
         </div>
 
         {/* Small Footer */}
-        <footer className="text-center text-xs text-blue-100/70 py-2 mt-4 font-normal tracking-wide drop-shadow-sm relative z-10">
+        <footer className="text-center text-xs text-white/80 py-2 mt-4 font-normal tracking-wide drop-shadow-sm relative z-10">
           General Affairs - PT Pelindo Terminal Petikemas &copy; 2026
         </footer>
       </section>
