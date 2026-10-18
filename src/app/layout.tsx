@@ -13,6 +13,16 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "SIMPATK - Pelindo Terminal Petikemas",
   description: "Sistem Informasi Manajemen Permintaan ATK General Affairs",
+  icons: {
+    icon: [
+      { url: "/logo/pelindo-symbol.png", sizes: "any" },
+      { url: "/icon.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/logo/pelindo-symbol.png" },
+    ],
+    shortcut: "/logo/pelindo-symbol.png",
+  },
 };
 
 export const viewport: Viewport = {
