@@ -15,7 +15,8 @@ export default function AdminPengaturanPage() {
 
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [totalUserCount, setTotalUserCount] = useState<number>(2);
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [totalUserCount, setTotalUserCount] = useState<number>(0);
 
   // Password update form
   const [newPassword, setNewPassword] = useState('');
@@ -33,6 +34,10 @@ export default function AdminPengaturanPage() {
       try {
         const { data: authData } = await supabase.auth.getUser();
         if (authData.user) {
+          if (authData.user.email) {
+            setUserEmail(authData.user.email);
+          }
+
           const [profRes, countRes] = await Promise.all([
             supabase.from('profiles').select('*').eq('id', authData.user.id).single(),
             supabase.from('profiles').select('id', { count: 'exact', head: true }),
@@ -42,7 +47,7 @@ export default function AdminPengaturanPage() {
             if (profRes.data) {
               setProfile(profRes.data as Profile);
             }
-            if (countRes.count !== null && countRes.count > 0) {
+            if (countRes.count !== null && countRes.count >= 0) {
               setTotalUserCount(countRes.count);
             }
           }
@@ -124,14 +129,14 @@ export default function AdminPengaturanPage() {
                 <div>
                   <span className="text-[11px] text-text-muted block mb-1">Nama Divisi / Bagian</span>
                   <p className="font-semibold text-text-main bg-bg px-3 py-2 rounded-control border border-border">
-                    {profile?.nama_divisi || 'General Affairs'}
+                    {profile?.nama_divisi || 'Memuat profil...'}
                   </p>
                 </div>
 
                 <div>
                   <span className="text-[11px] text-text-muted block mb-1">Alamat Email Terdaftar</span>
                   <p className="font-mono text-text-main bg-bg px-3 py-2 rounded-control border border-border">
-                    {profile?.email || 'admin.ga@tps.co.id'}
+                    {userEmail || profile?.email || 'Memuat email...'}
                   </p>
                 </div>
 

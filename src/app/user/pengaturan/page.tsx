@@ -14,7 +14,7 @@ export default function UserPengaturanPage() {
 
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [userEmail, setUserEmail] = useState<string>('ga@tps.co.id');
+  const [userEmail, setUserEmail] = useState<string>('');
 
   // Password update form
   const [newPassword, setNewPassword] = useState('');
@@ -124,7 +124,7 @@ export default function UserPengaturanPage() {
                   <div className="rounded-control bg-bg px-3.5 py-2.5 font-semibold text-text-main border border-border/80">
                     {isLoadingProfile
                       ? 'Memuat data divisi...'
-                      : profile?.nama_divisi || 'Divisi Operasional & Komersial'}
+                      : profile?.nama_divisi || 'Memuat profil...'}
                   </div>
                 </div>
 
@@ -133,7 +133,7 @@ export default function UserPengaturanPage() {
                     Alamat Email Korporat
                   </label>
                   <div className="rounded-control bg-bg px-3.5 py-2.5 font-medium text-text-main border border-border/80">
-                    {userEmail}
+                    {userEmail || 'Memuat email...'}
                   </div>
                 </div>
 

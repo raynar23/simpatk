@@ -211,7 +211,7 @@ export default function AdminLaporanPage() {
         nomor: r.nomor || `REQ-${r.id.slice(0, 8)}`,
         created_at: r.created_at,
         completed_at: r.completed_at || null,
-        pemohon: String(prof?.divisi || prof?.nama || 'Divisi Pemohon'),
+        pemohon: String(prof?.nama_divisi || 'Divisi Pemohon'),
         namaBarang: String(it?.nama || 'Barang ATK'),
         kodeBarang: String(it?.kode || 'ATK'),
         kategoriBarang: String(it?.kategori || 'Umum'),
@@ -220,7 +220,7 @@ export default function AdminLaporanPage() {
         status: (r.status as 'diproses' | 'selesai') || 'diproses',
         durasiJam: durasiJam !== null ? Math.max(0, durasiJam) : null,
         keperluan: r.keperluan ? String(r.keperluan) : null,
-        catatan: r.catatan ? String(r.catatan) : null,
+        catatan: r.catatan_ga ? String(r.catatan_ga) : null,
       };
     });
   }, [rawRequests]);

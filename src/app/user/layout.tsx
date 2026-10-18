@@ -11,7 +11,7 @@ export default async function UserLayout({
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  let divisionName = 'Divisi Operasional & Komersial';
+  let divisionName = 'Divisi Pemohon';
   if (user) {
     const { data: profile } = await supabase
       .from('profiles')

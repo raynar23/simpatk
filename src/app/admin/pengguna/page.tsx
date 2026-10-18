@@ -8,6 +8,7 @@ import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
 import { formatDate } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
 import type { Profile, AppRole } from '@/lib/types';
 
 interface UserAccount extends Profile {
@@ -16,6 +17,7 @@ interface UserAccount extends Profile {
 }
 
 export default function AdminPenggunaPage() {
+  const supabase = createClient();
   const { showToast } = useToast();
 
   const [users, setUsers] = useState<UserAccount[]>([]);
@@ -42,30 +44,38 @@ export default function AdminPenggunaPage() {
     async function fetchUsers() {
       try {
         const res = await fetch('/api/admin/users');
-        const data = await res.json();
-        if (!ignore && res.ok && data.users) {
-          setUsers(data.users);
-        } else if (!ignore) {
-          setUsers([
-            {
-              id: '1',
-              nama_divisi: 'General Affairs',
-              email: 'admin.ga@tps.co.id',
-              role: 'admin',
-              created_at: new Date().toISOString(),
-            },
-            {
-              id: '2',
-              nama_divisi: 'Divisi Operasional & Komersial',
-              email: 'ga@tps.co.id',
-              role: 'user',
-              created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
-            },
-          ]);
+        if (res.ok) {
+          const data = await res.json();
+          if (!ignore && data.users) {
+            setUsers(data.users);
+            return;
+          }
+        }
+
+        // Direct database query fallback
+        const { data: profs } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (!ignore) {
+          if (profs && profs.length > 0) {
+            setUsers(profs as UserAccount[]);
+          } else {
+            setUsers([]);
+          }
         }
       } catch {
         if (!ignore) {
-          showToast('Gagal memuat daftar pengguna.', 'error');
+          const { data: profs } = await supabase
+            .from('profiles')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (profs && profs.length > 0) {
+            setUsers(profs as UserAccount[]);
+          } else {
+            setUsers([]);
+          }
         }
       } finally {
         if (!ignore) {
@@ -79,16 +89,26 @@ export default function AdminPenggunaPage() {
     return () => {
       ignore = true;
     };
-  }, [showToast]);
+  }, [supabase]);
 
   // Refresh users on demand after mutation
   const refreshUsers = async () => {
     setIsLoading(true);
     try {
       const res = await fetch('/api/admin/users');
-      const data = await res.json();
-      if (res.ok && data.users) {
-        setUsers(data.users);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.users) {
+          setUsers(data.users);
+          return;
+        }
+      }
+      const { data: profs } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (profs) {
+        setUsers(profs as UserAccount[]);
       }
     } catch {
       showToast('Gagal memuat daftar pengguna.', 'error');
