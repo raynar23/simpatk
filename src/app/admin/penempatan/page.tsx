@@ -298,7 +298,7 @@ export default function AdminPenempatanPage() {
           </div>
 
           {/* 4 Rak Quick Selector Buttons */}
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="flex items-center gap-1.5 w-full">
             {RAK_DEFINITIONS.map((r, idx) => {
               const isActive = mobileRakIndex === idx;
               return (
@@ -306,7 +306,7 @@ export default function AdminPenempatanPage() {
                   key={r.id}
                   type="button"
                   onClick={() => handleMobilePageChange(idx)}
-                  className={`py-1.5 px-1 rounded-control text-xs font-semibold flex flex-col items-center justify-center transition-all cursor-pointer border ${
+                  className={`flex-1 py-1.5 px-1 rounded-control text-xs font-semibold flex flex-col items-center justify-center transition-all cursor-pointer border ${
                     isActive
                       ? 'bg-primary text-white border-primary shadow-subtle'
                       : 'bg-bg text-text-muted border-border hover:text-text-main hover:border-primary/40'
@@ -565,7 +565,7 @@ export default function AdminPenempatanPage() {
                       </div>
 
                       {/* Shelf Slots Container with UNIFORM FIXED HEIGHT for all pages */}
-                      <div className="p-3 bg-bg/40 h-[420px] overflow-y-auto">
+                      <div className="p-3 bg-bg/40 h-[420px] sm:h-[480px] overflow-y-auto">
                         {mobileRackItems.length === 0 ? (
                           <div className="h-full flex flex-col items-center justify-center text-center p-4">
                             <Package className="w-8 h-8 text-text-muted/40 mb-2" />
@@ -577,7 +577,7 @@ export default function AdminPenempatanPage() {
                             </p>
                           </div>
                         ) : (
-                          <div className="space-y-2.5">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                             {mobileRackItems.map((item) => {
                               const isOutOfStock = item.stok === 0;
                               const isLowStock = !isOutOfStock && item.stok <= item.stok_minimum;
@@ -724,9 +724,9 @@ export default function AdminPenempatanPage() {
                         </div>
                       </div>
 
-                      {/* Shelf Slots Grid (Max 8 cards per page on desktop) */}
+                      {/* Shelf Slots Grid (Max 8 cards per page on desktop, 3 columns) */}
                       <div className="p-3.5 bg-bg/40 flex-1">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                           {displayedCards.map((item) => {
                             const isOutOfStock = item.stok === 0;
                             const isLowStock = !isOutOfStock && item.stok <= item.stok_minimum;
