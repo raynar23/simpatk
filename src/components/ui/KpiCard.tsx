@@ -1,12 +1,11 @@
 // Metric KPI card with macOS panel style, 1px border, no shadow, and flat sparkline
 import React from 'react';
-import { LucideIcon, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface KpiCardProps {
   label: string;
   value: string | number;
   sublabel?: string;
-  icon?: LucideIcon;
   change?: number;
   invertTrend?: boolean;
   sparklineData?: number[];
@@ -17,7 +16,6 @@ export function KpiCard({
   label,
   value,
   sublabel,
-  icon: Icon,
   change,
   invertTrend = false,
   sparklineData,
@@ -78,14 +76,11 @@ export function KpiCard({
     <div
       className={`bg-surface rounded-card border border-border p-4 flex flex-col justify-between select-none ${className}`}
     >
-      {/* Header with plain muted icon and 12px label */}
+      {/* Header with plain 12px label */}
       <div className="flex items-center justify-between gap-2 mb-2">
         <span className="text-xs font-medium text-text-muted truncate">
           {label}
         </span>
-        {Icon && (
-          <Icon className="w-4 h-4 text-text-muted shrink-0" strokeWidth={1.5} />
-        )}
       </div>
 
       {/* Main value: 24px semi-bold with tabular numbers */}

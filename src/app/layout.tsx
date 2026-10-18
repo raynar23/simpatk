@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={inter.variable}>
+    <html lang="id" translate="no" className={inter.variable}>
       <body className="min-h-dvh bg-bg text-text-main antialiased selection:bg-primary-soft selection:text-primary">
         <ToastProvider>{children}</ToastProvider>
       </body>

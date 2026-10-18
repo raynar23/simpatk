@@ -6,13 +6,11 @@ import Image from 'next/image';
 import {
   Printer,
   Download,
-  AlertTriangle,
-  ShoppingCart,
   CheckSquare,
   Square,
-  CheckCircle2,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { formatRupiah, isLowStock } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
 import type { Item } from '@/lib/types';
@@ -158,20 +156,11 @@ export default function AdminDaftarBelanjaPage() {
   };
 
   return (
-    <div className="p-3 sm:p-5 max-w-[1440px] mx-auto space-y-4 select-none print:p-0 print:m-0">
-      {/* Header section (hidden in print) */}
-      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <div>
-          <h2 className="text-sm font-semibold text-text-main tracking-tight flex items-center gap-2">
-            <ShoppingCart className="w-4 h-4 text-primary" />
-            <span>Daftar Belanja Pengadaan ATK</span>
-          </h2>
-          <p className="text-[11px] text-text-muted mt-0.5">
-            Rekomendasi otomatis untuk barang yang telah mencapai atau di bawah batas minimum stok
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2">
+    <PageContainer
+      title="Daftar Belanja"
+      subtitle="Rekomendasi otomatis untuk barang yang telah mencapai atau di bawah batas minimum stok"
+      actions={
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
             onClick={handleExportCsv}
@@ -191,12 +180,13 @@ export default function AdminDaftarBelanjaPage() {
             <span>Cetak Dokumen</span>
           </button>
         </div>
-      </div>
-
+      }
+      className="print:p-0 print:m-0"
+    >
       {/* Printable Sheet Container */}
-      <div className="bg-surface rounded-card border border-border overflow-hidden print:border-none print:shadow-none">
-        {/* Printable Official Header */}
-        <div className="p-4 sm:p-6 border-b border-border bg-surface flex items-start justify-between">
+      <div className="bg-surface rounded-card border border-border flex-1 min-h-0 flex flex-col overflow-hidden print:border-none print:shadow-none">
+        {/* Printable Official Header: Shown ONLY when printing */}
+        <div className="hidden print:flex p-4 sm:p-6 border-b border-border bg-surface items-start justify-between">
           <div className="space-y-1">
             <div className="relative h-9 w-44 mb-1">
               <Image
@@ -218,11 +208,12 @@ export default function AdminDaftarBelanjaPage() {
             <p>
               Tanggal:{' '}
               <span className="font-semibold text-text-main">
-                {new Date().toLocaleDateString('id-ID', {
+                {new Intl.DateTimeFormat('id-ID', {
                   day: '2-digit',
                   month: 'long',
                   year: 'numeric',
-                })}
+                  timeZone: 'Asia/Jakarta',
+                }).format(new Date())}
               </span>
             </p>
             <p>Formula Beli: (Min. Stok × 2) - Stok Saat Ini</p>
@@ -230,7 +221,7 @@ export default function AdminDaftarBelanjaPage() {
         </div>
 
         {/* Table Content */}
-        <div className="overflow-x-auto">
+        <div className="flex-1 overflow-x-auto overflow-y-auto">
           {isLoading ? (
             <div className="p-6 space-y-3">
               {Array.from({ length: 5 }).map((_, idx) => (
@@ -239,7 +230,6 @@ export default function AdminDaftarBelanjaPage() {
             </div>
           ) : shoppingList.length === 0 ? (
             <div className="py-12 text-center text-xs text-text-muted flex flex-col items-center gap-1">
-              <CheckCircle2 className="w-8 h-8 text-success mb-2" />
               <p className="font-semibold text-text-main">Seluruh Stok Barang Terpenuhi</p>
               <p>Tidak ada barang yang berada pada batas minimum stok saat ini.</p>
             </div>
@@ -337,11 +327,10 @@ export default function AdminDaftarBelanjaPage() {
           )}
         </div>
 
-        {/* Sticky Selected Bottom Summary */}
+        {/* Selected Bottom Summary */}
         {shoppingList.length > 0 && (
-          <div className="p-3.5 bg-bg border-t border-border flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2 text-text-muted">
-              <AlertTriangle className="w-4 h-4 text-warning shrink-0" />
+          <div className="p-3.5 bg-bg border-t border-border flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
+            <div className="text-text-muted">
               <span>
                 <strong className="text-text-main font-semibold">{selectedItems.length}</strong> dari{' '}
                 {shoppingList.length} barang dipilih untuk pengadaan.
@@ -357,6 +346,7 @@ export default function AdminDaftarBelanjaPage() {
           </div>
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 }
+

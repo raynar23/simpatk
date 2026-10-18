@@ -138,10 +138,11 @@ export function DataTable<T extends object>({
     >
       {/* Top Toolbar: Search, Filters, and Actions */}
       {(onSearchChange || filterControls || actionControls) && (
-        <div className="p-3 border-b border-border flex flex-wrap items-center justify-between gap-2.5 bg-surface">
-          <div className="flex flex-1 items-center gap-2 min-w-[240px]">
+        <div className="p-3 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-2.5 bg-surface">
+          {/* Left: Search input (full width on mobile, w-72 on desktop) and Filter controls */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 flex-1 w-full">
             {onSearchChange && (
-              <div className="relative flex-1 max-w-xs">
+              <div className="relative w-full sm:w-72 shrink-0">
                 <Search
                   className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
                   strokeWidth={1.5}
@@ -151,21 +152,26 @@ export function DataTable<T extends object>({
                   value={searchValue || ''}
                   onChange={(e) => onSearchChange(e.target.value)}
                   placeholder={searchPlaceholder}
-                  className="w-full pl-8 pr-2.5 py-1 text-xs rounded-control border border-border bg-bg text-text-main placeholder:text-text-muted focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors min-h-[32px]"
+                  className="w-full pl-8 pr-2.5 py-1.5 text-xs rounded-control border border-border bg-bg text-text-main placeholder:text-text-muted focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors min-h-[34px]"
                 />
               </div>
             )}
-            {filterControls}
+            {filterControls && (
+              <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
+                {filterControls}
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Right: Action controls and Export CSV */}
+          <div className="flex items-center gap-2 flex-wrap justify-between sm:justify-end shrink-0 w-full sm:w-auto pt-1 sm:pt-0 border-t sm:border-t-0 border-border/40">
             {actionControls}
             <button
               type="button"
               onClick={handleExportCsv}
               disabled={data.length === 0}
               title="Ekspor ke CSV"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-control border border-border bg-surface hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-text-main cursor-pointer min-h-[32px]"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-control border border-border bg-surface hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-text-main cursor-pointer min-h-[32px]"
             >
               <Download className="w-3.5 h-3.5 text-text-muted" strokeWidth={1.5} />
               <span>Ekspor CSV</span>

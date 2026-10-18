@@ -5,15 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import {
-  Loader2,
-  Eye,
-  EyeOff,
-  AlertCircle,
-  Mail,
-  Lock,
-  CheckCircle2,
-} from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -119,17 +111,14 @@ export default function LoginPage() {
             Sistem Informasi Permintaan Alat Tulis Kantor, General Affairs Pelindo Terminal Petikemas.
           </p>
 
-          <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-white/90">
-            <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15">
-              <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
+          <div className="pt-2 flex flex-wrap items-center gap-3 text-xs text-white/90">
+            <div className="bg-black/25 backdrop-blur-sm px-3 py-1 rounded-badge border border-white/15">
               <span>Alur Otomatis</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15">
-              <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
+            <div className="bg-black/25 backdrop-blur-sm px-3 py-1 rounded-badge border border-white/15">
               <span>Stok Fisik Realtime</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15">
-              <CheckCircle2 className="w-3.5 h-3.5 text-success shrink-0" />
+            <div className="bg-black/25 backdrop-blur-sm px-3 py-1 rounded-badge border border-white/15">
               <span>100% Tanpa Kertas</span>
             </div>
           </div>
@@ -165,7 +154,7 @@ export default function LoginPage() {
 
             {/* Login Form */}
             <form onSubmit={handleLogin} className="space-y-4">
-              {/* Email Field with Left Icon */}
+              {/* Email Field without prefix icon */}
               <div>
                 <label
                   htmlFor="email"
@@ -173,26 +162,21 @@ export default function LoginPage() {
                 >
                   Email
                 </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
-                    <Mail className="w-4 h-4" strokeWidth={1.5} />
-                  </div>
-                  <input
-                    ref={emailInputRef}
-                    id="email"
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@tps.co.id"
-                    className="w-full rounded-control border border-border bg-bg pl-10 pr-3.5 py-2.5 text-base sm:text-xs text-text-main placeholder:text-text-muted/60 transition-all hover:border-primary/40 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[44px] sm:min-h-[38px]"
-                  />
-                </div>
+                <input
+                  ref={emailInputRef}
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="name@tps.co.id"
+                  className="w-full rounded-control border border-border bg-bg px-3.5 py-2.5 text-base sm:text-xs text-text-main placeholder:text-text-muted/60 transition-all hover:border-primary/40 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[44px] sm:min-h-[38px]"
+                />
               </div>
 
-              {/* Password Field with Left Icon and Show/Hide Button */}
+              {/* Password Field with Show/Hide Button */}
               <div>
                 <label
                   htmlFor="password"
@@ -201,9 +185,6 @@ export default function LoginPage() {
                   Kata Sandi
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-text-muted">
-                    <Lock className="w-4 h-4" strokeWidth={1.5} />
-                  </div>
                   <input
                     id="password"
                     name="password"
@@ -213,7 +194,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full rounded-control border border-border bg-bg pl-10 pr-10 py-2.5 text-base sm:text-xs text-text-main placeholder:text-text-muted/60 transition-all hover:border-primary/40 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[44px] sm:min-h-[38px]"
+                    className="w-full rounded-control border border-border bg-bg pl-3.5 pr-10 py-2.5 text-base sm:text-xs text-text-main placeholder:text-text-muted/60 transition-all hover:border-primary/40 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[44px] sm:min-h-[38px]"
                   />
                   <button
                     type="button"
@@ -243,10 +224,9 @@ export default function LoginPage() {
                 {errorMessage && (
                   <div
                     role="alert"
-                    className="flex items-center gap-2 rounded-control bg-danger-soft border border-danger/20 px-3 py-2 text-xs text-danger leading-relaxed"
+                    className="rounded-control bg-danger-soft border border-danger/20 px-3 py-2 text-xs text-danger leading-relaxed"
                   >
-                    <AlertCircle className="w-4 h-4 shrink-0" strokeWidth={1.5} />
-                    <span>{errorMessage}</span>
+                    {errorMessage}
                   </div>
                 )}
               </div>
@@ -274,7 +254,7 @@ export default function LoginPage() {
 
         {/* Small Footer */}
         <footer className="text-center text-xs text-text-muted py-2 mt-4">
-          General Affairs - PT Pelindo Terminal Petikemas &copy; {new Date().getFullYear()}
+          General Affairs - PT Pelindo Terminal Petikemas &copy; 2026
         </footer>
       </section>
     </main>

@@ -13,6 +13,7 @@ import {
   Clock,
   BookOpen,
   Settings,
+  Users,
   ArrowRight,
   Package,
   FileSpreadsheet,
@@ -107,6 +108,7 @@ function CommandPaletteModal({
     { label: 'Persediaan', href: '/admin/persediaan', icon: Boxes },
     { label: 'Daftar Belanja', href: '/admin/daftar-belanja', icon: ShoppingCart },
     { label: 'Laporan', href: '/admin/laporan', icon: FileText },
+    { label: 'Pengguna', href: '/admin/pengguna', icon: Users },
     { label: 'Pengaturan', href: '/admin/pengaturan', icon: Settings },
   ];
 

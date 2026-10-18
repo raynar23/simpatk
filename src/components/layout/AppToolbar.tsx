@@ -6,8 +6,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   Menu,
-  PanelLeft,
-  Search,
   Settings,
   LogOut,
   ChevronDown,
@@ -16,7 +14,6 @@ import {
 import { createClient } from '@/lib/supabase/client';
 import { useShell } from './ShellContext';
 import { NotificationsDropdown } from './NotificationsDropdown';
-import { Tooltip } from '@/components/ui/Tooltip';
 
 interface AppToolbarProps {
   role: 'admin' | 'user';
@@ -27,13 +24,13 @@ interface AppToolbarProps {
 
 export function AppToolbar({
   role,
-  title = 'Dashboard',
+  title,
   divisionName,
   userId,
 }: AppToolbarProps) {
   const router = useRouter();
   const supabase = createClient();
-  const { toggleCollapse, toggleMobile, openCommandPalette } = useShell();
+  const { toggleMobile } = useShell();
   const [isAccountMenuOpen, setIsAccountMenuOpen] = useState(false);
   const accountMenuRef = useRef<HTMLDivElement>(null);
 
@@ -56,7 +53,7 @@ export function AppToolbar({
 
   return (
     <header className="h-[52px] shrink-0 sticky top-0 z-20 bg-surface/95 backdrop-blur-md border-b border-border flex items-center justify-between px-3 sm:px-4 select-none">
-      {/* Left: Sidebar Toggle and Breadcrumb / Page Title */}
+      {/* Left: Mobile Hamburger and Portal Title */}
       <div className="flex items-center gap-2.5 min-w-0">
         {/* Mobile Hamburger (< lg) */}
         <button
@@ -68,58 +65,14 @@ export function AppToolbar({
           <Menu className="w-4 h-4" strokeWidth={1.5} />
         </button>
 
-        {/* Desktop Sidebar Collapse Toggle (lg+) */}
-        <div className="hidden lg:block">
-          <Tooltip content="Ciutkan/Perluas Sidebar (Cmd+B)" side="bottom">
-            <button
-              type="button"
-              onClick={toggleCollapse}
-              aria-label="Ciutkan atau perluas sidebar"
-              className="w-8 h-8 rounded-control flex items-center justify-center text-text-muted hover:text-text-main hover:bg-bg transition-colors cursor-pointer"
-            >
-              <PanelLeft className="w-4 h-4" strokeWidth={1.5} />
-            </button>
-          </Tooltip>
-        </div>
-
-        {/* Vertical divider */}
-        <div className="h-4 w-px bg-border hidden sm:block" />
-
-        {/* Page Title (20px semi-bold) */}
-        <h1 className="text-sm sm:text-base font-semibold text-text-main tracking-tight truncate">
-          {title}
+        {/* Portal Title / Role */}
+        <h1 className="text-sm font-semibold text-text-main tracking-tight truncate">
+          {title || (role === 'admin' ? 'Portal Admin' : 'Portal Pemohon')}
         </h1>
       </div>
 
-      {/* Center: Command Palette Trigger Button (Ctrl/Cmd+K) */}
-      <div className="flex-1 max-w-xs mx-4 hidden md:block">
-        <button
-          type="button"
-          onClick={openCommandPalette}
-          className="w-full flex items-center justify-between px-3 py-1.5 rounded-control border border-border bg-bg text-text-muted hover:border-primary/40 hover:bg-surface transition-colors cursor-pointer text-xs"
-        >
-          <div className="flex items-center gap-2">
-            <Search className="w-3.5 h-3.5" strokeWidth={1.5} />
-            <span>Cari atau pindah ke...</span>
-          </div>
-          <kbd className="text-[10px] font-mono text-text-muted bg-surface border border-border px-1.5 py-0.5 rounded-badge">
-            ⌘K
-          </kbd>
-        </button>
-      </div>
-
-      {/* Right: Search Mobile Icon, Notifications, and Account Menu */}
+      {/* Right: Notifications and Account Menu */}
       <div className="flex items-center gap-1.5">
-        {/* Mobile Search Icon */}
-        <button
-          type="button"
-          onClick={openCommandPalette}
-          aria-label="Buka pencarian cepat"
-          className="md:hidden w-8 h-8 rounded-control flex items-center justify-center text-text-muted hover:text-text-main hover:bg-bg transition-colors cursor-pointer"
-        >
-          <Search className="w-4 h-4" strokeWidth={1.5} />
-        </button>
-
         {/* Notifications Dropdown */}
         <NotificationsDropdown role={role} userId={userId} />
 

@@ -3,8 +3,9 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Plus, Minus, Edit, PackagePlus } from 'lucide-react';
+import { Plus, Minus, Edit } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
 import { InventorySummaryStrip } from '@/components/admin/InventorySummaryStrip';
 import { StockAdjustModal } from '@/components/admin/StockAdjustModal';
@@ -82,7 +83,7 @@ export default function AdminPersediaanPage() {
     if (stockStatusFilter === 'habis') {
       result = result.filter((it) => it.stok === 0);
     } else if (stockStatusFilter === 'menipis') {
-      result = result.filter((it) => it.stok > 0 && isLowStock(it.stok, it.stok_minimum));
+      result = result.filter((it) => isLowStock(it.stok, it.stok_minimum));
     } else if (stockStatusFilter === 'normal') {
       result = result.filter((it) => it.stok > it.stok_minimum);
     }
@@ -266,17 +267,28 @@ export default function AdminPersediaanPage() {
     },
   ];
 
-  return (
-    <div className="p-3 sm:p-5 max-w-[1440px] mx-auto space-y-4 select-none">
-      <div>
-        <h2 className="text-sm font-semibold text-text-main tracking-tight">
-          Katalog Persediaan ATK
-        </h2>
-        <p className="text-[11px] text-text-muted mt-0.5">
-          Kelola stok fisik, sesuaikan kuantitas manual, dan daftarkan jenis alat tulis kantor
-        </p>
-      </div>
+  const lowCount = useMemo(() => items.filter((it) => isLowStock(it.stok, it.stok_minimum)).length, [items]);
+  const outCount = useMemo(() => items.filter((it) => it.stok === 0).length, [items]);
 
+  return (
+    <PageContainer
+      title="Persediaan"
+      subtitle="Katalog barang operasional, posisi stok fisik, dan batas minimum pengadaan"
+      actions={
+        <button
+          type="button"
+          onClick={() => {
+            setItemToEdit(null);
+            setIsUpsertOpen(true);
+          }}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control bg-primary hover:bg-primary-dark text-white shadow-xs transition-colors cursor-pointer min-h-[32px]"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          <span>Tambah Barang</span>
+        </button>
+      }
+      contentClassName="space-y-3.5"
+    >
       {/* Summary metric strip */}
       <InventorySummaryStrip items={items} isLoading={isLoading} />
 
@@ -320,12 +332,12 @@ export default function AdminPersediaanPage() {
               ))}
             </select>
 
-            {/* Status Stok Filter Buttons */}
+            {/* Status Stok Filter Buttons with Dynamic Counts */}
             <div className="inline-flex p-0.5 rounded-control bg-bg border border-border text-xs">
               {[
                 { key: 'semua', label: 'Semua Stok' },
-                { key: 'menipis', label: 'Menipis' },
-                { key: 'habis', label: 'Habis (0)' },
+                { key: 'menipis', label: `Menipis (${lowCount})` },
+                { key: 'habis', label: `Habis (${outCount})` },
               ].map((opt) => (
                 <button
                   key={opt.key}
@@ -346,22 +358,11 @@ export default function AdminPersediaanPage() {
             </div>
           </div>
         }
-        actionControls={
-          <button
-            type="button"
-            onClick={() => {
-              setItemToEdit(null);
-              setIsUpsertOpen(true);
-            }}
-            className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-control bg-primary hover:bg-primary-dark text-white shadow-xs transition-colors cursor-pointer min-h-[32px]"
-          >
-            <PackagePlus className="w-3.5 h-3.5" />
-            <span>Tambah Barang</span>
-          </button>
-        }
         isLoading={isLoading}
         emptyMessage="Tidak ada barang ATK yang sesuai filter."
         csvFilename="katalog_persediaan_atk.csv"
+        enableDynamicHeight={true}
+        className="flex-1 min-h-0"
       />
 
       {/* Stock adjustment modal (Tambah/Kurangi Stok) */}
@@ -394,6 +395,7 @@ export default function AdminPersediaanPage() {
           }
         }}
       />
-    </div>
+    </PageContainer>
   );
 }
+

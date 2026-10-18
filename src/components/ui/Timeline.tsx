@@ -1,6 +1,7 @@
 // Clean macOS-style vertical status progression timeline
 import React from 'react';
 import { CheckCircle2, Clock, CircleDot, MessageSquare } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 
 interface TimelineProps {
   createdAt: string | Date;
@@ -17,20 +18,7 @@ export function Timeline({
   catatanGa,
   className = '',
 }: TimelineProps) {
-  const formatDate = (dateVal: string | Date) => {
-    try {
-      const d = new Date(dateVal);
-      return d.toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return String(dateVal);
-    }
-  };
+
 
   const isCompleted = status === 'selesai';
 

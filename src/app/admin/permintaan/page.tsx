@@ -4,6 +4,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
 import { RequestInspector } from '@/components/admin/RequestInspector';
 import { Badge } from '@/components/ui/Badge';
@@ -263,18 +264,10 @@ export default function AdminPermintaanPage() {
   };
 
   return (
-    <div className="p-3 sm:p-5 max-w-[1440px] mx-auto space-y-3 select-none">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <h2 className="text-sm font-semibold text-text-main tracking-tight">
-            Daftar Permintaan ATK
-          </h2>
-          <p className="text-[11px] text-text-muted mt-0.5">
-            Kelola dan pantau proses serah terima barang operasional seluruh divisi
-          </p>
-        </div>
-      </div>
-
+    <PageContainer
+      title="Permintaan"
+      subtitle="Kelola dan pantau proses serah terima barang operasional seluruh divisi"
+    >
       {/* Main DataTable Master View */}
       <DataTable
         columns={columns}
@@ -343,7 +336,8 @@ export default function AdminPermintaanPage() {
         isLoading={isLoading}
         emptyMessage="Tidak ada permintaan yang sesuai kriteria filter."
         csvFilename="daftar_permintaan_atk.csv"
-        className={highlightedId ? 'ring-2 ring-primary/40 transition-all' : ''}
+        enableDynamicHeight={true}
+        className={`flex-1 min-h-0 ${highlightedId ? 'ring-2 ring-primary/40 transition-all' : ''}`}
       />
 
       {/* Detail Slide-over Inspector */}
@@ -353,6 +347,6 @@ export default function AdminPermintaanPage() {
         onClose={() => setIsInspectorOpen(false)}
         onCompletedSuccess={handleCompletedSuccess}
       />
-    </div>
+    </PageContainer>
   );
 }
