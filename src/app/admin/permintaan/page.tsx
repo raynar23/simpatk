@@ -10,7 +10,7 @@ import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
 import { RequestInspector } from '@/components/admin/RequestInspector';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
-import { formatDateShort } from '@/lib/utils';
+import { formatDateShort, formatDate } from '@/lib/utils';
 import type { RequestWithDetails } from '@/lib/types';
 
 export default function AdminPermintaanPage() {
@@ -196,6 +196,7 @@ export default function AdminPermintaanPage() {
       header: 'Nomor',
       accessorKey: 'nomor',
       isSortable: true,
+      csvValue: (row) => row.nomor || `REQ-${row.id.slice(0, 8)}`,
       cell: (row) => (
         <span className="font-mono font-semibold text-primary text-[11px]">
           {row.nomor || 'REQ'}
@@ -207,6 +208,7 @@ export default function AdminPermintaanPage() {
       header: 'Tanggal',
       accessorKey: 'created_at',
       isSortable: true,
+      csvValue: (row) => formatDate(row.created_at),
       cell: (row) => (
         <span className="text-text-muted tabular-nums whitespace-nowrap">
           {formatDateShort(row.created_at)}
@@ -216,6 +218,7 @@ export default function AdminPermintaanPage() {
     {
       id: 'profiles',
       header: 'Divisi Pemohon',
+      csvValue: (row) => row.profiles?.nama_divisi || 'Divisi Pemohon',
       cell: (row) => (
         <span className="font-medium text-text-main truncate">
           {row.profiles?.nama_divisi || 'Divisi Pemohon'}
@@ -225,6 +228,8 @@ export default function AdminPermintaanPage() {
     {
       id: 'items',
       header: 'Nama Barang ATK',
+      csvValue: (row) =>
+        `${row.items?.nama || '-'}${row.items?.kode ? ` (${row.items.kode})` : ''}`,
       cell: (row) => (
         <div className="min-w-0">
           <p className="font-medium text-text-main truncate">{row.items?.nama || '-'}</p>
@@ -238,6 +243,7 @@ export default function AdminPermintaanPage() {
       accessorKey: 'jumlah',
       isNumeric: true,
       isSortable: true,
+      csvValue: (row) => `${row.jumlah} ${row.items?.satuan || 'unit'}`,
       cell: (row) => (
         <span className="tabular-nums font-semibold text-text-main">
           {row.jumlah} <span className="font-normal text-text-muted">{row.items?.satuan}</span>
@@ -250,6 +256,7 @@ export default function AdminPermintaanPage() {
       accessorKey: 'status',
       isNumeric: true,
       isSortable: true,
+      csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'),
       cell: (row) => <Badge variant={row.status as 'diproses' | 'selesai'} />,
     },
   ];
@@ -273,6 +280,7 @@ export default function AdminPermintaanPage() {
       <DataTable
         columns={columns}
         data={paginatedData}
+        exportData={filteredData}
         totalCount={filteredData.length}
         page={page}
         pageSize={pageSize}

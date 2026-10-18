@@ -53,6 +53,7 @@ export function DashboardPanels({
       id: 'nomor',
       header: 'Nomor',
       accessorKey: 'nomor',
+      csvValue: (row) => row.nomor || `REQ-${row.id.slice(0, 8)}`,
       cell: (row) => (
         <span className="font-mono font-semibold text-primary text-[11px]">
           {row.nomor || 'REQ'}
@@ -62,6 +63,8 @@ export function DashboardPanels({
     {
       id: 'created_at',
       header: 'Tanggal',
+      accessorKey: 'created_at',
+      csvValue: (row) => formatDateShort(row.created_at),
       cell: (row) => (
         <span className="text-text-muted tabular-nums whitespace-nowrap">
           {formatDateShort(row.created_at)}
@@ -71,6 +74,7 @@ export function DashboardPanels({
     {
       id: 'profiles',
       header: 'Divisi',
+      csvValue: (row) => row.profiles?.nama_divisi || 'Divisi',
       cell: (row) => (
         <span className="truncate max-w-[130px] font-medium text-text-main">
           {row.profiles?.nama_divisi || 'Divisi'}
@@ -80,6 +84,8 @@ export function DashboardPanels({
     {
       id: 'items',
       header: 'Barang',
+      csvValue: (row) =>
+        `${row.items?.nama || '-'}${row.items?.kode ? ` (${row.items.kode})` : ''}`,
       cell: (row) => (
         <span className="truncate max-w-[140px] text-text-main">
           {row.items?.nama || '-'}
@@ -89,7 +95,9 @@ export function DashboardPanels({
     {
       id: 'jumlah',
       header: 'Jumlah',
+      accessorKey: 'jumlah',
       isNumeric: true,
+      csvValue: (row) => `${row.jumlah} ${row.items?.satuan || 'unit'}`,
       cell: (row) => (
         <span className="tabular-nums font-semibold text-text-main">
           {row.jumlah} {row.items?.satuan}
@@ -99,7 +107,9 @@ export function DashboardPanels({
     {
       id: 'status',
       header: 'Status',
+      accessorKey: 'status',
       isNumeric: true,
+      csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'),
       cell: (row) => <Badge variant={row.status as 'diproses' | 'selesai'} />,
     },
   ];
@@ -110,6 +120,7 @@ export function DashboardPanels({
       id: 'kode',
       header: 'Kode',
       accessorKey: 'kode',
+      csvValue: (row) => row.kode || 'ATK',
       cell: (row) => (
         <span className="font-mono font-semibold text-primary text-[11px]">
           {row.kode || 'ATK'}
@@ -120,6 +131,7 @@ export function DashboardPanels({
       id: 'nama',
       header: 'Nama Barang',
       accessorKey: 'nama',
+      csvValue: (row) => row.nama,
       cell: (row) => (
         <span className="truncate max-w-[180px] font-medium text-text-main">
           {row.nama}
@@ -130,12 +142,15 @@ export function DashboardPanels({
       id: 'kategori',
       header: 'Kategori',
       accessorKey: 'kategori',
+      csvValue: (row) => row.kategori,
       cell: (row) => <span className="text-text-muted">{row.kategori}</span>,
     },
     {
       id: 'stok',
       header: 'Stok Fisik',
+      accessorKey: 'stok',
       isNumeric: true,
+      csvValue: (row) => `${row.stok} ${row.satuan}`,
       cell: (row) => (
         <span
           className={`tabular-nums font-bold ${
@@ -149,7 +164,9 @@ export function DashboardPanels({
     {
       id: 'stok_minimum',
       header: 'Batas Minimum',
+      accessorKey: 'stok_minimum',
       isNumeric: true,
+      csvValue: (row) => `${row.stok_minimum} ${row.satuan}`,
       cell: (row) => (
         <span className="tabular-nums text-text-muted">
           {row.stok_minimum} {row.satuan}
@@ -160,6 +177,7 @@ export function DashboardPanels({
       id: 'saran',
       header: 'Saran Beli',
       isNumeric: true,
+      csvValue: (row) => `+${Math.max(1, row.stok_minimum * 2 - row.stok)} ${row.satuan}`,
       cell: (row) => {
         const saran = Math.max(1, row.stok_minimum * 2 - row.stok);
         return (
@@ -197,12 +215,14 @@ export function DashboardPanels({
           <DataTable
             columns={requestColumns}
             data={paginatedRequests}
+            exportData={recentRequests}
             totalCount={recentRequests.length}
             page={reqPage}
             pageSize={reqPageSize}
             onPageChange={setReqPage}
             onPageSizeChange={setReqPageSize}
             isLoading={isLoading}
+            csvFilename="dashboard_permintaan_terbaru.csv"
             emptyMessage="Belum ada transaksi permintaan diajukan."
             className="border-none rounded-none shadow-none flex-1 min-h-0"
           />
@@ -233,12 +253,14 @@ export function DashboardPanels({
           <DataTable
             columns={stockColumns}
             data={paginatedLowStock}
+            exportData={lowStockItems}
             totalCount={lowStockItems.length}
             page={itemPage}
             pageSize={itemPageSize}
             onPageChange={setItemPage}
             onPageSizeChange={setItemPageSize}
             isLoading={isLoading}
+            csvFilename="dashboard_stok_menipis.csv"
             emptyMessage="Semua stok barang dalam kondisi aman di atas batas minimum."
             className="border-none rounded-none shadow-none flex-1 min-h-0"
           />

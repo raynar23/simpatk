@@ -98,7 +98,7 @@ function downloadCsv(filename: string, headers: string[], rows: (string | number
   const csvContent =
     '\uFEFF' +
     [
-      headers.join(','),
+      headers.map((h) => `"${h.replace(/"/g, '""')}"`).join(','),
       ...rows.map((row) =>
         row
           .map((val) => {
@@ -524,6 +524,7 @@ export default function AdminLaporanPage() {
       id: 'nomor',
       header: 'Nomor Tiket',
       accessorKey: 'nomor',
+      csvValue: (row) => row.nomor,
       cell: (row) => (
         <span className="font-mono text-xs font-semibold text-primary">{row.nomor}</span>
       ),
@@ -532,18 +533,21 @@ export default function AdminLaporanPage() {
       id: 'created_at',
       header: 'Waktu Pengajuan',
       accessorKey: 'created_at',
+      csvValue: (row) => formatDate(row.created_at),
       cell: (row) => <span className="text-xs text-text-muted">{formatDate(row.created_at)}</span>,
     },
     {
       id: 'pemohon',
       header: 'Divisi Pemohon',
       accessorKey: 'pemohon',
+      csvValue: (row) => row.pemohon,
       cell: (row) => <span className="text-xs font-medium text-text-main">{row.pemohon}</span>,
     },
     {
       id: 'namaBarang',
       header: 'Barang ATK',
       accessorKey: 'namaBarang',
+      csvValue: (row) => `${row.namaBarang} (${row.kodeBarang})`,
       cell: (row) => (
         <div>
           <p className="text-xs font-medium text-text-main leading-tight">{row.namaBarang}</p>
@@ -556,6 +560,7 @@ export default function AdminLaporanPage() {
       header: 'Jumlah',
       accessorKey: 'jumlah',
       isNumeric: true,
+      csvValue: (row) => `${row.jumlah} ${row.satuan}`,
       cell: (row) => (
         <span className="tabular-nums text-xs font-semibold text-text-main">
           {row.jumlah} {row.satuan}
@@ -565,6 +570,8 @@ export default function AdminLaporanPage() {
     {
       id: 'status',
       header: 'Status',
+      accessorKey: 'status',
+      csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'),
       cell: (row) => <Badge variant={row.status} />,
     },
     {
@@ -572,6 +579,7 @@ export default function AdminLaporanPage() {
       header: 'Durasi',
       accessorKey: 'durasiJam',
       isNumeric: true,
+      csvValue: (row) => (row.durasiJam !== null ? formatDuration(row.durasiJam) : '-'),
       cell: (row) => (
         <span className="tabular-nums text-xs text-text-muted">
           {row.durasiJam !== null ? formatDuration(row.durasiJam) : '-'}
@@ -581,6 +589,7 @@ export default function AdminLaporanPage() {
     {
       id: 'aksi',
       header: 'Aksi',
+      excludeFromCsv: true,
       isNumeric: true,
       cell: (row) => (
         <button
@@ -601,6 +610,7 @@ export default function AdminLaporanPage() {
       id: 'periode',
       header: 'Bulan / Periode',
       accessorKey: 'periode',
+      csvValue: (row) => row.periode,
       cell: (row) => <span className="font-semibold text-text-main text-xs">{row.periode}</span>,
     },
     {
@@ -608,6 +618,7 @@ export default function AdminLaporanPage() {
       header: 'Total Tiket',
       accessorKey: 'totalPermintaan',
       isNumeric: true,
+      csvValue: (row) => row.totalPermintaan,
       cell: (row) => (
         <span className="tabular-nums font-semibold text-text-main text-xs">
           {row.totalPermintaan} tiket
@@ -619,6 +630,7 @@ export default function AdminLaporanPage() {
       header: 'Selesai Diserahkan',
       accessorKey: 'totalSelesai',
       isNumeric: true,
+      csvValue: (row) => `${row.totalSelesai} (${row.persentaseSelesai}%)`,
       cell: (row) => (
         <span className="tabular-nums font-medium text-success text-xs">
           {row.totalSelesai} ({row.persentaseSelesai}%)
@@ -630,6 +642,7 @@ export default function AdminLaporanPage() {
       header: 'Sedang Diproses',
       accessorKey: 'totalDiproses',
       isNumeric: true,
+      csvValue: (row) => row.totalDiproses,
       cell: (row) => (
         <span className="tabular-nums text-text-muted text-xs">
           {row.totalDiproses} tiket
@@ -641,6 +654,7 @@ export default function AdminLaporanPage() {
       header: 'Rata-rata Durasi',
       accessorKey: 'rataWaktuJam',
       isNumeric: true,
+      csvValue: (row) => formatDuration(row.rataWaktuJam),
       cell: (row) => (
         <span className="tabular-nums text-text-muted text-xs">
           {formatDuration(row.rataWaktuJam)}
@@ -652,6 +666,7 @@ export default function AdminLaporanPage() {
       header: 'Total Unit ATK',
       accessorKey: 'totalUnit',
       isNumeric: true,
+      csvValue: (row) => row.totalUnit,
       cell: (row) => (
         <span className="tabular-nums font-semibold text-primary text-xs">
           {formatNumber(row.totalUnit)} unit
@@ -661,6 +676,7 @@ export default function AdminLaporanPage() {
     {
       id: 'aksi',
       header: 'Aksi',
+      excludeFromCsv: true,
       isNumeric: true,
       cell: (row) => (
         <button
@@ -681,6 +697,7 @@ export default function AdminLaporanPage() {
       id: 'kode',
       header: 'Kode',
       accessorKey: 'kode',
+      csvValue: (row) => row.kode,
       cell: (row) => (
         <span className="font-mono font-semibold text-primary text-xs">{row.kode}</span>
       ),
@@ -689,12 +706,14 @@ export default function AdminLaporanPage() {
       id: 'nama',
       header: 'Nama Barang ATK',
       accessorKey: 'nama',
+      csvValue: (row) => row.nama,
       cell: (row) => <span className="font-medium text-text-main text-xs">{row.nama}</span>,
     },
     {
       id: 'kategori',
       header: 'Kategori',
       accessorKey: 'kategori',
+      csvValue: (row) => row.kategori,
       cell: (row) => <span className="text-text-muted text-xs">{row.kategori}</span>,
     },
     {
@@ -702,6 +721,7 @@ export default function AdminLaporanPage() {
       header: 'Total Permintaan',
       accessorKey: 'totalDiminta',
       isNumeric: true,
+      csvValue: (row) => `${row.totalDiminta} ${row.satuan}`,
       cell: (row) => (
         <span className="tabular-nums font-bold text-text-main text-xs">
           {formatNumber(row.totalDiminta)} {row.satuan}
@@ -713,6 +733,7 @@ export default function AdminLaporanPage() {
       header: 'Frekuensi Pengajuan',
       accessorKey: 'frekuensiTiket',
       isNumeric: true,
+      csvValue: (row) => row.frekuensiTiket,
       cell: (row) => (
         <span className="tabular-nums text-text-muted text-xs">{row.frekuensiTiket} kali</span>
       ),
@@ -722,6 +743,7 @@ export default function AdminLaporanPage() {
       header: 'Estimasi Nilai Distribusi',
       accessorKey: 'estimasiNilai',
       isNumeric: true,
+      csvValue: (row) => row.estimasiNilai,
       cell: (row) => (
         <span className="tabular-nums font-semibold text-primary text-xs">
           {formatRupiah(row.estimasiNilai)}
@@ -731,6 +753,7 @@ export default function AdminLaporanPage() {
     {
       id: 'aksi',
       header: 'Aksi',
+      excludeFromCsv: true,
       isNumeric: true,
       cell: (row) => (
         <button
@@ -751,6 +774,7 @@ export default function AdminLaporanPage() {
       id: 'kode',
       header: 'Kode',
       accessorKey: 'kode',
+      csvValue: (row) => row.kode,
       cell: (row) => (
         <span className="font-mono font-semibold text-primary text-xs">{row.kode}</span>
       ),
@@ -759,12 +783,14 @@ export default function AdminLaporanPage() {
       id: 'nama',
       header: 'Nama Barang ATK',
       accessorKey: 'nama',
+      csvValue: (row) => row.nama,
       cell: (row) => <span className="font-medium text-text-main text-xs">{row.nama}</span>,
     },
     {
       id: 'kategori',
       header: 'Kategori',
       accessorKey: 'kategori',
+      csvValue: (row) => row.kategori,
       cell: (row) => <span className="text-text-muted text-xs">{row.kategori}</span>,
     },
     {
@@ -772,6 +798,7 @@ export default function AdminLaporanPage() {
       header: 'Stok Fisik',
       accessorKey: 'stok',
       isNumeric: true,
+      csvValue: (row) => `${row.stok} ${row.satuan}`,
       cell: (row) => (
         <span
           className={`tabular-nums font-bold text-xs ${
@@ -791,6 +818,7 @@ export default function AdminLaporanPage() {
       header: 'Min. Stok',
       accessorKey: 'stok_minimum',
       isNumeric: true,
+      csvValue: (row) => `${row.stok_minimum} ${row.satuan}`,
       cell: (row) => (
         <span className="tabular-nums text-text-muted text-xs">
           {row.stok_minimum} {row.satuan}
@@ -802,6 +830,7 @@ export default function AdminLaporanPage() {
       header: 'Estimasi Nilai Stok',
       accessorKey: 'totalValuasi',
       isNumeric: true,
+      csvValue: (row) => row.totalValuasi,
       cell: (row) => (
         <span className="tabular-nums font-semibold text-text-main text-xs">
           {formatRupiah(row.totalValuasi)}
@@ -811,12 +840,16 @@ export default function AdminLaporanPage() {
     {
       id: 'statusStok',
       header: 'Status',
+      accessorKey: 'statusStok',
       isNumeric: true,
+      csvValue: (row) =>
+        row.statusStok === 'habis' ? 'Habis' : row.statusStok === 'menipis' ? 'Menipis' : 'Normal',
       cell: (row) => <Badge variant={row.statusStok} />,
     },
     {
       id: 'aksi',
       header: 'Aksi',
+      excludeFromCsv: true,
       isNumeric: true,
       cell: (row) => (
         <button
@@ -990,6 +1023,7 @@ export default function AdminLaporanPage() {
           <DataTable
             columns={columnsTx}
             data={filteredTransactionRows.slice((pageTx - 1) * 10, pageTx * 10)}
+            exportData={filteredTransactionRows}
             totalCount={filteredTransactionRows.length}
             page={pageTx}
             pageSize={10}
@@ -1069,6 +1103,7 @@ export default function AdminLaporanPage() {
           <DataTable
             columns={columnsMonthly}
             data={monthlyRows.slice((pageMonthly - 1) * 10, pageMonthly * 10)}
+            exportData={monthlyRows}
             totalCount={monthlyRows.length}
             page={pageMonthly}
             pageSize={10}
@@ -1121,6 +1156,7 @@ export default function AdminLaporanPage() {
           <DataTable
             columns={columnsConsumption}
             data={consumptionRows.slice((pageConsumption - 1) * 10, pageConsumption * 10)}
+            exportData={consumptionRows}
             totalCount={consumptionRows.length}
             page={pageConsumption}
             pageSize={10}
@@ -1175,6 +1211,7 @@ export default function AdminLaporanPage() {
           <DataTable
             columns={columnsStock}
             data={stockAuditRows.slice((pageStock - 1) * 10, pageStock * 10)}
+            exportData={stockAuditRows}
             totalCount={stockAuditRows.length}
             page={pageStock}
             pageSize={10}

@@ -262,6 +262,8 @@ function UserDashboardContent() {
     {
       id: 'nomor',
       header: 'Nomor Tiket',
+      accessorKey: 'nomor',
+      csvValue: (row) => row.nomor || `REQ-${row.id.slice(0, 8)}`,
       cell: (row) => (
         <span className="font-semibold text-primary tracking-tight">
           {row.nomor || `REQ-${row.id.slice(0, 8)}`}
@@ -271,6 +273,8 @@ function UserDashboardContent() {
     {
       id: 'tanggal',
       header: 'Waktu Pengajuan',
+      accessorKey: 'created_at',
+      csvValue: (row) => formatDate(row.created_at),
       cell: (row) => (
         <span className="text-xs text-text-muted">
           {formatDate(row.created_at)}
@@ -280,6 +284,10 @@ function UserDashboardContent() {
     {
       id: 'barang',
       header: 'Barang & Kuantitas',
+      csvValue: (row) =>
+        `${row.items?.nama || 'Barang Dihapus'}${
+          row.items?.kode ? ` (${row.items.kode})` : ''
+        } - ${row.jumlah} ${row.items?.satuan || 'unit'}`,
       cell: (row) => (
         <div className="min-w-0">
           <p className="font-medium text-text-main text-xs truncate">
@@ -294,6 +302,8 @@ function UserDashboardContent() {
     {
       id: 'status',
       header: 'Status',
+      accessorKey: 'status',
+      csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Diproses'),
       cell: (row) => (
         <Badge variant={row.status === 'selesai' ? 'selesai' : 'diproses'}>
           {row.status === 'selesai' ? 'Selesai' : 'Diproses'}
@@ -604,11 +614,13 @@ function UserDashboardContent() {
               <DataTable
                 columns={columns}
                 data={paginatedRequests}
+                exportData={requests}
                 totalCount={requests.length}
                 page={page}
                 pageSize={pageSize}
                 onPageChange={setPage}
                 isLoading={isLoading}
+                csvFilename="permintaan_terbaru_saya.csv"
                 emptyMessage="Belum ada riwayat pengajuan ATK."
                 onRowClick={(row) => setSelectedRequest(row)}
                 className="h-full border-0"

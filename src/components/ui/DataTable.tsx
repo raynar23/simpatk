@@ -15,16 +15,20 @@ import { Pagination } from './Pagination';
 export interface ColumnDef<T> {
   id: string;
   header: string;
-  accessorKey?: keyof T;
+  accessorKey?: keyof T | string;
+  accessorFn?: (row: T) => unknown;
+  csvValue?: (row: T) => string | number | boolean | null | undefined;
   cell?: (row: T, index: number) => React.ReactNode;
   isNumeric?: boolean;
   isSortable?: boolean;
   className?: string;
+  excludeFromCsv?: boolean;
 }
 
 interface DataTableProps<T> {
   columns: ColumnDef<T>[];
   data: T[];
+  exportData?: T[];
   totalCount: number;
   page: number;
   pageSize: number;
@@ -42,6 +46,7 @@ interface DataTableProps<T> {
   isLoading?: boolean;
   emptyMessage?: string;
   csvFilename?: string;
+  onExportCsv?: () => void;
   enableDynamicHeight?: boolean;
   className?: string;
   tableClassName?: string;
@@ -50,6 +55,7 @@ interface DataTableProps<T> {
 export function DataTable<T extends object>({
   columns,
   data,
+  exportData,
   totalCount,
   page,
   pageSize,
@@ -67,6 +73,7 @@ export function DataTable<T extends object>({
   isLoading = false,
   emptyMessage = 'Tidak ada data yang ditemukan',
   csvFilename = 'simpatk_ekspor.csv',
+  onExportCsv,
   enableDynamicHeight = false,
   className = '',
   tableClassName = '',
@@ -106,19 +113,148 @@ export function DataTable<T extends object>({
     }
   };
 
-  // Export current view or dataset to CSV
-  const handleExportCsv = () => {
-    if (!data.length) return;
+  // Extract cell value with fallback heuristics for CSV export
+  const extractCellCsvValue = (col: ColumnDef<T>, row: T): string => {
+    // 1. Explicit csvValue function
+    if (col.csvValue) {
+      const customVal = col.csvValue(row);
+      if (customVal === null || customVal === undefined) return '';
+      return String(customVal);
+    }
 
-    const headers = columns.map((col) => `"${col.header.replace(/"/g, '""')}"`);
-    const rows = data.map((row) =>
-      columns
+    // 2. Explicit accessorFn
+    if (col.accessorFn) {
+      const fnVal = col.accessorFn(row);
+      if (fnVal === null || fnVal === undefined) return '';
+      return typeof fnVal === 'object' ? JSON.stringify(fnVal) : String(fnVal);
+    }
+
+    // 3. Resolve key (accessorKey or id)
+    const rawKey = (col.accessorKey as string) || col.id;
+    const r = row as Record<string, unknown>;
+
+    // Nested path (e.g. "items.nama")
+    if (rawKey.includes('.')) {
+      const parts = rawKey.split('.');
+      let curr: unknown = r;
+      for (const part of parts) {
+        if (curr && typeof curr === 'object') {
+          curr = (curr as Record<string, unknown>)[part];
+        } else {
+          curr = undefined;
+          break;
+        }
+      }
+      if (curr !== null && curr !== undefined) {
+        return String(curr);
+      }
+    }
+
+    // Direct object property
+    let direct = r[rawKey];
+    if (direct === undefined && col.accessorKey) {
+      direct = r[col.accessorKey as string];
+    }
+    if (direct === undefined && col.id) {
+      direct = r[col.id];
+    }
+
+    if (direct !== null && direct !== undefined) {
+      if (typeof direct === 'object') {
+        const obj = direct as Record<string, unknown>;
+        if ('nama_divisi' in obj) return String(obj.nama_divisi || '');
+        if ('nama' in obj) {
+          return obj.kode ? `${obj.nama} (${obj.kode})` : String(obj.nama || '');
+        }
+        return '';
+      }
+      return String(direct);
+    }
+
+    // 4. Smart heuristic by column id/header
+    const idL = col.id.toLowerCase();
+    const headerL = col.header.toLowerCase();
+
+    // Nomor tiket
+    if (idL.includes('nomor') || headerL.includes('nomor') || headerL.includes('tiket')) {
+      if ('nomor' in r && r.nomor) return String(r.nomor);
+      if ('id' in r && r.id) return `REQ-${String(r.id).slice(0, 8)}`;
+    }
+
+    // Waktu / Tanggal
+    if (idL.includes('created') || idL.includes('tanggal') || idL.includes('waktu') || headerL.includes('waktu') || headerL.includes('tanggal')) {
+      if ('created_at' in r && r.created_at) return String(r.created_at);
+      if ('tanggal' in r && r.tanggal) return String(r.tanggal);
+    }
+
+    // Divisi / Pemohon
+    if (idL.includes('divisi') || idL.includes('profile') || idL.includes('pemohon') || headerL.includes('divisi')) {
+      if ('profiles' in r && r.profiles && typeof r.profiles === 'object') {
+        return String((r.profiles as Record<string, unknown>).nama_divisi || '');
+      }
+      if ('nama_divisi' in r) return String(r.nama_divisi || '');
+      if ('pemohon' in r) return String(r.pemohon || '');
+    }
+
+    // Barang ATK
+    if (idL.includes('item') || idL.includes('barang') || headerL.includes('barang')) {
+      if ('items' in r && r.items && typeof r.items === 'object') {
+        const it = r.items as Record<string, unknown>;
+        return it.kode ? `${it.nama} (${it.kode})` : String(it.nama || '');
+      }
+      if ('nama' in r) return String(r.nama || '');
+      if ('namaBarang' in r) return String(r.namaBarang || '');
+    }
+
+    // Kuantitas / Jumlah
+    if (idL.includes('jumlah') || idL.includes('kuantitas') || headerL.includes('jumlah') || headerL.includes('kuantitas')) {
+      if ('jumlah' in r) return String(r.jumlah ?? '');
+      if ('kuantitas' in r) return String(r.kuantitas ?? '');
+    }
+
+    // Keperluan
+    if (idL.includes('keperluan') || headerL.includes('keperluan')) {
+      if ('keperluan' in r) return String(r.keperluan || '');
+    }
+
+    // Status
+    if (idL.includes('status') || headerL.includes('status')) {
+      if ('status' in r) {
+        const st = String(r.status);
+        if (st === 'diproses') return 'Diproses';
+        if (st === 'selesai') return 'Selesai';
+        return st;
+      }
+    }
+
+    return '';
+  };
+
+  // Export current view or full dataset to CSV
+  const handleExportCsv = () => {
+    if (onExportCsv) {
+      onExportCsv();
+      return;
+    }
+
+    const exportColumns = columns.filter((col) => {
+      if (col.excludeFromCsv) return false;
+      const idLower = col.id.toLowerCase();
+      const headerLower = col.header.toLowerCase();
+      if (idLower === 'aksi' || idLower === 'action' || idLower === 'actions') return false;
+      if (headerLower === 'aksi' || headerLower === 'action' || headerLower === 'actions') return false;
+      return true;
+    });
+
+    const dataset = exportData && exportData.length > 0 ? exportData : data;
+    if (!dataset.length) return;
+
+    const headers = exportColumns.map((col) => `"${col.header.replace(/"/g, '""')}"`);
+    const rows = dataset.map((row) =>
+      exportColumns
         .map((col) => {
-          let val = col.accessorKey
-            ? (row as Record<string, unknown>)[col.accessorKey as string]
-            : '';
-          if (val === null || val === undefined) val = '';
-          return `"${String(val).replace(/"/g, '""')}"`;
+          const val = extractCellCsvValue(col, row);
+          return `"${val.replace(/"/g, '""')}"`;
         })
         .join(',')
     );
@@ -173,7 +309,7 @@ export function DataTable<T extends object>({
             <button
               type="button"
               onClick={handleExportCsv}
-              disabled={data.length === 0}
+              disabled={(exportData ? exportData.length : data.length) === 0}
               title="Ekspor ke CSV"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-control border border-border bg-surface hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-text-main cursor-pointer min-h-[32px]"
             >
@@ -274,7 +410,7 @@ export function DataTable<T extends object>({
                       {col.cell
                         ? col.cell(row, rowIdx)
                         : col.accessorKey
-                        ? String(row[col.accessorKey] ?? '')
+                        ? String((row as Record<string, unknown>)[col.accessorKey as string] ?? '')
                         : ''}
                     </td>
                   ))}

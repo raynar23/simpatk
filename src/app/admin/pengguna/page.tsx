@@ -178,6 +178,8 @@ export default function AdminPenggunaPage() {
     {
       id: 'nama_divisi',
       header: 'Nama Divisi / Bagian',
+      accessorKey: 'nama_divisi',
+      csvValue: (row) => row.nama_divisi,
       cell: (row) => (
         <div className="flex flex-col">
           <span className="font-semibold text-text-main text-xs">{row.nama_divisi}</span>
@@ -188,6 +190,8 @@ export default function AdminPenggunaPage() {
     {
       id: 'email',
       header: 'Alamat Email',
+      accessorKey: 'email',
+      csvValue: (row) => row.email || '-',
       cell: (row) => (
         <span className="font-mono text-xs text-text-main select-all">
           {row.email || '-'}
@@ -197,6 +201,8 @@ export default function AdminPenggunaPage() {
     {
       id: 'role',
       header: 'Hak Akses',
+      accessorKey: 'role',
+      csvValue: (row) => (row.role === 'admin' ? 'Administrator GA' : 'Divisi Pemohon'),
       cell: (row) => (
         row.role === 'admin' ? (
           <Badge variant="info">
@@ -212,6 +218,8 @@ export default function AdminPenggunaPage() {
     {
       id: 'created_at',
       header: 'Terdaftar Sejak',
+      accessorKey: 'created_at',
+      csvValue: (row) => (row.created_at ? formatDate(row.created_at) : 'Terdaftar'),
       cell: (row) => (
         <span className="text-xs text-text-muted tabular-nums">
           {row.created_at ? formatDate(row.created_at) : 'Terdaftar'}
@@ -221,6 +229,7 @@ export default function AdminPenggunaPage() {
     {
       id: 'status',
       header: 'Status Akun',
+      csvValue: () => 'Aktif',
       cell: () => (
         <Badge variant="selesai">
           Aktif
@@ -311,6 +320,7 @@ export default function AdminPenggunaPage() {
         <DataTable
           columns={columns}
           data={paginatedUsers}
+          exportData={filteredUsers}
           totalCount={filteredUsers.length}
           page={page}
           pageSize={pageSize}
@@ -318,6 +328,7 @@ export default function AdminPenggunaPage() {
           onPageSizeChange={setPageSize}
           isLoading={isLoading}
           enableDynamicHeight={true}
+          csvFilename="daftar_pengguna_simpatk.csv"
           emptyMessage="Tidak ada pengguna yang sesuai dengan kriteria pencarian"
           className="flex-1 min-h-0"
         />

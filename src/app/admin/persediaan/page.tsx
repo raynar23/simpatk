@@ -12,7 +12,7 @@ import { StockAdjustModal } from '@/components/admin/StockAdjustModal';
 import { ItemUpsertModal, ATK_CATEGORIES } from '@/components/admin/ItemUpsertModal';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
-import { formatRupiah, isLowStock, formatDateShort } from '@/lib/utils';
+import { formatRupiah, isLowStock, formatDateShort, formatDate } from '@/lib/utils';
 import type { Item } from '@/lib/types';
 
 export default function AdminPersediaanPage() {
@@ -172,6 +172,7 @@ export default function AdminPersediaanPage() {
       header: 'Kode',
       accessorKey: 'kode',
       isSortable: true,
+      csvValue: (row) => row.kode || '',
       cell: (row) => (
         <span className="font-mono font-semibold text-primary text-[11px]">
           {row.kode || 'ATK-000'}
@@ -183,6 +184,7 @@ export default function AdminPersediaanPage() {
       header: 'Nama Barang',
       accessorKey: 'nama',
       isSortable: true,
+      csvValue: (row) => row.nama,
       cell: (row) => (
         <span className="font-medium text-text-main truncate max-w-[220px]">
           {row.nama}
@@ -194,6 +196,7 @@ export default function AdminPersediaanPage() {
       header: 'Kategori',
       accessorKey: 'kategori',
       isSortable: true,
+      csvValue: (row) => row.kategori || 'Lainnya',
       cell: (row) => (
         <span className="text-text-muted text-[11px]">{row.kategori || 'Lainnya'}</span>
       ),
@@ -202,6 +205,7 @@ export default function AdminPersediaanPage() {
       id: 'satuan',
       header: 'Satuan',
       accessorKey: 'satuan',
+      csvValue: (row) => row.satuan,
       cell: (row) => <span className="text-text-muted text-xs">{row.satuan}</span>,
     },
     {
@@ -210,6 +214,7 @@ export default function AdminPersediaanPage() {
       accessorKey: 'stok',
       isNumeric: true,
       isSortable: true,
+      csvValue: (row) => row.stok,
       cell: (row) => {
         const isLow = row.stok <= row.stok_minimum;
         const isZero = row.stok === 0;
@@ -230,6 +235,7 @@ export default function AdminPersediaanPage() {
       accessorKey: 'stok_minimum',
       isNumeric: true,
       isSortable: true,
+      csvValue: (row) => row.stok_minimum,
       cell: (row) => (
         <span className="tabular-nums text-text-muted text-xs">
           {row.stok_minimum}
@@ -242,6 +248,7 @@ export default function AdminPersediaanPage() {
       accessorKey: 'harga_satuan',
       isNumeric: true,
       isSortable: true,
+      csvValue: (row) => row.harga_satuan || 0,
       cell: (row) => (
         <span className="tabular-nums text-text-main text-xs">
           {row.harga_satuan ? formatRupiah(row.harga_satuan) : '-'}
@@ -251,6 +258,8 @@ export default function AdminPersediaanPage() {
     {
       id: 'status',
       header: 'Status Stok',
+      csvValue: (row) =>
+        row.stok === 0 ? 'Habis' : row.stok <= row.stok_minimum ? 'Menipis' : 'Normal',
       cell: (row) => {
         if (row.stok === 0) return <Badge variant="habis" />;
         if (row.stok <= row.stok_minimum) return <Badge variant="menipis" />;
@@ -262,6 +271,7 @@ export default function AdminPersediaanPage() {
       header: 'Tgl Masuk',
       accessorKey: 'created_at',
       isSortable: true,
+      csvValue: (row) => (row.created_at ? formatDate(row.created_at) : '-'),
       cell: (row) => (
         <span className="tabular-nums text-text-muted text-[11px] whitespace-nowrap">
           {row.created_at ? formatDateShort(row.created_at) : '-'}
@@ -271,6 +281,7 @@ export default function AdminPersediaanPage() {
     {
       id: 'actions',
       header: 'Aksi',
+      excludeFromCsv: true,
       isNumeric: true,
       cell: (row) => (
         <div className="inline-flex items-center gap-1 justify-end">
@@ -347,6 +358,7 @@ export default function AdminPersediaanPage() {
       <DataTable
         columns={columns}
         data={paginatedItems}
+        exportData={filteredItems}
         totalCount={filteredItems.length}
         page={page}
         pageSize={pageSize}

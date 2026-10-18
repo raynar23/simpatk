@@ -200,7 +200,9 @@ function UserRiwayatContent() {
     {
       id: 'nomor',
       header: 'Nomor Tiket',
+      accessorKey: 'nomor',
       isSortable: true,
+      csvValue: (row) => row.nomor || `REQ-${row.id.slice(0, 8)}`,
       cell: (row) => (
         <span className="font-semibold text-primary">
           {row.nomor || `REQ-${row.id.slice(0, 8)}`}
@@ -210,7 +212,9 @@ function UserRiwayatContent() {
     {
       id: 'created_at',
       header: 'Waktu Pengajuan',
+      accessorKey: 'created_at',
       isSortable: true,
+      csvValue: (row) => formatDate(row.created_at),
       cell: (row) => (
         <span className="text-xs text-text-muted">
           {formatDate(row.created_at)}
@@ -220,7 +224,12 @@ function UserRiwayatContent() {
     {
       id: 'items.nama',
       header: 'Nama & Kode Barang',
+      accessorKey: 'items.nama',
       isSortable: true,
+      csvValue: (row) =>
+        `${row.items?.nama || 'Barang Dihapus'}${
+          row.items?.kode ? ` (${row.items.kode})` : ''
+        }`,
       cell: (row) => (
         <div>
           <p className="font-medium text-text-main text-xs">
@@ -237,17 +246,24 @@ function UserRiwayatContent() {
     {
       id: 'jumlah',
       header: 'Kuantitas',
+      accessorKey: 'jumlah',
       isNumeric: true,
       isSortable: true,
+      csvValue: (row) => `${row.jumlah} ${row.items?.satuan || 'unit'}`,
       cell: (row) => (
         <span className="tabular-nums font-semibold text-text-main">
-          {row.jumlah} <span className="text-xs font-normal text-text-muted">{row.items?.satuan || 'unit'}</span>
+          {row.jumlah}{' '}
+          <span className="text-xs font-normal text-text-muted">
+            {row.items?.satuan || 'unit'}
+          </span>
         </span>
       ),
     },
     {
       id: 'keperluan',
       header: 'Keperluan',
+      accessorKey: 'keperluan',
+      csvValue: (row) => row.keperluan || '',
       cell: (row) => (
         <span className="line-clamp-1 text-xs text-text-muted max-w-[280px]">
           {row.keperluan}
@@ -257,7 +273,9 @@ function UserRiwayatContent() {
     {
       id: 'status',
       header: 'Status',
+      accessorKey: 'status',
       isSortable: true,
+      csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'),
       cell: (row) => (
         <Badge variant={row.status === 'selesai' ? 'selesai' : 'diproses'}>
           {row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'}
@@ -331,6 +349,7 @@ function UserRiwayatContent() {
           <DataTable
             columns={columns}
             data={paginatedData}
+            exportData={filteredRequests}
             totalCount={filteredRequests.length}
             page={page}
             pageSize={pageSize}
