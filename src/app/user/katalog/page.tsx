@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/client';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Badge } from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Pagination } from '@/components/ui/Pagination';
 import { useToast } from '@/components/ui/Toast';
 import type { Item } from '@/lib/types';
 
@@ -41,6 +42,15 @@ function UserKatalogContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Semua Kategori');
   const [availabilityFilter, setAvailabilityFilter] = useState<'all' | 'safe' | 'low' | 'out'>('all');
+
+  // Pagination: limited to 3 items per page
+  const [page, setPage] = useState(1);
+  const pageSize = 3;
+
+  // Reset to first page whenever search or filter changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, selectedCategory, availabilityFilter]);
 
   // Load items from Supabase asynchronously
   useEffect(() => {
@@ -133,6 +143,12 @@ function UserKatalogContent() {
       return true;
     });
   }, [items, selectedCategory, availabilityFilter, searchQuery]);
+
+  // Paginated items slice (max 3 items per page)
+  const paginatedItems = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filteredItems.slice(start, start + pageSize);
+  }, [filteredItems, page, pageSize]);
 
   // Handle direct request
   const handleRequestItem = (item: Item) => {
@@ -309,8 +325,8 @@ function UserKatalogContent() {
               }
             />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {filteredItems.map((item) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {paginatedItems.map((item) => {
                 const isOutOfStock = item.stok === 0;
                 const isLowStock = !isOutOfStock && item.stok <= item.stok_minimum;
 
@@ -376,6 +392,19 @@ function UserKatalogContent() {
             </div>
           )}
         </div>
+
+        {/* Pagination Controls (Max 3 items per page) */}
+        {!isLoading && filteredItems.length > 0 && (
+          <div className="bg-surface rounded-card border border-border overflow-hidden shrink-0 shadow-xs">
+            <Pagination
+              page={page}
+              pageSize={pageSize}
+              totalCount={filteredItems.length}
+              onPageChange={setPage}
+              className="border-t-0"
+            />
+          </div>
+        )}
       </div>
     </PageContainer>
   );
