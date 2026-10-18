@@ -54,7 +54,7 @@ export function Badge({ variant, children, className = '' }: BadgeProps) {
 
   if (current.isTextOnly) {
     return (
-      <span className={`text-xs text-text-muted select-none ${className}`}>
+      <span className={`text-xs text-text-muted select-none whitespace-nowrap shrink-0 ${className}`}>
         {label}
       </span>
     );
@@ -62,7 +62,7 @@ export function Badge({ variant, children, className = '' }: BadgeProps) {
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-badge border select-none ${current.container} ${className}`}
+      className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-badge border select-none whitespace-nowrap shrink-0 ${current.container} ${className}`}
     >
       {label}
     </span>

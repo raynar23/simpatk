@@ -215,12 +215,12 @@ export default function AdminPenempatanPage() {
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-bold text-text-main tracking-tight flex items-center gap-1.5">
-                      <Layers className="w-3.5 h-3.5 text-primary" />
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-xs font-bold text-text-main tracking-tight flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                      <Layers className="w-3.5 h-3.5 text-primary shrink-0" />
                       {rak.id}
                     </span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-control border ${rak.theme.badgeBg}`}>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-control border whitespace-nowrap shrink-0 ${rak.theme.badgeBg}`}>
                       {rak.sub}
                     </span>
                   </div>
@@ -242,14 +242,14 @@ export default function AdminPenempatanPage() {
                   {!isLoading && data && data.lowStockCount > 0 ? (
                     <span
                       title={`${data.lowStockCount} barang perlu restock / menipis`}
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-danger-bg text-danger border border-danger/30"
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-danger-bg text-danger border border-danger/30 whitespace-nowrap shrink-0"
                     >
-                      <AlertTriangle className="w-3 h-3" />
+                      <AlertTriangle className="w-3 h-3 shrink-0" />
                       <span>{data.lowStockCount} menipis</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-success-bg text-success border border-success/30">
-                      <CheckCircle2 className="w-3 h-3" />
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-success-bg text-success border border-success/30 whitespace-nowrap shrink-0">
+                      <CheckCircle2 className="w-3 h-3 shrink-0" />
                       <span>Stok aman</span>
                     </span>
                   )}
@@ -432,15 +432,15 @@ export default function AdminPenempatanPage() {
                                   <span className="text-text-muted text-[11px]">Stok Fisik:</span>
                                   {/* Point 7: warna merah jika menipis/habis */}
                                   {isOutOfStock ? (
-                                    <span className="text-[11px] font-bold text-danger bg-danger-bg px-2 py-0.5 rounded border border-danger/30">
+                                    <span className="text-[11px] font-bold text-danger bg-danger-bg px-2 py-0.5 rounded border border-danger/30 whitespace-nowrap shrink-0">
                                       Habis (0 {item.satuan})
                                     </span>
                                   ) : isLowStock ? (
-                                    <span className="text-[11px] font-bold text-danger bg-danger-bg px-2 py-0.5 rounded border border-danger/30">
+                                    <span className="text-[11px] font-bold text-danger bg-danger-bg px-2 py-0.5 rounded border border-danger/30 whitespace-nowrap shrink-0">
                                       Sisa {item.stok} {item.satuan}
                                     </span>
                                   ) : (
-                                    <span className="text-[11px] font-semibold text-text-main tabular-nums">
+                                    <span className="text-[11px] font-semibold text-text-main tabular-nums whitespace-nowrap shrink-0">
                                       {item.stok} {item.satuan}
                                     </span>
                                   )}
@@ -452,9 +452,9 @@ export default function AdminPenempatanPage() {
                                 <button
                                   type="button"
                                   onClick={() => setMoveItem(item)}
-                                  className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-control text-[11px] font-semibold text-text-muted hover:text-primary bg-bg hover:bg-primary/5 border border-border hover:border-primary/30 transition-colors cursor-pointer"
+                                  className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-control text-[11px] font-semibold text-text-muted hover:text-primary bg-bg hover:bg-primary/5 border border-border hover:border-primary/30 transition-colors cursor-pointer whitespace-nowrap"
                                 >
-                                  <ArrowRightLeft className="w-3 h-3" />
+                                  <ArrowRightLeft className="w-3 h-3 shrink-0" />
                                   <span>Pindah Rak</span>
                                 </button>
                               </div>
@@ -471,16 +471,16 @@ export default function AdminPenempatanPage() {
             /* Table View */
             <div className="bg-surface rounded-card border border-border overflow-hidden shadow-xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-bg border-b border-border text-text-muted font-semibold uppercase text-[10px] tracking-wider">
+                <table className="w-full min-w-[760px] text-left text-xs">
+                  <thead className="bg-bg border-b border-border text-text-muted font-semibold uppercase text-[10px] tracking-wider whitespace-nowrap">
                     <tr>
-                      <th className="px-4 py-3">Kode</th>
-                      <th className="px-4 py-3">Nama Barang</th>
-                      <th className="px-4 py-3">Kategori</th>
-                      <th className="px-4 py-3">Lokasi Penempatan</th>
-                      <th className="px-4 py-3 text-center">Stok Fisik</th>
-                      <th className="px-4 py-3 text-center">Status Stok</th>
-                      <th className="px-4 py-3 text-center">Aksi</th>
+                      <th className="px-4 py-3 whitespace-nowrap">Kode</th>
+                      <th className="px-4 py-3 min-w-[200px]">Nama Barang</th>
+                      <th className="px-4 py-3 whitespace-nowrap">Kategori</th>
+                      <th className="px-4 py-3 whitespace-nowrap">Lokasi Penempatan</th>
+                      <th className="px-4 py-3 text-center whitespace-nowrap min-w-[100px]">Stok Fisik</th>
+                      <th className="px-4 py-3 text-center whitespace-nowrap min-w-[125px]">Status Stok</th>
+                      <th className="px-4 py-3 text-center whitespace-nowrap min-w-[80px]">Aksi</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -490,42 +490,42 @@ export default function AdminPenempatanPage() {
 
                       return (
                         <tr key={item.id} className="hover:bg-bg/50 transition-colors">
-                          <td className="px-4 py-3 font-mono font-semibold text-text-muted">
+                          <td className="px-4 py-3 font-mono font-semibold text-text-muted whitespace-nowrap">
                             {item.kode || 'ATK'}
                           </td>
-                          <td className="px-4 py-3 font-medium text-text-main">
+                          <td className="px-4 py-3 font-medium text-text-main min-w-[200px]">
                             {item.nama}
                           </td>
-                          <td className="px-4 py-3 text-text-muted">
+                          <td className="px-4 py-3 text-text-muted whitespace-nowrap">
                             {item.kategori || 'Umum'}
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 whitespace-nowrap">
                             <RakBadge rak={item.resolvedRak} size="sm" />
                           </td>
-                          <td className="px-4 py-3 text-center font-mono font-semibold tabular-nums">
+                          <td className="px-4 py-3 text-center font-mono font-semibold tabular-nums whitespace-nowrap">
                             {item.stok} {item.satuan}
                           </td>
-                          <td className="px-4 py-3 text-center">
-                            <div className="flex justify-center">
+                          <td className="px-4 py-3 text-center whitespace-nowrap">
+                            <div className="flex justify-center whitespace-nowrap">
                               {isOutOfStock ? (
-                                <Badge variant="habis">Habis (0)</Badge>
+                                <Badge variant="habis" className="whitespace-nowrap shrink-0">Habis (0)</Badge>
                               ) : isLowStock ? (
-                                <Badge variant="menipis">Menipis ({item.stok})</Badge>
+                                <Badge variant="menipis" className="whitespace-nowrap shrink-0">Menipis ({item.stok})</Badge>
                               ) : (
-                                <span className="text-[11px] font-medium text-success inline-flex items-center gap-1">
-                                  <CheckCircle2 className="w-3 h-3" />
+                                <span className="text-[11px] font-medium text-success inline-flex items-center gap-1 whitespace-nowrap shrink-0">
+                                  <CheckCircle2 className="w-3 h-3 shrink-0" />
                                   <span>Aman</span>
                                 </span>
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-center">
+                          <td className="px-4 py-3 text-center whitespace-nowrap">
                             <button
                               type="button"
                               onClick={() => setMoveItem(item)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-control text-xs font-semibold text-primary hover:bg-primary/10 border border-primary/20 transition-colors cursor-pointer"
+                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-control text-xs font-semibold text-primary hover:bg-primary/10 border border-primary/20 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                             >
-                              <ArrowRightLeft className="w-3 h-3" />
+                              <ArrowRightLeft className="w-3 h-3 shrink-0" />
                               <span>Pindah</span>
                             </button>
                           </td>

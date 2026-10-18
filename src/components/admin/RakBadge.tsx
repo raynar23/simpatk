@@ -23,10 +23,10 @@ export function RakBadge({ rak, showIcon = true, size = 'sm', className = '' }: 
   return (
     <span
       title={`${def.nama} (${def.zona})`}
-      className={`inline-flex items-center gap-1.5 font-medium rounded-control border ${def.theme.badgeBg} ${sizeClasses} ${className}`}
+      className={`inline-flex items-center gap-1.5 font-medium rounded-control border whitespace-nowrap shrink-0 ${def.theme.badgeBg} ${sizeClasses} ${className}`}
     >
       {showIcon && <Layers className="w-3 h-3 shrink-0 opacity-75" />}
-      <span className="font-semibold tracking-tight">{rak}</span>
+      <span className="font-semibold tracking-tight whitespace-nowrap">{rak}</span>
     </span>
   );
 }

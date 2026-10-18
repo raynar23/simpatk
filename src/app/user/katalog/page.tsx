@@ -375,7 +375,7 @@ function UserKatalogContent() {
                             Sisa {item.stok} {item.satuan}
                           </Badge>
                         ) : (
-                          <span className="text-text-muted tabular-nums">
+                          <span className="text-text-muted tabular-nums whitespace-nowrap shrink-0">
                             Tersedia ({item.stok} {item.satuan})
                           </span>
                         )}
