@@ -20,6 +20,7 @@ import {
   FileText,
   Highlighter,
   BookOpen,
+  Check,
 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -126,14 +127,23 @@ export default function LoginPage() {
             Sistem Informasi Permintaan Alat Tulis Kantor, General Affairs Pelindo Terminal Petikemas.
           </p>
 
-          <div className="pt-2 flex flex-wrap items-center gap-3 text-xs text-white/90">
-            <div className="bg-black/25 backdrop-blur-sm px-3 py-1 rounded-badge border border-white/15">
+          <div className="pt-2 flex flex-wrap items-center gap-2.5 text-xs text-white/95">
+            <div className="inline-flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15 shadow-xs">
+              <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+              </span>
               <span>Alur Otomatis</span>
             </div>
-            <div className="bg-black/25 backdrop-blur-sm px-3 py-1 rounded-badge border border-white/15">
+            <div className="inline-flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15 shadow-xs">
+              <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+              </span>
               <span>Stok Fisik Realtime</span>
             </div>
-            <div className="bg-black/25 backdrop-blur-sm px-3 py-1 rounded-badge border border-white/15">
+            <div className="inline-flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2.5 py-1 rounded-badge border border-white/15 shadow-xs">
+              <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+              </span>
               <span>100% Tanpa Kertas</span>
             </div>
           </div>
