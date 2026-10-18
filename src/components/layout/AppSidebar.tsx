@@ -44,9 +44,10 @@ interface NavGroupDef {
 interface AppSidebarProps {
   role: 'admin' | 'user';
   divisionName?: string;
+  userId?: string;
 }
 
-export function AppSidebar({ role, divisionName }: AppSidebarProps) {
+export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -54,29 +55,97 @@ export function AppSidebar({ role, divisionName }: AppSidebarProps) {
 
   const [pendingRequestsCount, setPendingRequestsCount] = useState<number | null>(null);
   const [lowStockCount, setLowStockCount] = useState<number | null>(null);
+  const [userUpdatesCount, setUserUpdatesCount] = useState<number | null>(null);
+  const [dismissedHrefs, setDismissedHrefs] = useState<Set<string>>(new Set());
 
-  // Fetch badge counts for Admin (pending requests & low stock items)
+  // Keep references to latest raw database values
+  const rawPendingRef = React.useRef(0);
+  const rawLowRef = React.useRef(0);
+
+  // Fetch badge counts dynamically for Admin & User
   useEffect(() => {
-    if (role !== 'admin') return;
     let ignore = false;
 
     async function loadCounts() {
       try {
-        const [reqRes, itemsRes] = await Promise.all([
-          supabase.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'diproses'),
-          supabase.from('items').select('stok, stok_minimum'),
-        ]);
+        if (role === 'admin') {
+          const [reqRes, itemsRes] = await Promise.all([
+            supabase.from('requests').select('*', { count: 'exact', head: true }).eq('status', 'diproses'),
+            supabase.from('items').select('stok, stok_minimum'),
+          ]);
 
-        if (ignore) return;
+          if (ignore) return;
 
-        if (reqRes.count !== null) {
-          setPendingRequestsCount(reqRes.count);
-        }
+          const rawPending = reqRes.count || 0;
+          rawPendingRef.current = rawPending;
 
-        if (itemsRes.data) {
-          // Unified low stock definition: stok <= stok_minimum (including 0)
-          const low = itemsRes.data.filter((it) => it.stok <= it.stok_minimum).length;
-          setLowStockCount(low);
+          const rawLow = itemsRes.data
+            ? itemsRes.data.filter((it) => it.stok <= it.stok_minimum).length
+            : 0;
+          rawLowRef.current = rawLow;
+
+          // Check if user is currently on /admin/permintaan
+          if (pathname.startsWith('/admin/permintaan')) {
+            try {
+              localStorage.setItem('simpatk_sidebar_ack_pending_count', String(rawPending));
+            } catch {}
+            setPendingRequestsCount(0);
+          } else {
+            const ackPendingStr = typeof window !== 'undefined' ? localStorage.getItem('simpatk_sidebar_ack_pending_count') : null;
+            if (ackPendingStr !== null) {
+              setPendingRequestsCount(Math.max(0, rawPending - Number(ackPendingStr)));
+            } else {
+              setPendingRequestsCount(rawPending);
+            }
+          }
+
+          // Check if user is currently on /admin/persediaan
+          if (pathname.startsWith('/admin/persediaan')) {
+            try {
+              localStorage.setItem('simpatk_sidebar_ack_low_stock_count', String(rawLow));
+            } catch {}
+            setLowStockCount(0);
+          } else {
+            const ackLowStr = typeof window !== 'undefined' ? localStorage.getItem('simpatk_sidebar_ack_low_stock_count') : null;
+            if (ackLowStr !== null) {
+              setLowStockCount(Math.max(0, rawLow - Number(ackLowStr)));
+            } else {
+              setLowStockCount(rawLow);
+            }
+          }
+        } else {
+          // User portal (Pemohon)
+          if (!userId) return;
+
+          if (pathname.startsWith('/user/riwayat')) {
+            try {
+              localStorage.setItem(`simpatk_sidebar_ack_user_riwayat_${userId}`, Date.now().toString());
+            } catch {}
+            setUserUpdatesCount(0);
+          } else {
+            const lastVisitStr = typeof window !== 'undefined' ? localStorage.getItem(`simpatk_sidebar_ack_user_riwayat_${userId}`) : null;
+            const { data: userReqs } = await supabase
+              .from('requests')
+              .select('status, created_at, completed_at')
+              .eq('user_id', userId);
+
+            if (ignore) return;
+
+            if (userReqs) {
+              if (lastVisitStr) {
+                const lastVisitMs = Number(lastVisitStr);
+                const newUpdates = userReqs.filter((r) => {
+                  const completedMs = r.completed_at ? new Date(r.completed_at).getTime() : 0;
+                  const createdMs = new Date(r.created_at).getTime();
+                  return completedMs > lastVisitMs || (r.status === 'selesai' && createdMs > lastVisitMs);
+                }).length;
+                setUserUpdatesCount(newUpdates);
+              } else {
+                const completed = userReqs.filter((r) => r.status === 'selesai').length;
+                setUserUpdatesCount(completed);
+              }
+            }
+          }
         }
       } catch {
         // Silent fallback
@@ -88,7 +157,56 @@ export function AppSidebar({ role, divisionName }: AppSidebarProps) {
     return () => {
       ignore = true;
     };
-  }, [supabase, role, pathname]);
+  }, [supabase, role, userId, pathname]);
+
+  // Realtime updates for sidebar notification counts
+  useEffect(() => {
+    const channel = supabase
+      .channel('sidebar_notifications_realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'requests' },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            if (role === 'admin' && !pathname.startsWith('/admin/permintaan')) {
+              setPendingRequestsCount((prev) => (prev || 0) + 1);
+            } else if (role === 'user' && payload.new.user_id === userId && !pathname.startsWith('/user/riwayat')) {
+              setUserUpdatesCount((prev) => (prev || 0) + 1);
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as { user_id: string; status: string };
+            if (role === 'user' && updated.user_id === userId && updated.status === 'selesai' && !pathname.startsWith('/user/riwayat')) {
+              setUserUpdatesCount((prev) => (prev || 0) + 1);
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [supabase, role, userId, pathname]);
+
+  // Handle clicking navigation link: dismiss notification badge immediately
+  const handleNavClick = React.useCallback((href: string) => {
+    closeMobile();
+    setDismissedHrefs((prev) => new Set(prev).add(href));
+
+    try {
+      if (href === '/admin/permintaan') {
+        setPendingRequestsCount(0);
+        localStorage.setItem('simpatk_sidebar_ack_pending_count', String(rawPendingRef.current));
+      } else if (href === '/admin/persediaan') {
+        setLowStockCount(0);
+        localStorage.setItem('simpatk_sidebar_ack_low_stock_count', String(rawLowRef.current));
+      } else if (href === '/user/riwayat') {
+        setUserUpdatesCount(0);
+        const timestamp = String(new Date().getTime());
+        localStorage.setItem(`simpatk_sidebar_ack_user_riwayat_${userId || 'user'}`, timestamp);
+      }
+    } catch {}
+  }, [closeMobile, userId]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -158,7 +276,12 @@ export function AppSidebar({ role, divisionName }: AppSidebarProps) {
     {
       groupLabel: 'OPERASIONAL',
       items: [
-        { label: 'Riwayat Permintaan', href: '/user/riwayat', icon: Clock },
+        {
+          label: 'Riwayat Permintaan',
+          href: '/user/riwayat',
+          icon: Clock,
+          count: userUpdatesCount,
+        },
         { label: 'Katalog ATK', href: '/user/katalog', icon: BookOpen },
       ],
     },
@@ -188,11 +311,19 @@ export function AppSidebar({ role, divisionName }: AppSidebarProps) {
             const Icon = item.icon;
             const active = isLinkActive(item.href);
 
+            // Hide notification badge if link is active, user dismissed it, or count is 0/null
+            const showCount =
+              !active &&
+              !dismissedHrefs.has(item.href) &&
+              item.count !== undefined &&
+              item.count !== null &&
+              item.count > 0;
+
             const linkContent = (
               <Link
                 key={item.href}
                 href={item.href}
-                onClick={closeMobile}
+                onClick={() => handleNavClick(item.href)}
                 className={`h-10 flex items-center gap-3 px-3 rounded-control text-sm font-medium transition-colors cursor-pointer ${
                   isCompact ? 'justify-center px-0' : ''
                 } ${
@@ -201,14 +332,25 @@ export function AppSidebar({ role, divisionName }: AppSidebarProps) {
                     : 'text-white/75 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Icon className="w-[18px] h-[18px] shrink-0" strokeWidth={1.5} />
+                <div className="relative shrink-0 flex items-center justify-center">
+                  <Icon className="w-[18px] h-[18px]" strokeWidth={1.5} />
+                  {isCompact && showCount && (
+                    <span
+                      className={`absolute -top-1 -right-1 w-2 h-2 rounded-full ring-2 ring-primary-dark ${
+                        item.countDanger ? 'bg-red-400' : 'bg-white'
+                      }`}
+                    />
+                  )}
+                </div>
                 {!isCompact && (
                   <>
                     <span className="truncate flex-1">{item.label}</span>
-                    {item.count !== undefined && item.count !== null && item.count > 0 && (
+                    {showCount && (
                       <span
-                        className={`text-xs tabular-nums font-semibold shrink-0 select-none ${
-                          item.countDanger ? 'text-red-300' : 'text-white/80'
+                        className={`text-xs tabular-nums font-semibold shrink-0 select-none px-2 py-0.5 rounded-full ${
+                          item.countDanger
+                            ? 'bg-red-500/30 text-red-200 border border-red-400/40'
+                            : 'bg-white/20 text-white'
                         }`}
                       >
                         {item.count}
@@ -220,7 +362,7 @@ export function AppSidebar({ role, divisionName }: AppSidebarProps) {
             );
 
             if (isCompact) {
-              const tooltipLabel = item.count ? `${item.label} (${item.count})` : item.label;
+              const tooltipLabel = showCount ? `${item.label} (${item.count})` : item.label;
               return (
                 <Tooltip key={item.href} content={tooltipLabel} side="right">
                   {linkContent}

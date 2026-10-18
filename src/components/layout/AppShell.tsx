@@ -26,7 +26,7 @@ export function AppShell({
     <ShellProvider>
       <div className="min-h-screen flex bg-bg text-text-main overflow-x-hidden overflow-y-auto lg:h-dvh lg:max-h-dvh lg:overflow-hidden">
         {/* Unified Sidebar (Desktop collapsible + Mobile drawer) */}
-        <AppSidebar role={role} divisionName={divisionName} />
+        <AppSidebar role={role} divisionName={divisionName} userId={userId} />
 
         {/* Main Application Area */}
         <div className="flex-1 flex flex-col min-h-screen min-w-0 overflow-visible lg:h-full lg:overflow-hidden">
