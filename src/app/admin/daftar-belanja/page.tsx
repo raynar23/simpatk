@@ -207,37 +207,50 @@ export default function AdminDaftarBelanjaPage() {
       {/* Printable Sheet Container */}
       <div className="bg-surface rounded-card border border-border flex-1 min-h-0 flex flex-col overflow-hidden print:border-none print:shadow-none print:bg-white print:overflow-visible">
         {/* Printable Official Header: Shown ONLY when printing (Standard Dokumen RKS / RAB Pelindo) */}
-        <div className="hidden print:flex pb-4 mb-3 border-b-2 border-black bg-white items-start justify-between">
-          <div className="space-y-1">
-            <div className="relative h-10 w-48 mb-1.5">
+        <div className="hidden print:flex flex-col gap-4 pt-4 pb-6 mb-8 border-b-2 border-black bg-white">
+          {/* Top Row: Information on Left, Logo on Right */}
+          <div className="flex items-start justify-between gap-4">
+            {/* Pojok Atas Kiri: Tanggal Cetak & Formula Beli */}
+            <div className="text-left text-xs text-text-muted space-y-1.5 pt-1">
+              <p className="text-xs">
+                Tanggal Cetak:{' '}
+                <span className="font-semibold text-text-main">
+                  {new Intl.DateTimeFormat('id-ID', {
+                    day: '2-digit',
+                    month: 'long',
+                    year: 'numeric',
+                    timeZone: 'Asia/Jakarta',
+                  }).format(new Date())}
+                </span>
+              </p>
+              <p className="text-xs">
+                Formula Beli:{' '}
+                <span className="font-semibold text-text-main">
+                  (Min. Stok * 2) - Stok Saat Ini
+                </span>
+              </p>
+            </div>
+
+            {/* Pojok Atas Kanan: Logo Pelindo TPS */}
+            <div className="relative h-12 w-56 shrink-0">
               <Image
                 src="/logo/pelindo-color.png"
-                alt="Logo Pelindo Terminal Petikemas"
+                alt="Logo Pelindo Terminal Petikemas TPS Surabaya"
                 fill
-                className="object-contain object-left"
+                className="object-contain object-right"
                 priority
               />
             </div>
-            <h1 className="text-base font-bold text-text-main tracking-tight uppercase">
+          </div>
+
+          {/* Document Title Block */}
+          <div className="pt-3 border-t border-gray-200">
+            <h1 className="text-lg font-bold text-text-main tracking-tight uppercase">
               Daftar Belanja Pengadaan Alat Tulis Kantor
             </h1>
-            <p className="text-xs text-text-muted">
+            <p className="text-xs text-text-muted mt-1">
               Departemen General Affairs - PT Pelindo Terminal Petikemas TPS
             </p>
-          </div>
-          <div className="text-right text-xs text-text-muted space-y-1">
-            <p>
-              Tanggal Cetak:{' '}
-              <span className="font-semibold text-text-main">
-                {new Intl.DateTimeFormat('id-ID', {
-                  day: '2-digit',
-                  month: 'long',
-                  year: 'numeric',
-                  timeZone: 'Asia/Jakarta',
-                }).format(new Date())}
-              </span>
-            </p>
-            <p>Formula Beli: (Min. Stok * 2) - Stok Saat Ini</p>
           </div>
         </div>
 
@@ -350,7 +363,7 @@ export default function AdminDaftarBelanjaPage() {
 
         {/* Selected Bottom Summary */}
         {shoppingList.length > 0 && (
-          <div className="p-3.5 bg-bg border-t border-border flex flex-wrap items-center justify-between gap-3 text-xs shrink-0">
+          <div className="p-3.5 bg-bg border-t border-border flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 print:border-t-2 print:border-black print:bg-white print:pt-6 print:mt-6">
             <div className="text-text-muted">
               <span>
                 <strong className="text-text-main font-semibold">{selectedItems.length}</strong> dari{' '}

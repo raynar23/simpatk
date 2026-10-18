@@ -63,7 +63,7 @@ body {
 @media print {
   @page {
     size: auto;
-    margin: 12mm 10mm 12mm 10mm;
+    margin: 20mm 15mm 20mm 15mm;
   }
 
   html, body {
@@ -112,12 +112,14 @@ body {
     border-radius: 0 !important;
   }
 
-  /* Tables: full width, clean borders, no clipping */
+  /* Tables: full width, clean borders, generous professional spacing */
   table {
     width: 100% !important;
     min-width: 0 !important;
     border-collapse: collapse !important;
     page-break-inside: auto;
+    margin-top: 12px !important;
+    margin-bottom: 20px !important;
   }
 
   tr {
@@ -131,7 +133,7 @@ body {
 
   th, td {
     border: 1px solid #d1d5db !important;
-    padding: 6px 8px !important;
+    padding: 8px 10px !important;
     color: #111827 !important;
     white-space: normal !important;
   }
@@ -140,5 +142,7 @@ body {
     background-color: #f3f4f6 !important;
     font-weight: 600 !important;
     font-size: 10px !important;
+    padding-top: 9px !important;
+    padding-bottom: 9px !important;
   }
 }

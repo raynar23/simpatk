@@ -958,18 +958,38 @@ export default function AdminLaporanPage() {
       contentClassName="space-y-3"
     >
       {/* Official Header for Print Mode */}
-      <div className="hidden print:flex items-start justify-between border-b border-border pb-4 mb-4">
-        <div>
-          <div className="relative h-10 w-48 mb-2">
+      <div className="hidden print:flex flex-col gap-4 pt-4 pb-6 mb-8 border-b-2 border-black bg-white">
+        {/* Top Row: Information on Left, Logo on Right */}
+        <div className="flex items-start justify-between gap-4">
+          {/* Pojok Atas Kiri: Periode Data & Waktu Cetak */}
+          <div className="text-left text-xs text-text-muted space-y-1.5 pt-1">
+            <p className="text-xs">
+              Periode Data:{' '}
+              <span className="font-semibold text-text-main">
+                {formatDisplayDateShort(dateRange.startDate)} s.d. {formatDisplayDate(dateRange.endDate)}
+              </span>
+            </p>
+            <p className="text-xs">
+              Dicetak:{' '}
+              <span className="font-semibold text-text-main">{formatDate(new Date())}</span>
+            </p>
+          </div>
+
+          {/* Pojok Atas Kanan: Logo Pelindo TPS */}
+          <div className="relative h-12 w-56 shrink-0">
             <Image
               src="/logo/pelindo-color.png"
-              alt="Logo Pelindo Terminal Petikemas"
+              alt="Logo Pelindo Terminal Petikemas TPS Surabaya"
               fill
-              className="object-contain object-left"
+              className="object-contain object-right"
               priority
             />
           </div>
-          <h1 className="text-base font-bold text-text-main uppercase tracking-tight">
+        </div>
+
+        {/* Document Title Block */}
+        <div className="pt-3 border-t border-gray-200">
+          <h1 className="text-lg font-bold text-text-main uppercase tracking-tight">
             {activeReport === 'transaksi'
               ? 'Laporan Riwayat Permintaan Alat Tulis Kantor'
               : activeReport === 'rekapitulasi'
@@ -978,16 +998,7 @@ export default function AdminLaporanPage() {
               ? 'Laporan Konsumsi & Distribusi Barang Alat Tulis Kantor'
               : 'Laporan Posisi Persediaan & Valuasi Fisik Alat Tulis Kantor'}
           </h1>
-          <p className="text-xs text-text-muted">General Affairs - PT Pelindo Terminal Petikemas</p>
-        </div>
-        <div className="text-right text-xs text-text-muted">
-          <p>
-            Periode Data:{' '}
-            <span className="font-semibold text-text-main">
-              {formatDisplayDateShort(dateRange.startDate)} s.d. {formatDisplayDate(dateRange.endDate)}
-            </span>
-          </p>
-          <p>Dicetak: {formatDate(new Date())}</p>
+          <p className="text-xs text-text-muted mt-1">General Affairs - PT Pelindo Terminal Petikemas</p>
         </div>
       </div>
 
