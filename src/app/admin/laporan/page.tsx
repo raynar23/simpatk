@@ -1,43 +1,86 @@
-// Admin periodic reporting page with 3 report tabs, DataTable, CSV export, and print capability
+// Admin comprehensive reporting portal with 4 standalone report modules, 7d-2y date filtering,
+// interactive detail inspector modal, individual CSV downloads, and official print layout.
 'use client';
 
 import React, { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import {
-  FileText,
   Printer,
-  TrendingUp,
-  Package,
+  Download,
+  Eye,
+  FileText,
+  BarChart3,
   Boxes,
+  ClipboardList,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/Badge';
+import { Dialog } from '@/components/ui/Dialog';
 import { useToast } from '@/components/ui/Toast';
-import { formatRupiah, isLowStock } from '@/lib/utils';
+import {
+  DashboardDateFilter,
+  type DateFilterRange,
+  getPresetRange,
+  formatDisplayDate,
+  formatDisplayDateShort,
+} from '@/components/admin/DashboardDateFilter';
+import {
+  formatRupiah,
+  isLowStock,
+  formatDuration,
+  formatMonthYear,
+  formatDate,
+  formatDateShort,
+  formatNumber,
+} from '@/lib/utils';
 import type { Item, RequestWithDetails } from '@/lib/types';
-import type { TopItemDataPoint } from '@/components/admin/DashboardCharts';
+
+// Types for each report
+type ReportType = 'transaksi' | 'rekapitulasi' | 'konsumsi' | 'persediaan';
+
+interface TransactionReportRow extends Record<string, unknown> {
+  id: string;
+  nomor: string;
+  created_at: string;
+  completed_at: string | null;
+  pemohon: string;
+  namaBarang: string;
+  kodeBarang: string;
+  kategoriBarang: string;
+  jumlah: number;
+  satuan: string;
+  status: 'diproses' | 'selesai';
+  durasiJam: number | null;
+  keperluan: string | null;
+  catatan: string | null;
+}
 
 interface MonthlySummaryRow extends Record<string, unknown> {
   id: string;
   periode: string;
   totalPermintaan: number;
   totalSelesai: number;
+  totalDiproses: number;
   persentaseSelesai: number;
   rataWaktuJam: number;
+  totalUnit: number;
 }
 
-interface ItemReportRow extends Record<string, unknown> {
+interface ItemConsumptionRow extends Record<string, unknown> {
   id: string;
   kode: string;
   nama: string;
   kategori: string;
   satuan: string;
-  total_diminta: number;
-  total_frekuensi: number;
+  totalDiminta: number;
+  frekuensiTiket: number;
+  rataPerTiket: number;
+  estimasiNilai: number;
 }
 
-interface StockReportRow extends Record<string, unknown> {
+interface StockAuditRow extends Record<string, unknown> {
   id: string;
   kode: string;
   nama: string;
@@ -50,147 +93,524 @@ interface StockReportRow extends Record<string, unknown> {
   statusStok: 'habis' | 'menipis' | 'normal';
 }
 
+// Browser CSV download helper
+function downloadCsv(filename: string, headers: string[], rows: (string | number)[][]) {
+  const csvContent =
+    '\uFEFF' +
+    [
+      headers.join(','),
+      ...rows.map((row) =>
+        row
+          .map((val) => {
+            const str = String(val ?? '').replace(/"/g, '""');
+            return `"${str}"`;
+          })
+          .join(',')
+      ),
+    ].join('\r\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', filename);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
 export default function AdminLaporanPage() {
   const supabase = createClient();
   const { showToast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<'permintaan' | 'barang' | 'persediaan'>('permintaan');
-  const [periodDays, setPeriodDays] = useState<number>(30); // 7, 30, 180, 365
+  // Active standalone report
+  const [activeReport, setActiveReport] = useState<ReportType>('transaksi');
+
+  // Filter range: supports 7d, 30d, 6m, 1y, 2y, and custom calendar
+  const [dateRange, setDateRange] = useState<DateFilterRange>(() => getPresetRange('30d'));
   const [isLoading, setIsLoading] = useState(true);
 
+  // Raw database data
   const [rawRequests, setRawRequests] = useState<RequestWithDetails[]>([]);
-  const [topItems, setTopItems] = useState<TopItemDataPoint[]>([]);
   const [rawItems, setRawItems] = useState<Item[]>([]);
 
-  // Load report data
+  // Local table filters
+  const [txSearch, setTxSearch] = useState('');
+  const [txStatusFilter, setTxStatusFilter] = useState<'semua' | 'selesai' | 'diproses'>('semua');
+  const [itemSearch, setItemSearch] = useState('');
+  const [stockSearch, setStockSearch] = useState('');
+  const [stockStatusFilter, setStockStatusFilter] = useState<'semua' | 'kritis' | 'normal'>('semua');
+
+  // Pagination states
+  const [pageTx, setPageTx] = useState(1);
+  const [pageMonthly, setPageMonthly] = useState(1);
+  const [pageConsumption, setPageConsumption] = useState(1);
+  const [pageStock, setPageStock] = useState(1);
+
+  // Inspector detail modal state
+  const [inspectedTx, setInspectedTx] = useState<TransactionReportRow | null>(null);
+  const [inspectedMonthly, setInspectedMonthly] = useState<MonthlySummaryRow | null>(null);
+  const [inspectedItem, setInspectedItem] = useState<ItemConsumptionRow | null>(null);
+  const [inspectedStock, setInspectedStock] = useState<StockAuditRow | null>(null);
+
+  // Load report data matching active date filter
   useEffect(() => {
     let ignore = false;
 
-    async function loadReportData() {
+    async function loadData() {
       try {
-        const thresholdDate = new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000).toISOString();
-
-        const [reqRes, topRes, itemsRes] = await Promise.all([
+        const [reqRes, itemsRes] = await Promise.all([
           supabase
             .from('requests')
             .select('*, items(*), profiles(*)')
-            .gte('created_at', thresholdDate)
-            .order('created_at', { ascending: false }),
-          supabase.rpc('top_items', { p_days: periodDays, p_limit: 24 }),
+            .gte('created_at', dateRange.startDate.toISOString())
+            .lte('created_at', dateRange.endDate.toISOString())
+            .order('created_at', { ascending: false })
+            .limit(5000),
           supabase.from('items').select('*').order('nama', { ascending: true }),
         ]);
 
         if (ignore) return;
 
         if (reqRes.data) setRawRequests(reqRes.data as RequestWithDetails[]);
-        if (topRes.data) setTopItems(topRes.data as unknown as TopItemDataPoint[]);
         if (itemsRes.data) setRawItems(itemsRes.data as Item[]);
       } catch {
-        if (!ignore) showToast('Gagal memuat data laporan.', 'error');
+        if (!ignore) showToast('Gagal memuat data laporan operasional.', 'error');
       } finally {
         if (!ignore) setIsLoading(false);
       }
     }
 
-    loadReportData();
+    loadData();
 
     return () => {
       ignore = true;
     };
-  }, [supabase, showToast, periodDays]);
+  }, [supabase, showToast, dateRange]);
 
-  // Tab 1: Ringkasan Permintaan per Bulan / Periode
-  const monthlySummary = useMemo<MonthlySummaryRow[]>(() => {
+  const handleRangeChange = (newRange: DateFilterRange) => {
+    setIsLoading(true);
+    setDateRange(newRange);
+    setPageTx(1);
+    setPageMonthly(1);
+    setPageConsumption(1);
+  };
+
+  // --- 1. Laporan Riwayat Transaksi Permintaan ---
+  const transactionRows = useMemo<TransactionReportRow[]>(() => {
+    return rawRequests.map((r) => {
+      const it = r.items;
+      const prof = r.profiles;
+      let durasiJam: number | null = null;
+      if (r.status === 'selesai' && r.completed_at) {
+        durasiJam = (new Date(r.completed_at).getTime() - new Date(r.created_at).getTime()) / 3600000;
+      }
+      return {
+        id: r.id,
+        nomor: r.nomor || `REQ-${r.id.slice(0, 8)}`,
+        created_at: r.created_at,
+        completed_at: r.completed_at || null,
+        pemohon: String(prof?.divisi || prof?.nama || 'Divisi Pemohon'),
+        namaBarang: String(it?.nama || 'Barang ATK'),
+        kodeBarang: String(it?.kode || 'ATK'),
+        kategoriBarang: String(it?.kategori || 'Umum'),
+        jumlah: r.jumlah || 1,
+        satuan: String(it?.satuan || 'unit'),
+        status: (r.status as 'diproses' | 'selesai') || 'diproses',
+        durasiJam: durasiJam !== null ? Math.max(0, durasiJam) : null,
+        keperluan: r.keperluan ? String(r.keperluan) : null,
+        catatan: r.catatan ? String(r.catatan) : null,
+      };
+    });
+  }, [rawRequests]);
+
+  const filteredTransactionRows = useMemo(() => {
+    return transactionRows.filter((row) => {
+      if (txStatusFilter !== 'semua' && row.status !== txStatusFilter) return false;
+      if (txSearch) {
+        const q = txSearch.toLowerCase();
+        const matchesNomor = row.nomor.toLowerCase().includes(q);
+        const matchesBarang = row.namaBarang.toLowerCase().includes(q) || row.kodeBarang.toLowerCase().includes(q);
+        const matchesPemohon = row.pemohon.toLowerCase().includes(q);
+        if (!matchesNomor && !matchesBarang && !matchesPemohon) return false;
+      }
+      return true;
+    });
+  }, [transactionRows, txStatusFilter, txSearch]);
+
+  // --- 2. Laporan Rekapitulasi Periode & Kinerja ---
+  const monthlyRows = useMemo<MonthlySummaryRow[]>(() => {
     const buckets: Record<
       string,
-      { count: number; selesai: number; totalHours: number; completedCount: number }
+      {
+        count: number;
+        selesai: number;
+        diproses: number;
+        totalHours: number;
+        completedCount: number;
+        totalUnit: number;
+      }
     > = {};
 
     rawRequests.forEach((req) => {
       const d = new Date(req.created_at);
-      const key = d.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+      const key = formatMonthYear(d);
 
       if (!buckets[key]) {
-        buckets[key] = { count: 0, selesai: 0, totalHours: 0, completedCount: 0 };
+        buckets[key] = {
+          count: 0,
+          selesai: 0,
+          diproses: 0,
+          totalHours: 0,
+          completedCount: 0,
+          totalUnit: 0,
+        };
       }
       buckets[key].count += 1;
+      buckets[key].totalUnit += Number(req.jumlah || 0);
 
       if (req.status === 'selesai') {
         buckets[key].selesai += 1;
         if (req.completed_at) {
           const diffHours =
-            (new Date(req.completed_at).getTime() - new Date(req.created_at).getTime()) /
-            (1000 * 60 * 60);
+            (new Date(req.completed_at).getTime() - new Date(req.created_at).getTime()) / 3600000;
           if (diffHours >= 0) {
             buckets[key].totalHours += diffHours;
             buckets[key].completedCount += 1;
           }
         }
+      } else {
+        buckets[key].diproses += 1;
       }
     });
 
     return Object.entries(buckets).map(([periode, stats], idx) => ({
-      id: `summary-${idx}`,
+      id: `rekap-${idx}`,
       periode,
       totalPermintaan: stats.count,
       totalSelesai: stats.selesai,
+      totalDiproses: stats.diproses,
       persentaseSelesai: stats.count > 0 ? Math.round((stats.selesai / stats.count) * 100) : 0,
       rataWaktuJam:
         stats.completedCount > 0 ? Math.round((stats.totalHours / stats.completedCount) * 10) / 10 : 0,
+      totalUnit: stats.totalUnit,
     }));
   }, [rawRequests]);
 
-  // Tab 2: Barang Paling Diminta
-  const topItemsReport = useMemo<ItemReportRow[]>(() => {
-    return topItems.map((it) => ({
-      id: it.item_id,
-      kode: it.kode,
-      nama: it.nama,
-      kategori: it.kategori,
-      satuan: it.satuan,
-      total_diminta: it.total_diminta,
-      total_frekuensi: it.total_frekuensi,
-    }));
-  }, [topItems]);
+  // --- 3. Laporan Konsumsi & Distribusi Barang ---
+  const consumptionRows = useMemo<ItemConsumptionRow[]>(() => {
+    const itemMap = new Map<
+      string,
+      {
+        kode: string;
+        nama: string;
+        kategori: string;
+        satuan: string;
+        totalDiminta: number;
+        frekuensiTiket: number;
+        hargaSatuan: number;
+      }
+    >();
 
-  // Tab 3: Posisi Persediaan
-  const stockPositionReport = useMemo<StockReportRow[]>(() => {
-    return rawItems.map((it) => {
-      let statusStok: 'habis' | 'menipis' | 'normal' = 'normal';
-      if (it.stok === 0) statusStok = 'habis';
-      else if (isLowStock(it.stok, it.stok_minimum)) statusStok = 'menipis';
-
-      return {
-        id: it.id,
+    // Seed catalog items
+    rawItems.forEach((it) => {
+      itemMap.set(it.id, {
         kode: it.kode || 'ATK',
         nama: it.nama,
         kategori: it.kategori || 'Lainnya',
-        satuan: it.satuan,
-        stok: it.stok,
-        stok_minimum: it.stok_minimum,
-        harga_satuan: it.harga_satuan || 0,
-        totalValuasi: (it.stok || 0) * (it.harga_satuan || 0),
-        statusStok,
-      };
+        satuan: it.satuan || 'unit',
+        totalDiminta: 0,
+        frekuensiTiket: 0,
+        hargaSatuan: it.harga_satuan || 0,
+      });
     });
-  }, [rawItems]);
 
-  // Column definitions for Tab 1: Ringkasan Permintaan
-  const columnsTab1: ColumnDef<MonthlySummaryRow>[] = [
+    // Tally demands
+    rawRequests.forEach((req) => {
+      if (!req.item_id) return;
+      const existing = itemMap.get(req.item_id);
+      const qty = Number(req.jumlah || 0);
+      if (existing) {
+        existing.totalDiminta += qty;
+        existing.frekuensiTiket += 1;
+      } else {
+        const it = req.items;
+        itemMap.set(req.item_id, {
+          kode: it?.kode || 'ATK',
+          nama: it?.nama || 'Barang ATK',
+          kategori: it?.kategori || 'Umum',
+          satuan: it?.satuan || 'unit',
+          totalDiminta: qty,
+          frekuensiTiket: 1,
+          hargaSatuan: it?.harga_satuan || 0,
+        });
+      }
+    });
+
+    return Array.from(itemMap.entries())
+      .map(([id, val]) => ({
+        id,
+        kode: val.kode,
+        nama: val.nama,
+        kategori: val.kategori,
+        satuan: val.satuan,
+        totalDiminta: val.totalDiminta,
+        frekuensiTiket: val.frekuensiTiket,
+        rataPerTiket:
+          val.frekuensiTiket > 0 ? Number((val.totalDiminta / val.frekuensiTiket).toFixed(1)) : 0,
+        estimasiNilai: val.totalDiminta * val.hargaSatuan,
+      }))
+      .filter((row) => {
+        if (!itemSearch) return true;
+        const q = itemSearch.toLowerCase();
+        return (
+          row.nama.toLowerCase().includes(q) ||
+          row.kode.toLowerCase().includes(q) ||
+          row.kategori.toLowerCase().includes(q)
+        );
+      })
+      .sort((a, b) => b.totalDiminta - a.totalDiminta);
+  }, [rawItems, rawRequests, itemSearch]);
+
+  // --- 4. Laporan Posisi & Valuasi Persediaan Fisik ---
+  const stockAuditRows = useMemo<StockAuditRow[]>(() => {
+    return rawItems
+      .map((it) => {
+        let statusStok: 'habis' | 'menipis' | 'normal' = 'normal';
+        if (it.stok === 0) statusStok = 'habis';
+        else if (isLowStock(it.stok, it.stok_minimum)) statusStok = 'menipis';
+
+        return {
+          id: it.id,
+          kode: it.kode || 'ATK',
+          nama: it.nama,
+          kategori: it.kategori || 'Lainnya',
+          satuan: it.satuan,
+          stok: it.stok,
+          stok_minimum: it.stok_minimum,
+          harga_satuan: it.harga_satuan || 0,
+          totalValuasi: (it.stok || 0) * (it.harga_satuan || 0),
+          statusStok,
+        };
+      })
+      .filter((it) => {
+        if (stockStatusFilter === 'kritis' && it.statusStok === 'normal') return false;
+        if (stockStatusFilter === 'normal' && it.statusStok !== 'normal') return false;
+        if (stockSearch) {
+          const q = stockSearch.toLowerCase();
+          return (
+            it.nama.toLowerCase().includes(q) ||
+            it.kode.toLowerCase().includes(q) ||
+            it.kategori.toLowerCase().includes(q)
+          );
+        }
+        return true;
+      });
+  }, [rawItems, stockSearch, stockStatusFilter]);
+
+  // Export CSV Handlers for each report
+  const handleExportTransactions = () => {
+    const headers = [
+      'Nomor Tiket',
+      'Tanggal Diajukan',
+      'Divisi Pemohon',
+      'Kode Barang',
+      'Nama Barang ATK',
+      'Kategori',
+      'Jumlah',
+      'Satuan',
+      'Status Tiket',
+      'Waktu Selesai',
+      'Durasi Jam',
+      'Keperluan',
+    ];
+    const rows = filteredTransactionRows.map((r) => [
+      r.nomor,
+      formatDate(r.created_at),
+      r.pemohon,
+      r.kodeBarang,
+      r.namaBarang,
+      r.kategoriBarang,
+      r.jumlah,
+      r.satuan,
+      r.status,
+      r.completed_at ? formatDate(r.completed_at) : '-',
+      r.durasiJam !== null ? r.durasiJam.toFixed(1) : '-',
+      r.keperluan || '-',
+    ]);
+    downloadCsv(`laporan_transaksi_permintaan_${formatDateShort(new Date())}.csv`, headers, rows);
+    showToast('Laporan riwayat transaksi berhasil diunduh.', 'success');
+  };
+
+  const handleExportMonthly = () => {
+    const headers = [
+      'Bulan Periode',
+      'Total Tiket Diajukan',
+      'Selesai Diserahkan',
+      'Sedang Diproses',
+      'Tingkat Penyelesaian (%)',
+      'Rata-rata Durasi (Jam)',
+      'Total Unit ATK Disalurkan',
+    ];
+    const rows = monthlyRows.map((r) => [
+      r.periode,
+      r.totalPermintaan,
+      r.totalSelesai,
+      r.totalDiproses,
+      `${r.persentaseSelesai}%`,
+      r.rataWaktuJam,
+      r.totalUnit,
+    ]);
+    downloadCsv(`laporan_rekapitulasi_bulanan_${formatDateShort(new Date())}.csv`, headers, rows);
+    showToast('Laporan rekapitulasi bulanan berhasil diunduh.', 'success');
+  };
+
+  const handleExportConsumption = () => {
+    const headers = [
+      'Kode Barang',
+      'Nama Barang ATK',
+      'Kategori',
+      'Satuan',
+      'Total Kuantitas Diminta',
+      'Frekuensi Pengajuan',
+      'Rata-rata per Tiket',
+      'Estimasi Nilai Distribusi (IDR)',
+    ];
+    const rows = consumptionRows.map((r) => [
+      r.kode,
+      r.nama,
+      r.kategori,
+      r.satuan,
+      r.totalDiminta,
+      r.frekuensiTiket,
+      r.rataPerTiket,
+      r.estimasiNilai,
+    ]);
+    downloadCsv(`laporan_konsumsi_barang_${formatDateShort(new Date())}.csv`, headers, rows);
+    showToast('Laporan konsumsi barang berhasil diunduh.', 'success');
+  };
+
+  const handleExportStock = () => {
+    const headers = [
+      'Kode Barang',
+      'Nama Barang ATK',
+      'Kategori',
+      'Satuan',
+      'Stok Fisik',
+      'Batas Minimum',
+      'Status Stok',
+      'Harga Satuan (IDR)',
+      'Total Valuasi Fisik (IDR)',
+    ];
+    const rows = stockAuditRows.map((r) => [
+      r.kode,
+      r.nama,
+      r.kategori,
+      r.satuan,
+      r.stok,
+      r.stok_minimum,
+      r.statusStok,
+      r.harga_satuan,
+      r.totalValuasi,
+    ]);
+    downloadCsv(`laporan_posisi_persediaan_${formatDateShort(new Date())}.csv`, headers, rows);
+    showToast('Laporan posisi persediaan fisik berhasil diunduh.', 'success');
+  };
+
+  // Columns for Table 1: Transaksi Permintaan
+  const columnsTx: ColumnDef<TransactionReportRow>[] = [
+    {
+      id: 'nomor',
+      header: 'Nomor Tiket',
+      accessorKey: 'nomor',
+      cell: (row) => (
+        <span className="font-mono text-xs font-semibold text-primary">{row.nomor}</span>
+      ),
+    },
+    {
+      id: 'created_at',
+      header: 'Waktu Pengajuan',
+      accessorKey: 'created_at',
+      cell: (row) => <span className="text-xs text-text-muted">{formatDate(row.created_at)}</span>,
+    },
+    {
+      id: 'pemohon',
+      header: 'Divisi Pemohon',
+      accessorKey: 'pemohon',
+      cell: (row) => <span className="text-xs font-medium text-text-main">{row.pemohon}</span>,
+    },
+    {
+      id: 'namaBarang',
+      header: 'Barang ATK',
+      accessorKey: 'namaBarang',
+      cell: (row) => (
+        <div>
+          <p className="text-xs font-medium text-text-main leading-tight">{row.namaBarang}</p>
+          <p className="text-[10px] text-text-muted font-mono">{row.kodeBarang} • {row.kategoriBarang}</p>
+        </div>
+      ),
+    },
+    {
+      id: 'jumlah',
+      header: 'Jumlah',
+      accessorKey: 'jumlah',
+      isNumeric: true,
+      cell: (row) => (
+        <span className="tabular-nums text-xs font-semibold text-text-main">
+          {row.jumlah} {row.satuan}
+        </span>
+      ),
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      cell: (row) => <Badge variant={row.status} />,
+    },
+    {
+      id: 'durasiJam',
+      header: 'Durasi',
+      accessorKey: 'durasiJam',
+      isNumeric: true,
+      cell: (row) => (
+        <span className="tabular-nums text-xs text-text-muted">
+          {row.durasiJam !== null ? formatDuration(row.durasiJam) : '-'}
+        </span>
+      ),
+    },
+    {
+      id: 'aksi',
+      header: 'Aksi',
+      isNumeric: true,
+      cell: (row) => (
+        <button
+          type="button"
+          onClick={() => setInspectedTx(row)}
+          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-control transition-colors cursor-pointer"
+        >
+          <Eye className="w-3 h-3" />
+          <span>Lihat Laporan</span>
+        </button>
+      ),
+    },
+  ];
+
+  // Columns for Table 2: Rekapitulasi Bulanan
+  const columnsMonthly: ColumnDef<MonthlySummaryRow>[] = [
     {
       id: 'periode',
       header: 'Bulan / Periode',
       accessorKey: 'periode',
-      cell: (row) => <span className="font-semibold text-text-main">{row.periode}</span>,
+      cell: (row) => <span className="font-semibold text-text-main text-xs">{row.periode}</span>,
     },
     {
       id: 'totalPermintaan',
-      header: 'Total Permintaan',
+      header: 'Total Tiket',
       accessorKey: 'totalPermintaan',
       isNumeric: true,
       cell: (row) => (
-        <span className="tabular-nums font-semibold text-text-main">
-          {row.totalPermintaan} transaksi
+        <span className="tabular-nums font-semibold text-text-main text-xs">
+          {row.totalPermintaan} tiket
         </span>
       ),
     },
@@ -200,95 +620,166 @@ export default function AdminLaporanPage() {
       accessorKey: 'totalSelesai',
       isNumeric: true,
       cell: (row) => (
-        <span className="tabular-nums font-medium text-success">
+        <span className="tabular-nums font-medium text-success text-xs">
           {row.totalSelesai} ({row.persentaseSelesai}%)
         </span>
       ),
     },
     {
+      id: 'totalDiproses',
+      header: 'Sedang Diproses',
+      accessorKey: 'totalDiproses',
+      isNumeric: true,
+      cell: (row) => (
+        <span className="tabular-nums text-text-muted text-xs">
+          {row.totalDiproses} tiket
+        </span>
+      ),
+    },
+    {
       id: 'rataWaktuJam',
-      header: 'Rata-rata Waktu',
+      header: 'Rata-rata Durasi',
       accessorKey: 'rataWaktuJam',
       isNumeric: true,
       cell: (row) => (
-        <span className="tabular-nums text-text-muted">
-          {row.rataWaktuJam < 24
-            ? `${row.rataWaktuJam} jam`
-            : `${(row.rataWaktuJam / 24).toFixed(1)} hari`}
+        <span className="tabular-nums text-text-muted text-xs">
+          {formatDuration(row.rataWaktuJam)}
         </span>
+      ),
+    },
+    {
+      id: 'totalUnit',
+      header: 'Total Unit ATK',
+      accessorKey: 'totalUnit',
+      isNumeric: true,
+      cell: (row) => (
+        <span className="tabular-nums font-semibold text-primary text-xs">
+          {formatNumber(row.totalUnit)} unit
+        </span>
+      ),
+    },
+    {
+      id: 'aksi',
+      header: 'Aksi',
+      isNumeric: true,
+      cell: (row) => (
+        <button
+          type="button"
+          onClick={() => setInspectedMonthly(row)}
+          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-control transition-colors cursor-pointer"
+        >
+          <Eye className="w-3 h-3" />
+          <span>Lihat Rincian</span>
+        </button>
       ),
     },
   ];
 
-  // Column definitions for Tab 2: Barang Paling Diminta
-  const columnsTab2: ColumnDef<ItemReportRow>[] = [
+  // Columns for Table 3: Konsumsi Barang
+  const columnsConsumption: ColumnDef<ItemConsumptionRow>[] = [
     {
       id: 'kode',
       header: 'Kode',
       accessorKey: 'kode',
       cell: (row) => (
-        <span className="font-mono font-semibold text-primary text-[11px]">{row.kode}</span>
+        <span className="font-mono font-semibold text-primary text-xs">{row.kode}</span>
       ),
     },
     {
       id: 'nama',
-      header: 'Nama Barang',
+      header: 'Nama Barang ATK',
       accessorKey: 'nama',
-      cell: (row) => <span className="font-medium text-text-main">{row.nama}</span>,
+      cell: (row) => <span className="font-medium text-text-main text-xs">{row.nama}</span>,
     },
     {
       id: 'kategori',
       header: 'Kategori',
       accessorKey: 'kategori',
-      cell: (row) => <span className="text-text-muted">{row.kategori}</span>,
+      cell: (row) => <span className="text-text-muted text-xs">{row.kategori}</span>,
     },
     {
-      id: 'total_diminta',
-      header: 'Total Diminta',
-      accessorKey: 'total_diminta',
+      id: 'totalDiminta',
+      header: 'Total Permintaan',
+      accessorKey: 'totalDiminta',
       isNumeric: true,
       cell: (row) => (
-        <span className="tabular-nums font-bold text-text-main">
-          {row.total_diminta} {row.satuan}
+        <span className="tabular-nums font-bold text-text-main text-xs">
+          {formatNumber(row.totalDiminta)} {row.satuan}
         </span>
       ),
     },
     {
-      id: 'total_frekuensi',
+      id: 'frekuensiTiket',
       header: 'Frekuensi Pengajuan',
-      accessorKey: 'total_frekuensi',
+      accessorKey: 'frekuensiTiket',
       isNumeric: true,
       cell: (row) => (
-        <span className="tabular-nums text-text-muted">{row.total_frekuensi} kali</span>
+        <span className="tabular-nums text-text-muted text-xs">{row.frekuensiTiket} kali</span>
+      ),
+    },
+    {
+      id: 'estimasiNilai',
+      header: 'Estimasi Nilai Distribusi',
+      accessorKey: 'estimasiNilai',
+      isNumeric: true,
+      cell: (row) => (
+        <span className="tabular-nums font-semibold text-primary text-xs">
+          {formatRupiah(row.estimasiNilai)}
+        </span>
+      ),
+    },
+    {
+      id: 'aksi',
+      header: 'Aksi',
+      isNumeric: true,
+      cell: (row) => (
+        <button
+          type="button"
+          onClick={() => setInspectedItem(row)}
+          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-control transition-colors cursor-pointer"
+        >
+          <Eye className="w-3 h-3" />
+          <span>Lihat Distribusi</span>
+        </button>
       ),
     },
   ];
 
-  // Column definitions for Tab 3: Posisi Persediaan
-  const columnsTab3: ColumnDef<StockReportRow>[] = [
+  // Columns for Table 4: Posisi Persediaan
+  const columnsStock: ColumnDef<StockAuditRow>[] = [
     {
       id: 'kode',
       header: 'Kode',
       accessorKey: 'kode',
       cell: (row) => (
-        <span className="font-mono font-semibold text-primary text-[11px]">{row.kode}</span>
+        <span className="font-mono font-semibold text-primary text-xs">{row.kode}</span>
       ),
     },
     {
       id: 'nama',
-      header: 'Nama Barang',
+      header: 'Nama Barang ATK',
       accessorKey: 'nama',
-      cell: (row) => <span className="font-medium text-text-main">{row.nama}</span>,
+      cell: (row) => <span className="font-medium text-text-main text-xs">{row.nama}</span>,
+    },
+    {
+      id: 'kategori',
+      header: 'Kategori',
+      accessorKey: 'kategori',
+      cell: (row) => <span className="text-text-muted text-xs">{row.kategori}</span>,
     },
     {
       id: 'stok',
-      header: 'Stok Saat Ini',
+      header: 'Stok Fisik',
       accessorKey: 'stok',
       isNumeric: true,
       cell: (row) => (
         <span
-          className={`tabular-nums font-bold ${
-            row.stok === 0 ? 'text-danger' : row.stok <= row.stok_minimum ? 'text-warning' : 'text-text-main'
+          className={`tabular-nums font-bold text-xs ${
+            row.stok === 0
+              ? 'text-danger'
+              : row.stok <= row.stok_minimum
+              ? 'text-warning'
+              : 'text-text-main'
           }`}
         >
           {row.stok} {row.satuan}
@@ -301,7 +792,9 @@ export default function AdminLaporanPage() {
       accessorKey: 'stok_minimum',
       isNumeric: true,
       cell: (row) => (
-        <span className="tabular-nums text-text-muted">{row.stok_minimum} {row.satuan}</span>
+        <span className="tabular-nums text-text-muted text-xs">
+          {row.stok_minimum} {row.satuan}
+        </span>
       ),
     },
     {
@@ -310,7 +803,7 @@ export default function AdminLaporanPage() {
       accessorKey: 'totalValuasi',
       isNumeric: true,
       cell: (row) => (
-        <span className="tabular-nums font-semibold text-text-main">
+        <span className="tabular-nums font-semibold text-text-main text-xs">
           {formatRupiah(row.totalValuasi)}
         </span>
       ),
@@ -321,62 +814,52 @@ export default function AdminLaporanPage() {
       isNumeric: true,
       cell: (row) => <Badge variant={row.statusStok} />,
     },
+    {
+      id: 'aksi',
+      header: 'Aksi',
+      isNumeric: true,
+      cell: (row) => (
+        <button
+          type="button"
+          onClick={() => setInspectedStock(row)}
+          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-control transition-colors cursor-pointer"
+        >
+          <Eye className="w-3 h-3" />
+          <span>Lihat Detail</span>
+        </button>
+      ),
+    },
   ];
 
-  const handlePrint = () => {
-    window.print();
-  };
+  // Header controls for PageContainer: Comprehensive Date Filter (7d to 2y) & Print Action
+  const headerActions = (
+    <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-between sm:justify-end">
+      <DashboardDateFilter
+        currentRange={dateRange}
+        onChangeRange={handleRangeChange}
+        isLoading={isLoading}
+        presetOptions={['7d', '30d', '6m', '1y', '2y']}
+      />
+
+      <button
+        type="button"
+        onClick={() => window.print()}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control bg-primary hover:bg-primary/90 text-white shadow-xs transition-colors cursor-pointer min-h-[30px] shrink-0"
+      >
+        <Printer className="w-3.5 h-3.5" strokeWidth={1.5} />
+        <span>Cetak Laporan</span>
+      </button>
+    </div>
+  );
 
   return (
-    <div className="p-3 sm:p-5 max-w-[1440px] mx-auto space-y-4 select-none print:p-0 print:m-0">
-      {/* Header and Filter Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
-        <div>
-          <h2 className="text-sm font-semibold text-text-main tracking-tight flex items-center gap-2">
-            <FileText className="w-4 h-4 text-primary" />
-            <span>Laporan Manajemen Persediaan & Permintaan ATK</span>
-          </h2>
-          <p className="text-[11px] text-text-muted mt-0.5">
-            Analisis berkala arus keluar masuk barang, popularitas barang, dan valuasi aset fisik
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {/* Period Selector */}
-          <div className="inline-flex p-0.5 rounded-control bg-bg border border-border text-xs">
-            {[
-              { days: 7, label: '7 Hari' },
-              { days: 30, label: '30 Hari' },
-              { days: 180, label: '6 Bulan' },
-              { days: 365, label: '1 Tahun' },
-            ].map((opt) => (
-              <button
-                key={opt.days}
-                type="button"
-                onClick={() => setPeriodDays(opt.days)}
-                className={`px-2.5 py-1 rounded-badge text-[11px] font-medium transition-colors cursor-pointer ${
-                  periodDays === opt.days
-                    ? 'bg-surface text-primary shadow-xs font-semibold'
-                    : 'text-text-muted hover:text-text-main'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Print button */}
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control bg-primary hover:bg-primary-dark text-white shadow-xs transition-colors cursor-pointer min-h-[32px]"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Cetak Laporan</span>
-          </button>
-        </div>
-      </div>
-
+    <PageContainer
+      title="Laporan Operasional"
+      subtitle="Pusat pelaporan berkala, analisis riwayat transaksi, konsumsi ATK, dan posisi aset persediaan"
+      actions={headerActions}
+      className="print:p-0 print:m-0"
+      contentClassName="space-y-3"
+    >
       {/* Official Header for Print Mode */}
       <div className="hidden print:flex items-start justify-between border-b border-border pb-4 mb-4">
         <div>
@@ -398,97 +881,579 @@ export default function AdminLaporanPage() {
           <p>
             Periode Data:{' '}
             <span className="font-semibold text-text-main">
-              {periodDays <= 30 ? `${periodDays} Hari Terakhir` : `${periodDays / 30} Bulan Terakhir`}
+              {formatDisplayDateShort(dateRange.startDate)} s.d. {formatDisplayDate(dateRange.endDate)}
             </span>
           </p>
-          <p>Dicetak: {new Date().toLocaleDateString('id-ID')}</p>
+          <p>Dicetak: {formatDate(new Date())}</p>
         </div>
       </div>
 
-      {/* Report Category Tabs */}
-      <div className="inline-flex p-1 rounded-control bg-bg border border-border text-xs print:hidden">
-        <button
-          type="button"
-          onClick={() => setActiveTab('permintaan')}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-badge text-xs font-medium transition-colors cursor-pointer ${
-            activeTab === 'permintaan'
-              ? 'bg-surface text-text-main shadow-xs font-semibold'
-              : 'text-text-muted hover:text-text-main'
-          }`}
-        >
-          <TrendingUp className="w-3.5 h-3.5" />
-          <span>Ringkasan Permintaan</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('barang')}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-badge text-xs font-medium transition-colors cursor-pointer ${
-            activeTab === 'barang'
-              ? 'bg-surface text-text-main shadow-xs font-semibold'
-              : 'text-text-muted hover:text-text-main'
-          }`}
-        >
-          <Package className="w-3.5 h-3.5" />
-          <span>Barang Paling Diminta</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('persediaan')}
-          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-badge text-xs font-medium transition-colors cursor-pointer ${
-            activeTab === 'persediaan'
-              ? 'bg-surface text-text-main shadow-xs font-semibold'
-              : 'text-text-muted hover:text-text-main'
-          }`}
-        >
-          <Boxes className="w-3.5 h-3.5" />
-          <span>Posisi Persediaan Fisik</span>
-        </button>
+      {/* Standalone Report Selector Nav (4 Distinct Modules) */}
+      <div className="flex items-center justify-between border-b border-border pb-2.5 flex-wrap gap-2 print:hidden w-full">
+        <div className="inline-flex p-0.5 rounded-control bg-bg border border-border text-xs flex-wrap w-full sm:w-auto">
+          {[
+            { key: 'transaksi' as const, label: 'Riwayat Transaksi', icon: ClipboardList },
+            { key: 'rekapitulasi' as const, label: 'Rekapitulasi Kinerja', icon: BarChart3 },
+            { key: 'konsumsi' as const, label: 'Konsumsi Barang', icon: FileText },
+            { key: 'persediaan' as const, label: 'Posisi Persediaan', icon: Boxes },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeReport === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveReport(tab.key)}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-badge text-xs font-medium transition-colors cursor-pointer ${
+                  isActive
+                    ? 'bg-surface text-primary shadow-xs font-semibold'
+                    : 'text-text-muted hover:text-text-main'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5" strokeWidth={1.5} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Dedicated Download Action for active report */}
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          {activeReport === 'transaksi' && (
+            <button
+              type="button"
+              onClick={handleExportTransactions}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control border border-border bg-surface hover:bg-border/20 text-text-main transition-colors cursor-pointer min-h-[30px]"
+            >
+              <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <span>Unduh CSV Transaksi</span>
+            </button>
+          )}
+
+          {activeReport === 'rekapitulasi' && (
+            <button
+              type="button"
+              onClick={handleExportMonthly}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control border border-border bg-surface hover:bg-border/20 text-text-main transition-colors cursor-pointer min-h-[30px]"
+            >
+              <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <span>Unduh CSV Rekapitulasi</span>
+            </button>
+          )}
+
+          {activeReport === 'konsumsi' && (
+            <button
+              type="button"
+              onClick={handleExportConsumption}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control border border-border bg-surface hover:bg-border/20 text-text-main transition-colors cursor-pointer min-h-[30px]"
+            >
+              <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <span>Unduh CSV Konsumsi</span>
+            </button>
+          )}
+
+          {activeReport === 'persediaan' && (
+            <button
+              type="button"
+              onClick={handleExportStock}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control border border-border bg-surface hover:bg-border/20 text-text-main transition-colors cursor-pointer min-h-[30px]"
+            >
+              <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
+              <span>Unduh CSV Persediaan</span>
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Tab 1: Ringkasan Permintaan */}
-      {activeTab === 'permintaan' && (
-        <DataTable
-          columns={columnsTab1}
-          data={monthlySummary}
-          totalCount={monthlySummary.length}
-          page={1}
-          pageSize={12}
-          onPageChange={() => {}}
-          isLoading={isLoading}
-          emptyMessage="Tidak ada data permintaan dalam rentang waktu ini."
-          csvFilename="laporan_ringkasan_permintaan.csv"
-        />
+      {/* --- MODUL 1: RIWAYAT TRANSAKSI PERMINTAAN --- */}
+      {activeReport === 'transaksi' && (
+        <div className="flex-1 min-h-0 flex flex-col space-y-2.5">
+          {/* Mini KPI Strip */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 shrink-0 print:hidden">
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Total Tiket Masuk</p>
+              <p className="text-lg font-bold text-text-main tabular-nums mt-0.5">
+                {formatNumber(transactionRows.length)}
+              </p>
+            </div>
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Selesai Diserahkan</p>
+              <p className="text-lg font-bold text-success tabular-nums mt-0.5">
+                {formatNumber(transactionRows.filter((r) => r.status === 'selesai').length)}
+              </p>
+            </div>
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Menunggu Penyelesaian</p>
+              <p className="text-lg font-bold text-primary tabular-nums mt-0.5">
+                {formatNumber(transactionRows.filter((r) => r.status === 'diproses').length)}
+              </p>
+            </div>
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Rata-rata Waktu Siklus</p>
+              <p className="text-lg font-bold text-text-main tabular-nums mt-0.5">
+                {(() => {
+                  const done = transactionRows.filter((r) => r.durasiJam !== null);
+                  if (done.length === 0) return '0 jam';
+                  const avg = done.reduce((acc, curr) => acc + (curr.durasiJam || 0), 0) / done.length;
+                  return formatDuration(avg);
+                })()}
+              </p>
+            </div>
+          </div>
+
+          {/* Table Container */}
+          <DataTable
+            columns={columnsTx}
+            data={filteredTransactionRows.slice((pageTx - 1) * 10, pageTx * 10)}
+            totalCount={filteredTransactionRows.length}
+            page={pageTx}
+            pageSize={10}
+            onPageChange={setPageTx}
+            searchValue={txSearch}
+            onSearchChange={(val) => {
+              setTxSearch(val);
+              setPageTx(1);
+            }}
+            searchPlaceholder="Cari nomor tiket, barang, atau divisi..."
+            filterControls={
+              <div className="inline-flex p-0.5 rounded-control bg-bg border border-border text-xs">
+                {(['semua', 'diproses', 'selesai'] as const).map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => {
+                      setTxStatusFilter(st);
+                      setPageTx(1);
+                    }}
+                    className={`px-2.5 py-1 rounded-badge text-[11px] capitalize transition-colors cursor-pointer ${
+                      txStatusFilter === st
+                        ? 'bg-surface text-primary shadow-xs font-semibold'
+                        : 'text-text-muted hover:text-text-main'
+                    }`}
+                  >
+                    {st}
+                  </button>
+                ))}
+              </div>
+            }
+            isLoading={isLoading}
+            emptyMessage="Tidak ada transaksi permintaan pada rentang tanggal terpilih."
+            enableDynamicHeight={true}
+            className="flex-1 min-h-0"
+          />
+        </div>
       )}
 
-      {/* Tab 2: Barang Paling Diminta */}
-      {activeTab === 'barang' && (
-        <DataTable
-          columns={columnsTab2}
-          data={topItemsReport}
-          totalCount={topItemsReport.length}
-          page={1}
-          pageSize={12}
-          onPageChange={() => {}}
-          isLoading={isLoading}
-          emptyMessage="Tidak ada data barang diminta dalam rentang waktu ini."
-          csvFilename="laporan_barang_terpopuler.csv"
-        />
+      {/* --- MODUL 2: REKAPITULASI KINERJA BULANAN --- */}
+      {activeReport === 'rekapitulasi' && (
+        <div className="flex-1 min-h-0 flex flex-col space-y-2.5">
+          {/* Mini Summary Banner */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 shrink-0 print:hidden">
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Jumlah Periode Bulan</p>
+              <p className="text-lg font-bold text-text-main tabular-nums mt-0.5">
+                {monthlyRows.length} Bulan
+              </p>
+            </div>
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Akumulasi Tiket</p>
+              <p className="text-lg font-bold text-text-main tabular-nums mt-0.5">
+                {formatNumber(monthlyRows.reduce((acc, curr) => acc + curr.totalPermintaan, 0))}
+              </p>
+            </div>
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Tingkat Sukses Periode</p>
+              <p className="text-lg font-bold text-success tabular-nums mt-0.5">
+                {(() => {
+                  const total = monthlyRows.reduce((acc, curr) => acc + curr.totalPermintaan, 0);
+                  const selesai = monthlyRows.reduce((acc, curr) => acc + curr.totalSelesai, 0);
+                  return total > 0 ? `${Math.round((selesai / total) * 100)}%` : '0%';
+                })()}
+              </p>
+            </div>
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Total Distribusi Unit</p>
+              <p className="text-lg font-bold text-primary tabular-nums mt-0.5">
+                {formatNumber(monthlyRows.reduce((acc, curr) => acc + curr.totalUnit, 0))} unit
+              </p>
+            </div>
+          </div>
+
+          <DataTable
+            columns={columnsMonthly}
+            data={monthlyRows.slice((pageMonthly - 1) * 10, pageMonthly * 10)}
+            totalCount={monthlyRows.length}
+            page={pageMonthly}
+            pageSize={10}
+            onPageChange={setPageMonthly}
+            isLoading={isLoading}
+            emptyMessage="Tidak ada data rekapitulasi pada rentang tanggal ini."
+            enableDynamicHeight={true}
+            className="flex-1 min-h-0"
+          />
+        </div>
       )}
 
-      {/* Tab 3: Posisi Persediaan */}
-      {activeTab === 'persediaan' && (
-        <DataTable
-          columns={columnsTab3}
-          data={stockPositionReport}
-          totalCount={stockPositionReport.length}
-          page={1}
-          pageSize={15}
-          onPageChange={() => {}}
-          isLoading={isLoading}
-          emptyMessage="Katalog barang kosong."
-          csvFilename="laporan_posisi_persediaan.csv"
-        />
+      {/* --- MODUL 3: KONSUMSI & DISTRIBUSI BARANG --- */}
+      {activeReport === 'konsumsi' && (
+        <div className="flex-1 min-h-0 flex flex-col space-y-2.5">
+          {/* Mini Summary Banner */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 shrink-0 print:hidden">
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Total Unit Diminta</p>
+              <p className="text-lg font-bold text-primary tabular-nums mt-0.5">
+                {formatNumber(consumptionRows.reduce((acc, curr) => acc + curr.totalDiminta, 0))} unit
+              </p>
+            </div>
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Estimasi Nilai Pengeluaran ATK</p>
+              <p className="text-lg font-bold text-text-main tabular-nums mt-0.5">
+                {formatRupiah(consumptionRows.reduce((acc, curr) => acc + curr.estimasiNilai, 0))}
+              </p>
+            </div>
+            <div className="p-3 bg-surface rounded-card border border-border col-span-2 md:col-span-1">
+              <p className="text-[11px] text-text-muted font-medium">Barang Paling Sering Diajukan</p>
+              <p className="text-sm font-bold text-text-main truncate mt-1">
+                {consumptionRows[0]?.nama || '-'}
+              </p>
+            </div>
+          </div>
+
+          <DataTable
+            columns={columnsConsumption}
+            data={consumptionRows.slice((pageConsumption - 1) * 10, pageConsumption * 10)}
+            totalCount={consumptionRows.length}
+            page={pageConsumption}
+            pageSize={10}
+            onPageChange={setPageConsumption}
+            searchValue={itemSearch}
+            onSearchChange={(val) => {
+              setItemSearch(val);
+              setPageConsumption(1);
+            }}
+            searchPlaceholder="Cari nama barang atau kode ATK..."
+            isLoading={isLoading}
+            emptyMessage="Tidak ada data konsumsi barang pada rentang tanggal ini."
+            enableDynamicHeight={true}
+            className="flex-1 min-h-0"
+          />
+        </div>
       )}
-    </div>
+
+      {/* --- MODUL 4: POSISI PERSEDIAAN FISIK & VALUASI --- */}
+      {activeReport === 'persediaan' && (
+        <div className="flex-1 min-h-0 flex flex-col space-y-2.5">
+          {/* Mini Summary Banner */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5 shrink-0 print:hidden">
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Total Valuasi Fisik ATK</p>
+              <p className="text-lg font-bold text-text-main tabular-nums mt-0.5">
+                {formatRupiah(rawItems.reduce((acc, curr) => acc + curr.stok * (curr.harga_satuan || 0), 0))}
+              </p>
+            </div>
+            <div className="p-3 bg-surface rounded-card border border-border">
+              <p className="text-[11px] text-text-muted font-medium">Total Item Terdaftar (SKU)</p>
+              <p className="text-lg font-bold text-primary tabular-nums mt-0.5">
+                {rawItems.length} SKU
+              </p>
+            </div>
+            <div className="p-3 bg-surface rounded-card border border-border col-span-2 md:col-span-1">
+              <p className="text-[11px] text-text-muted font-medium">Stok Kritis (Menipis / Habis)</p>
+              <p className="text-lg font-bold text-danger tabular-nums mt-0.5">
+                {rawItems.filter((i) => i.stok <= i.stok_minimum).length} Barang
+              </p>
+            </div>
+          </div>
+
+          <DataTable
+            columns={columnsStock}
+            data={stockAuditRows.slice((pageStock - 1) * 10, pageStock * 10)}
+            totalCount={stockAuditRows.length}
+            page={pageStock}
+            pageSize={10}
+            onPageChange={setPageStock}
+            searchValue={stockSearch}
+            onSearchChange={(val) => {
+              setStockSearch(val);
+              setPageStock(1);
+            }}
+            searchPlaceholder="Cari kode atau nama barang fisik..."
+            filterControls={
+              <div className="inline-flex p-0.5 rounded-control bg-bg border border-border text-xs">
+                {(['semua', 'kritis', 'normal'] as const).map((st) => (
+                  <button
+                    key={st}
+                    type="button"
+                    onClick={() => {
+                      setStockStatusFilter(st);
+                      setPageStock(1);
+                    }}
+                    className={`px-2.5 py-1 rounded-badge text-[11px] capitalize transition-colors cursor-pointer ${
+                      stockStatusFilter === st
+                        ? 'bg-surface text-primary shadow-xs font-semibold'
+                        : 'text-text-muted hover:text-text-main'
+                    }`}
+                  >
+                    {st === 'kritis' ? 'Stok Kritis' : st}
+                  </button>
+                ))}
+              </div>
+            }
+            isLoading={isLoading}
+            emptyMessage="Katalog barang fisik kosong."
+            enableDynamicHeight={true}
+            className="flex-1 min-h-0"
+          />
+        </div>
+      )}
+
+      {/* --- DETAIL INSPECTOR MODAL: TRANSAKSI PERMINTAAN --- */}
+      <Dialog
+        isOpen={!!inspectedTx}
+        onClose={() => setInspectedTx(null)}
+        title="Rincian Tiket Permintaan"
+        description="Dokumentasi lengkap transaksi permintaan ATK operasional."
+        footer={
+          <div className="flex justify-end w-full">
+            <button
+              type="button"
+              onClick={() => setInspectedTx(null)}
+              className="px-4 py-1.5 text-xs font-medium rounded-control bg-surface border border-border text-text-main hover:bg-border/20 transition-colors cursor-pointer"
+            >
+              Tutup
+            </button>
+          </div>
+        }
+      >
+        {inspectedTx && (
+          <div className="space-y-3 py-1 text-xs">
+            <div className="flex items-center justify-between p-2.5 rounded-control bg-bg border border-border">
+              <div>
+                <p className="font-mono font-bold text-primary text-sm">{inspectedTx.nomor}</p>
+                <p className="text-text-muted mt-0.5">{formatDate(inspectedTx.created_at)}</p>
+              </div>
+              <Badge variant={inspectedTx.status} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Divisi Pemohon</span>
+                <span className="font-semibold text-text-main mt-0.5 block">{inspectedTx.pemohon}</span>
+              </div>
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Durasi Siklus</span>
+                <span className="font-semibold text-text-main mt-0.5 block">
+                  {inspectedTx.durasiJam !== null ? formatDuration(inspectedTx.durasiJam) : 'Sedang Diproses'}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-2.5 rounded-control border border-border bg-surface space-y-1">
+              <span className="text-text-muted block text-[11px]">Barang yang Diajukan</span>
+              <p className="font-semibold text-text-main text-sm">{inspectedTx.namaBarang}</p>
+              <div className="flex items-center justify-between pt-1 text-text-muted font-mono">
+                <span>{inspectedTx.kodeBarang} • {inspectedTx.kategoriBarang}</span>
+                <span className="font-bold text-primary tabular-nums">
+                  {inspectedTx.jumlah} {inspectedTx.satuan}
+                </span>
+              </div>
+            </div>
+
+            {inspectedTx.keperluan && (
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Keperluan Penggunaan</span>
+                <p className="text-text-main mt-0.5">{inspectedTx.keperluan}</p>
+              </div>
+            )}
+
+            {inspectedTx.catatan && (
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Catatan Serah Terima</span>
+                <p className="text-text-main mt-0.5">{inspectedTx.catatan}</p>
+              </div>
+            )}
+          </div>
+        )}
+      </Dialog>
+
+      {/* --- DETAIL INSPECTOR MODAL: REKAPITULASI BULANAN --- */}
+      <Dialog
+        isOpen={!!inspectedMonthly}
+        onClose={() => setInspectedMonthly(null)}
+        title="Rincian Rekapitulasi Periode"
+        description="Ringkasan performa pemenuhan tiket ATK pada periode bulan terpilih."
+        footer={
+          <div className="flex justify-end w-full">
+            <button
+              type="button"
+              onClick={() => setInspectedMonthly(null)}
+              className="px-4 py-1.5 text-xs font-medium rounded-control bg-surface border border-border text-text-main hover:bg-border/20 transition-colors cursor-pointer"
+            >
+              Tutup
+            </button>
+          </div>
+        }
+      >
+        {inspectedMonthly && (
+          <div className="space-y-3 py-1 text-xs">
+            <div className="p-2.5 rounded-control bg-bg border border-border">
+              <p className="text-text-muted text-[11px]">Periode Evaluasi</p>
+              <p className="font-bold text-text-main text-sm mt-0.5">{inspectedMonthly.periode}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Total Tiket Masuk</span>
+                <span className="font-bold text-text-main text-base tabular-nums mt-0.5 block">
+                  {inspectedMonthly.totalPermintaan} tiket
+                </span>
+              </div>
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Tingkat Penyelesaian</span>
+                <span className="font-bold text-success text-base tabular-nums mt-0.5 block">
+                  {inspectedMonthly.persentaseSelesai}%
+                </span>
+              </div>
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Selesai Diserahkan</span>
+                <span className="font-semibold text-text-main tabular-nums mt-0.5 block">
+                  {inspectedMonthly.totalSelesai} tiket
+                </span>
+              </div>
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Rata-rata Waktu Siklus</span>
+                <span className="font-semibold text-text-main tabular-nums mt-0.5 block">
+                  {formatDuration(inspectedMonthly.rataWaktuJam)}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-2.5 rounded-control border border-border bg-surface flex items-center justify-between">
+              <span className="text-text-muted text-[11px]">Akumulasi Unit ATK Terdistribusi</span>
+              <span className="font-bold text-primary text-sm tabular-nums">
+                {formatNumber(inspectedMonthly.totalUnit)} unit
+              </span>
+            </div>
+          </div>
+        )}
+      </Dialog>
+
+      {/* --- DETAIL INSPECTOR MODAL: KONSUMSI BARANG --- */}
+      <Dialog
+        isOpen={!!inspectedItem}
+        onClose={() => setInspectedItem(null)}
+        title="Distribusi Barang ATK"
+        description="Analisis permintaan dan penyerahan barang pada rentang tanggal aktif."
+        footer={
+          <div className="flex justify-end w-full">
+            <button
+              type="button"
+              onClick={() => setInspectedItem(null)}
+              className="px-4 py-1.5 text-xs font-medium rounded-control bg-surface border border-border text-text-main hover:bg-border/20 transition-colors cursor-pointer"
+            >
+              Tutup
+            </button>
+          </div>
+        }
+      >
+        {inspectedItem && (
+          <div className="space-y-3 py-1 text-xs">
+            <div className="p-2.5 rounded-control bg-bg border border-border">
+              <span className="font-mono text-primary text-[11px] font-semibold">{inspectedItem.kode}</span>
+              <p className="font-bold text-text-main text-sm mt-0.5">{inspectedItem.nama}</p>
+              <p className="text-text-muted mt-0.5">Kategori: {inspectedItem.kategori}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Total Kuantitas Diminta</span>
+                <span className="font-bold text-primary text-base tabular-nums mt-0.5 block">
+                  {formatNumber(inspectedItem.totalDiminta)} {inspectedItem.satuan}
+                </span>
+              </div>
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Frekuensi Pengajuan</span>
+                <span className="font-bold text-text-main text-base tabular-nums mt-0.5 block">
+                  {inspectedItem.frekuensiTiket} kali
+                </span>
+              </div>
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Rata-rata per Tiket</span>
+                <span className="font-semibold text-text-main tabular-nums mt-0.5 block">
+                  {inspectedItem.rataPerTiket} {inspectedItem.satuan}
+                </span>
+              </div>
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Estimasi Nilai Distribusi</span>
+                <span className="font-semibold text-text-main tabular-nums mt-0.5 block">
+                  {formatRupiah(inspectedItem.estimasiNilai)}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </Dialog>
+
+      {/* --- DETAIL INSPECTOR MODAL: POSISI PERSEDIAAN --- */}
+      <Dialog
+        isOpen={!!inspectedStock}
+        onClose={() => setInspectedStock(null)}
+        title="Audit Persediaan Fisik ATK"
+        description="Detail saldo stok fisik dan batas aman barang inventaris."
+        footer={
+          <div className="flex justify-end w-full">
+            <button
+              type="button"
+              onClick={() => setInspectedStock(null)}
+              className="px-4 py-1.5 text-xs font-medium rounded-control bg-surface border border-border text-text-main hover:bg-border/20 transition-colors cursor-pointer"
+            >
+              Tutup
+            </button>
+          </div>
+        }
+      >
+        {inspectedStock && (
+          <div className="space-y-3 py-1 text-xs">
+            <div className="flex items-center justify-between p-2.5 rounded-control bg-bg border border-border">
+              <div>
+                <span className="font-mono text-primary text-[11px] font-semibold">{inspectedStock.kode}</span>
+                <p className="font-bold text-text-main text-sm mt-0.5">{inspectedStock.nama}</p>
+                <p className="text-text-muted mt-0.5">Kategori: {inspectedStock.kategori}</p>
+              </div>
+              <Badge variant={inspectedStock.statusStok} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Stok Fisik Tersedia</span>
+                <span className={`font-bold text-base tabular-nums mt-0.5 block ${
+                  inspectedStock.stok === 0 ? 'text-danger' : inspectedStock.stok <= inspectedStock.stok_minimum ? 'text-warning' : 'text-primary'
+                }`}>
+                  {inspectedStock.stok} {inspectedStock.satuan}
+                </span>
+              </div>
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Batas Minimum Aman</span>
+                <span className="font-bold text-text-main text-base tabular-nums mt-0.5 block">
+                  {inspectedStock.stok_minimum} {inspectedStock.satuan}
+                </span>
+              </div>
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Harga Satuan</span>
+                <span className="font-semibold text-text-main tabular-nums mt-0.5 block">
+                  {formatRupiah(inspectedStock.harga_satuan)}
+                </span>
+              </div>
+              <div className="p-2.5 rounded-control border border-border bg-surface">
+                <span className="text-text-muted block text-[11px]">Estimasi Total Nilai Aset</span>
+                <span className="font-semibold text-text-main tabular-nums mt-0.5 block">
+                  {formatRupiah(inspectedStock.totalValuasi)}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </Dialog>
+    </PageContainer>
   );
 }
