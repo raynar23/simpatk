@@ -208,16 +208,18 @@ export default function LoginPage() {
             {/* Top decorative gradient line */}
             <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-primary-dark via-[#38BDF8] to-primary-dark" />
 
-            {/* Header with Color Pelindo Logo and Generous Spacing */}
+            {/* Header with Color Pelindo Logo at Top-Right */}
             <div className="mb-6 sm:mb-7">
-              <div className="relative h-10 w-48 mb-6 sm:mb-8">
-                <Image
-                  src="/logo/pelindo-color.png"
-                  alt="Logo Pelindo Terminal Petikemas"
-                  fill
-                  className="object-contain object-left"
-                  priority
-                />
+              <div className="flex items-center justify-end mb-4 sm:mb-6">
+                <div className="relative h-10 w-44 sm:w-48">
+                  <Image
+                    src="/logo/pelindo-color.png"
+                    alt="Logo Pelindo Terminal Petikemas"
+                    fill
+                    className="object-contain object-right"
+                    priority
+                  />
+                </div>
               </div>
               <h2 className="text-2xl sm:text-[26px] font-bold text-text-main tracking-tight leading-tight">
                 Masuk

@@ -52,7 +52,7 @@ export function AppToolbar({
   };
 
   return (
-    <header className="h-[52px] shrink-0 sticky top-0 z-20 bg-surface/95 backdrop-blur-md border-b border-border flex items-center justify-between px-3 sm:px-4 select-none">
+    <header className="h-[52px] w-full shrink-0 sticky top-0 z-30 bg-surface/95 backdrop-blur-md border-b border-border shadow-xs flex items-center justify-between px-3 sm:px-4 select-none">
       {/* Left: Mobile Hamburger and Portal Title */}
       <div className="flex items-center gap-2.5 min-w-0">
         {/* Mobile Hamburger (< lg) */}
