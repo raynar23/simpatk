@@ -81,9 +81,9 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-dvh w-full flex flex-col lg:flex-row bg-white">
-      {/* Left column: Full-bleed TPS Photo Panel (50% equal width on desktop) */}
-      <section className="hidden lg:flex relative w-full lg:w-1/2 min-h-dvh select-none overflow-hidden flex-col justify-between p-12 shrink-0 z-20 border-r border-black/10">
+    <main className="min-h-dvh w-full flex flex-col lg:flex-row bg-[#0B5288]">
+      {/* Left column: Full-bleed TPS Photo Panel (50% equal width on desktop, seamless borderless transition) */}
+      <section className="hidden lg:flex relative w-full lg:w-1/2 min-h-dvh select-none overflow-hidden flex-col justify-between p-12 shrink-0 z-20">
         {/* Terminal background image with object-position 62% 50% */}
         <Image
           src="/images/tps-terminal.jpg"
