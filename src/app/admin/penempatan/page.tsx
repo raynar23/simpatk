@@ -14,6 +14,7 @@ import {
   LayoutGrid,
   List,
   ArrowRightLeft,
+  ChevronLeft,
   ChevronRight,
   Info,
 } from 'lucide-react';
@@ -45,9 +46,27 @@ export default function AdminPenempatanPage() {
 
   // Active filters and views
   const [selectedRakTab, setSelectedRakTab] = useState<'semua' | RakKey>('semua');
+  const [mobileRakIndex, setMobileRakIndex] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [stockFilter, setStockFilter] = useState<'semua' | 'aman' | 'perhatian'>('semua');
   const [viewMode, setViewMode] = useState<'visual' | 'table'>('visual');
+
+  const currentMobileRak = RAK_KEYS[mobileRakIndex] || 'Rak 1';
+
+  const handleSelectRak = (rak: 'semua' | RakKey) => {
+    setSelectedRakTab(rak);
+    if (rak !== 'semua') {
+      const idx = RAK_KEYS.indexOf(rak);
+      if (idx !== -1) setMobileRakIndex(idx);
+    }
+  };
+
+  const handleMobilePageChange = (newIndex: number) => {
+    if (newIndex >= 0 && newIndex < RAK_KEYS.length) {
+      setMobileRakIndex(newIndex);
+      setSelectedRakTab(RAK_KEYS[newIndex]);
+    }
+  };
 
   // Modal move state
   const [moveItem, setMoveItem] = useState<(Item & { resolvedRak: RakKey }) | null>(null);
@@ -157,6 +176,47 @@ export default function AdminPenempatanPage() {
     return stats;
   }, [enrichedItems]);
 
+
+  // Helper to get filtered items for a specific rack
+  const getRackFilteredItems = (rakId: RakKey) => {
+    return enrichedItems.filter((it) => {
+      if (it.resolvedRak !== rakId) return false;
+
+      // Stock filter
+      const isOut = it.stok === 0;
+      const isLow = !isOut && it.stok <= it.stok_minimum;
+      if (stockFilter === 'aman' && (isOut || isLow)) return false;
+      if (stockFilter === 'perhatian' && !isOut && !isLow) return false;
+
+      // Search query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchName = it.nama.toLowerCase().includes(q);
+        const matchKode = (it.kode || '').toLowerCase().includes(q);
+        const matchKategori = (it.kategori || '').toLowerCase().includes(q);
+        return matchName || matchKode || matchKategori;
+      }
+      return true;
+    });
+  };
+
+  // Auto-switch mobile page if search query matches item in another shelf
+  useEffect(() => {
+    if (!searchQuery.trim()) return;
+    const q = searchQuery.toLowerCase();
+    const matched = enrichedItems.find(
+      (it) =>
+        it.nama.toLowerCase().includes(q) ||
+        (it.kode || '').toLowerCase().includes(q)
+    );
+    if (matched) {
+      const idx = RAK_KEYS.indexOf(matched.resolvedRak);
+      if (idx !== -1 && idx !== mobileRakIndex) {
+        setMobileRakIndex(idx);
+      }
+    }
+  }, [searchQuery, enrichedItems, mobileRakIndex]);
+
   // Handle reset to default categorization
   const handleReset = () => {
     if (confirm('Kembalikan semua penempatan barang ke rak default sesuai kategorinya?')) {
@@ -198,8 +258,118 @@ export default function AdminPenempatanPage() {
       }
     >
       <div className="h-full flex flex-col gap-3.5 min-h-0">
-        {/* Top 4 Storage Racks KPI Strip */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
+        {/* Mobile: 1 Rak 1 Halaman Pagination Navigation Bar */}
+        <div className="sm:hidden bg-surface rounded-card border border-border p-2.5 flex flex-col gap-2 shrink-0 shadow-xs">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-text-main uppercase tracking-wider">
+                Navigasi Rak
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                Halaman {mobileRakIndex + 1} dari 4
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => handleMobilePageChange(mobileRakIndex - 1)}
+                disabled={mobileRakIndex === 0}
+                className="inline-flex items-center justify-center w-7 h-7 rounded-control border border-border text-text-main hover:bg-bg disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                title="Rak Sebelumnya"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleMobilePageChange(mobileRakIndex + 1)}
+                disabled={mobileRakIndex === RAK_KEYS.length - 1}
+                className="inline-flex items-center justify-center w-7 h-7 rounded-control border border-border text-text-main hover:bg-bg disabled:opacity-30 disabled:pointer-events-none transition-colors cursor-pointer"
+                title="Rak Selanjutnya"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* 4 Rak Quick Selector Buttons */}
+          <div className="grid grid-cols-4 gap-1.5">
+            {RAK_DEFINITIONS.map((r, idx) => {
+              const isActive = mobileRakIndex === idx;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => handleMobilePageChange(idx)}
+                  className={`py-1.5 px-1 rounded-control text-xs font-semibold flex flex-col items-center justify-center transition-all cursor-pointer border ${
+                    isActive
+                      ? 'bg-primary text-white border-primary shadow-subtle'
+                      : 'bg-bg text-text-muted border-border hover:text-text-main hover:border-primary/40'
+                  }`}
+                >
+                  <span>{r.id}</span>
+                  <span className={`text-[10px] font-normal tabular-nums ${isActive ? 'text-white/85' : 'text-text-muted'}`}>
+                    {rakStats[r.id]?.count || 0} ATK
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Mobile: Active Rak KPI Summary Card */}
+        <div className="sm:hidden">
+          {(() => {
+            const activeRakDef = RAK_DEFINITIONS[mobileRakIndex];
+            const data = rakStats[activeRakDef.id];
+
+            return (
+              <div className="bg-surface rounded-card border border-border p-3 flex flex-col justify-between shadow-xs">
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-xs font-bold text-text-main tracking-tight flex items-center gap-1.5 whitespace-nowrap shrink-0">
+                      <Layers className="w-3.5 h-3.5 text-primary shrink-0" />
+                      {activeRakDef.id}
+                    </span>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-control border whitespace-nowrap shrink-0 ${activeRakDef.theme.badgeBg}`}>
+                      {activeRakDef.sub}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-text-muted line-clamp-1">{activeRakDef.zona}</p>
+                </div>
+
+                <div className="mt-2.5 pt-2 border-t border-border/70 flex items-end justify-between">
+                  <div>
+                    <div className="text-lg font-bold text-text-main tabular-nums">
+                      {isLoading ? '-' : data?.count || 0}{' '}
+                      <span className="text-xs font-normal text-text-muted">jenis ATK</span>
+                    </div>
+                    <div className="text-[11px] text-text-muted tabular-nums">
+                      Total {isLoading ? '-' : data?.totalUnits || 0} unit fisik
+                    </div>
+                  </div>
+
+                  {!isLoading && data && data.lowStockCount > 0 ? (
+                    <span
+                      title={`${data.lowStockCount} barang perlu restock / menipis`}
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-danger-bg text-danger border border-danger/30 whitespace-nowrap shrink-0"
+                    >
+                      <AlertTriangle className="w-3 h-3 shrink-0" />
+                      <span>{data.lowStockCount} menipis</span>
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-success-bg text-success border border-success/30 whitespace-nowrap shrink-0">
+                      <CheckCircle2 className="w-3 h-3 shrink-0" />
+                      <span>Stok aman</span>
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+
+        {/* Desktop: Top 4 Storage Racks KPI Grid */}
+        <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
           {RAK_DEFINITIONS.map((rak) => {
             const data = rakStats[rak.id];
             const isSelected = selectedRakTab === rak.id;
@@ -207,7 +377,7 @@ export default function AdminPenempatanPage() {
             return (
               <div
                 key={rak.id}
-                onClick={() => setSelectedRakTab(isSelected ? 'semua' : rak.id)}
+                onClick={() => handleSelectRak(isSelected ? 'semua' : rak.id)}
                 className={`bg-surface rounded-card border p-3.5 flex flex-col justify-between transition-all cursor-pointer relative group ${
                   isSelected
                     ? 'border-primary ring-1 ring-primary shadow-subtle'
@@ -238,7 +408,6 @@ export default function AdminPenempatanPage() {
                     </div>
                   </div>
 
-                  {/* Stock Alert (Point 7: warna merah ketika menipis/habis) */}
                   {!isLoading && data && data.lowStockCount > 0 ? (
                     <span
                       title={`${data.lowStockCount} barang perlu restock / menipis`}
@@ -275,8 +444,8 @@ export default function AdminPenempatanPage() {
 
           {/* Filter Tabs & Switcher */}
           <div className="flex items-center gap-2 flex-wrap justify-between sm:justify-end">
-            {/* Rak Filter Pills */}
-            <div className="inline-flex rounded-control bg-bg p-0.5 border border-border overflow-x-auto max-w-full">
+            {/* Rak Filter Pills - Desktop Only */}
+            <div className="hidden sm:inline-flex rounded-control bg-bg p-0.5 border border-border overflow-x-auto max-w-full">
               <button
                 type="button"
                 onClick={() => setSelectedRakTab('semua')}
@@ -340,7 +509,7 @@ export default function AdminPenempatanPage() {
             <div className="w-full h-64 flex items-center justify-center">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
-          ) : filteredItems.length === 0 ? (
+          ) : filteredItems.length === 0 && selectedRakTab === 'semua' && !searchQuery.trim() ? (
             <EmptyState
               title="Barang Tidak Ditemukan"
               description="Tidak ada barang ATK yang sesuai pada rak atau pencarian saat ini."
@@ -359,185 +528,433 @@ export default function AdminPenempatanPage() {
               }
             />
           ) : viewMode === 'visual' ? (
-            /* Visual Shelves Layout */
-            <div className="space-y-4">
-              {RAK_DEFINITIONS.filter((r) =>
-                selectedRakTab === 'semua' ? true : r.id === selectedRakTab
-              ).map((rakDef) => {
-                const rackItems = filteredItems.filter((it) => it.resolvedRak === rakDef.id);
-                if (rackItems.length === 0 && selectedRakTab === 'semua') return null;
+            <>
+              {/* Mobile View: 1 Rak per Halaman with Uniform Height (420px) */}
+              <div className="sm:hidden">
+                {(() => {
+                  const mobileDef = RAK_DEFINITIONS[mobileRakIndex];
+                  const mobileRackItems = getRackFilteredItems(mobileDef.id);
 
-                return (
-                  <div
-                    key={rakDef.id}
-                    className="bg-surface rounded-card border border-border overflow-hidden shadow-xs"
-                  >
-                    {/* Shelf Header */}
-                    <div
-                      className={`px-4 py-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${rakDef.theme.headerBg}`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-control bg-white shadow-xs border border-border flex items-center justify-center text-primary shrink-0">
-                          <Layers className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-bold text-text-main">{rakDef.nama}</h3>
-                            <span className="text-[11px] font-semibold text-text-muted">
-                              ({rackItems.length} jenis ATK)
-                            </span>
+                  return (
+                    <div className="bg-surface rounded-card border border-border overflow-hidden shadow-xs flex flex-col">
+                      {/* Shelf Header */}
+                      <div className={`px-3.5 py-3 border-b flex items-center justify-between gap-2 ${mobileDef.theme.headerBg}`}>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-control bg-white shadow-xs border border-border flex items-center justify-center text-primary shrink-0">
+                            <Layers className="w-4 h-4" />
                           </div>
-                          <p className="text-[11px] text-text-muted">{rakDef.deskripsi}</p>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h3 className="text-xs font-bold text-text-main">{mobileDef.nama}</h3>
+                              <span className="text-[10px] font-semibold text-text-muted">
+                                ({mobileRackItems.length} jenis ATK)
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-text-muted truncate">{mobileDef.deskripsi}</p>
+                          </div>
                         </div>
-                      </div>
-
-                      <div className="text-right flex items-center gap-2">
-                        <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/90 border border-border/80 text-text-muted">
-                          {rakDef.zona}
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/90 border border-border/80 text-text-muted shrink-0">
+                          {mobileDef.zona}
                         </span>
                       </div>
-                    </div>
 
-                    {/* Shelf Slots Grid */}
-                    <div className="p-3.5 bg-bg/40">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {rackItems.map((item) => {
+                      {/* Shelf Slots Container with UNIFORM FIXED HEIGHT for all pages */}
+                      <div className="p-3 bg-bg/40 h-[420px] overflow-y-auto">
+                        {mobileRackItems.length === 0 ? (
+                          <div className="h-full flex flex-col items-center justify-center text-center p-4">
+                            <Package className="w-8 h-8 text-text-muted/40 mb-2" />
+                            <p className="text-xs font-semibold text-text-main">Tidak Ada Barang di {mobileDef.id}</p>
+                            <p className="text-[11px] text-text-muted mt-0.5">
+                              {searchQuery.trim()
+                                ? 'Tidak ada barang yang cocok dengan kata kunci pencarian pada rak ini.'
+                                : 'Belum ada barang ATK yang ditempatkan pada rak ini.'}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2.5">
+                            {mobileRackItems.map((item) => {
+                              const isOutOfStock = item.stok === 0;
+                              const isLowStock = !isOutOfStock && item.stok <= item.stok_minimum;
+
+                              return (
+                                <div
+                                  key={item.id}
+                                  className={`bg-surface rounded-control border p-3 flex flex-col justify-between transition-all ${
+                                    isOutOfStock || isLowStock
+                                      ? 'border-danger/40 ring-1 ring-danger/20'
+                                      : 'border-border'
+                                  }`}
+                                >
+                                  <div>
+                                    <div className="flex items-center justify-between text-[11px] mb-1">
+                                      <span className="font-mono font-semibold text-text-muted bg-bg px-1.5 py-0.5 rounded border border-border/70 text-[10px]">
+                                        {item.kode || 'ATK'}
+                                      </span>
+                                      <span className="text-text-muted text-[10px] font-medium truncate max-w-[120px]">
+                                        {item.kategori || 'Umum'}
+                                      </span>
+                                    </div>
+
+                                    <h4 className="text-xs font-semibold text-text-main tracking-tight line-clamp-2">
+                                      {item.nama}
+                                    </h4>
+
+                                    <div className="mt-2 pt-2 border-t border-border/60 flex items-center justify-between text-xs">
+                                      <span className="text-text-muted text-[11px]">Stok Fisik:</span>
+                                      {isOutOfStock ? (
+                                        <span className="text-[10px] font-bold text-danger bg-danger-bg px-2 py-0.5 rounded border border-danger/30 whitespace-nowrap shrink-0">
+                                          Habis (0 {item.satuan})
+                                        </span>
+                                      ) : isLowStock ? (
+                                        <span className="text-[10px] font-bold text-danger bg-danger-bg px-2 py-0.5 rounded border border-danger/30 whitespace-nowrap shrink-0">
+                                          Sisa {item.stok} {item.satuan}
+                                        </span>
+                                      ) : (
+                                        <span className="text-[11px] font-semibold text-text-main tabular-nums whitespace-nowrap shrink-0">
+                                          {item.stok} {item.satuan}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-2.5 pt-2 border-t border-border/60">
+                                    <button
+                                      type="button"
+                                      onClick={() => setMoveItem(item)}
+                                      className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-control text-[11px] font-semibold text-text-muted hover:text-primary bg-bg hover:bg-primary/5 border border-border hover:border-primary/30 transition-colors cursor-pointer whitespace-nowrap"
+                                    >
+                                      <ArrowRightLeft className="w-3 h-3 shrink-0" />
+                                      <span>Pindah Rak</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Bottom Pagination Controls */}
+                      <div className="px-3.5 py-2.5 bg-surface border-t border-border flex items-center justify-between text-xs">
+                        <button
+                          type="button"
+                          onClick={() => handleMobilePageChange(mobileRakIndex - 1)}
+                          disabled={mobileRakIndex === 0}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                          <span>Sebelumnya</span>
+                        </button>
+
+                        <div className="flex items-center gap-1.5 font-medium text-text-muted text-[11px]">
+                          <span>Halaman</span>
+                          <span className="font-bold text-primary font-mono text-xs">{mobileRakIndex + 1}</span>
+                          <span>dari 4</span>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleMobilePageChange(mobileRakIndex + 1)}
+                          disabled={mobileRakIndex === RAK_KEYS.length - 1}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
+                        >
+                          <span>Selanjutnya</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Desktop View: Multi-Rak Layout */}
+              <div className="hidden sm:block space-y-4">
+                {RAK_DEFINITIONS.filter((r) =>
+                  selectedRakTab === 'semua' ? true : r.id === selectedRakTab
+                ).map((rakDef) => {
+                  const rackItems = filteredItems.filter((it) => it.resolvedRak === rakDef.id);
+                  if (rackItems.length === 0 && selectedRakTab === 'semua') return null;
+
+                  return (
+                    <div
+                      key={rakDef.id}
+                      className="bg-surface rounded-card border border-border overflow-hidden shadow-xs"
+                    >
+                      {/* Shelf Header */}
+                      <div
+                        className={`px-4 py-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${rakDef.theme.headerBg}`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-control bg-white shadow-xs border border-border flex items-center justify-center text-primary shrink-0">
+                            <Layers className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-sm font-bold text-text-main">{rakDef.nama}</h3>
+                              <span className="text-[11px] font-semibold text-text-muted">
+                                ({rackItems.length} jenis ATK)
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-text-muted">{rakDef.deskripsi}</p>
+                          </div>
+                        </div>
+
+                        <div className="text-right flex items-center gap-2">
+                          <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/90 border border-border/80 text-text-muted">
+                            {rakDef.zona}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Shelf Slots Grid */}
+                      <div className="p-3.5 bg-bg/40">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                          {rackItems.map((item) => {
+                            const isOutOfStock = item.stok === 0;
+                            const isLowStock = !isOutOfStock && item.stok <= item.stok_minimum;
+
+                            return (
+                              <div
+                                key={item.id}
+                                className={`bg-surface rounded-control border p-3 flex flex-col justify-between transition-all hover:shadow-subtle group ${
+                                  isOutOfStock || isLowStock
+                                    ? 'border-danger/40 ring-1 ring-danger/20'
+                                    : 'border-border hover:border-primary/40'
+                                }`}
+                              >
+                                <div>
+                                  <div className="flex items-center justify-between text-[11px] mb-1.5">
+                                    <span className="font-mono font-semibold text-text-muted bg-bg px-1.5 py-0.5 rounded border border-border/70">
+                                      {item.kode || 'ATK'}
+                                    </span>
+                                    <span className="text-text-muted text-[10px] font-medium truncate max-w-[110px]">
+                                      {item.kategori || 'Umum'}
+                                    </span>
+                                  </div>
+
+                                  <h4 className="text-xs font-semibold text-text-main line-clamp-2 min-h-[32px] tracking-tight">
+                                    {item.nama}
+                                  </h4>
+
+                                  <div className="mt-2 pt-2 border-t border-border/60 flex items-center justify-between text-xs">
+                                    <span className="text-text-muted text-[11px]">Stok Fisik:</span>
+                                    {isOutOfStock ? (
+                                      <span className="text-[11px] font-bold text-danger bg-danger-bg px-2 py-0.5 rounded border border-danger/30 whitespace-nowrap shrink-0">
+                                        Habis (0 {item.satuan})
+                                      </span>
+                                    ) : isLowStock ? (
+                                      <span className="text-[11px] font-bold text-danger bg-danger-bg px-2 py-0.5 rounded border border-danger/30 whitespace-nowrap shrink-0">
+                                        Sisa {item.stok} {item.satuan}
+                                      </span>
+                                    ) : (
+                                      <span className="text-[11px] font-semibold text-text-main tabular-nums whitespace-nowrap shrink-0">
+                                        {item.stok} {item.satuan}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                <div className="mt-2.5 pt-2 border-t border-border/60">
+                                  <button
+                                    type="button"
+                                    onClick={() => setMoveItem(item)}
+                                    className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-control text-[11px] font-semibold text-text-muted hover:text-primary bg-bg hover:bg-primary/5 border border-border hover:border-primary/30 transition-colors cursor-pointer whitespace-nowrap"
+                                  >
+                                    <ArrowRightLeft className="w-3 h-3 shrink-0" />
+                                    <span>Pindah Rak</span>
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          ) : (
+            /* Table View */
+            <>
+              {/* Mobile Table View: Filtered to current active rak with uniform 420px height & pagination */}
+              <div className="sm:hidden bg-surface rounded-card border border-border overflow-hidden shadow-xs flex flex-col">
+                <div className="px-3.5 py-2.5 bg-bg border-b border-border flex items-center justify-between">
+                  <span className="text-xs font-bold text-text-main">
+                    Daftar ATK - {RAK_DEFINITIONS[mobileRakIndex].id}
+                  </span>
+                  <span className="text-[11px] font-semibold text-text-muted">
+                    {getRackFilteredItems(RAK_DEFINITIONS[mobileRakIndex].id).length} item
+                  </span>
+                </div>
+                <div className="overflow-x-auto h-[420px] overflow-y-auto">
+                  <table className="w-full min-w-[560px] text-left text-xs">
+                    <thead className="bg-bg/80 border-b border-border text-text-muted font-semibold uppercase text-[10px] tracking-wider whitespace-nowrap sticky top-0 backdrop-blur-xs">
+                      <tr>
+                        <th className="px-3 py-2 whitespace-nowrap">Kode</th>
+                        <th className="px-3 py-2 min-w-[160px]">Nama Barang</th>
+                        <th className="px-3 py-2 text-center whitespace-nowrap">Stok</th>
+                        <th className="px-3 py-2 text-center whitespace-nowrap">Status</th>
+                        <th className="px-3 py-2 text-center whitespace-nowrap">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {getRackFilteredItems(RAK_DEFINITIONS[mobileRakIndex].id).length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-text-muted">
+                            Tidak ada barang di rak ini
+                          </td>
+                        </tr>
+                      ) : (
+                        getRackFilteredItems(RAK_DEFINITIONS[mobileRakIndex].id).map((item) => {
                           const isOutOfStock = item.stok === 0;
                           const isLowStock = !isOutOfStock && item.stok <= item.stok_minimum;
 
                           return (
-                            <div
-                              key={item.id}
-                              className={`bg-surface rounded-control border p-3 flex flex-col justify-between transition-all hover:shadow-subtle group ${
-                                isOutOfStock || isLowStock
-                                  ? 'border-danger/40 ring-1 ring-danger/20'
-                                  : 'border-border hover:border-primary/40'
-                              }`}
-                            >
-                              <div>
-                                <div className="flex items-center justify-between text-[11px] mb-1.5">
-                                  <span className="font-mono font-semibold text-text-muted bg-bg px-1.5 py-0.5 rounded border border-border/70">
-                                    {item.kode || 'ATK'}
-                                  </span>
-                                  <span className="text-text-muted text-[10px] font-medium truncate max-w-[110px]">
-                                    {item.kategori || 'Umum'}
-                                  </span>
-                                </div>
-
-                                <h4 className="text-xs font-semibold text-text-main line-clamp-2 min-h-[32px] tracking-tight">
-                                  {item.nama}
-                                </h4>
-
-                                <div className="mt-2 pt-2 border-t border-border/60 flex items-center justify-between text-xs">
-                                  <span className="text-text-muted text-[11px]">Stok Fisik:</span>
-                                  {/* Point 7: warna merah jika menipis/habis */}
+                            <tr key={item.id} className="hover:bg-bg/50 transition-colors">
+                              <td className="px-3 py-2 font-mono font-semibold text-text-muted whitespace-nowrap text-[11px]">
+                                {item.kode || 'ATK'}
+                              </td>
+                              <td className="px-3 py-2 font-medium text-text-main min-w-[160px]">
+                                {item.nama}
+                              </td>
+                              <td className="px-3 py-2 text-center font-mono font-semibold tabular-nums whitespace-nowrap text-[11px]">
+                                {item.stok} {item.satuan}
+                              </td>
+                              <td className="px-3 py-2 text-center whitespace-nowrap">
+                                <div className="flex justify-center whitespace-nowrap">
                                   {isOutOfStock ? (
-                                    <span className="text-[11px] font-bold text-danger bg-danger-bg px-2 py-0.5 rounded border border-danger/30 whitespace-nowrap shrink-0">
-                                      Habis (0 {item.satuan})
-                                    </span>
+                                    <Badge variant="habis" className="whitespace-nowrap shrink-0">Habis (0)</Badge>
                                   ) : isLowStock ? (
-                                    <span className="text-[11px] font-bold text-danger bg-danger-bg px-2 py-0.5 rounded border border-danger/30 whitespace-nowrap shrink-0">
-                                      Sisa {item.stok} {item.satuan}
-                                    </span>
+                                    <Badge variant="menipis" className="whitespace-nowrap shrink-0">Menipis ({item.stok})</Badge>
                                   ) : (
-                                    <span className="text-[11px] font-semibold text-text-main tabular-nums whitespace-nowrap shrink-0">
-                                      {item.stok} {item.satuan}
+                                    <span className="text-[11px] font-medium text-success inline-flex items-center gap-1 whitespace-nowrap shrink-0">
+                                      <CheckCircle2 className="w-3 h-3 shrink-0" />
+                                      <span>Aman</span>
                                     </span>
                                   )}
                                 </div>
-                              </div>
-
-                              {/* Action move button */}
-                              <div className="mt-2.5 pt-2 border-t border-border/60">
+                              </td>
+                              <td className="px-3 py-2 text-center whitespace-nowrap">
                                 <button
                                   type="button"
                                   onClick={() => setMoveItem(item)}
-                                  className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-control text-[11px] font-semibold text-text-muted hover:text-primary bg-bg hover:bg-primary/5 border border-border hover:border-primary/30 transition-colors cursor-pointer whitespace-nowrap"
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-control text-xs font-semibold text-primary hover:bg-primary/10 border border-primary/20 transition-colors cursor-pointer whitespace-nowrap shrink-0"
                                 >
                                   <ArrowRightLeft className="w-3 h-3 shrink-0" />
-                                  <span>Pindah Rak</span>
+                                  <span>Pindah</span>
                                 </button>
-                              </div>
-                            </div>
+                              </td>
+                            </tr>
                           );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            /* Table View */
-            <div className="bg-surface rounded-card border border-border overflow-hidden shadow-xs">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] text-left text-xs">
-                  <thead className="bg-bg border-b border-border text-text-muted font-semibold uppercase text-[10px] tracking-wider whitespace-nowrap">
-                    <tr>
-                      <th className="px-4 py-3 whitespace-nowrap">Kode</th>
-                      <th className="px-4 py-3 min-w-[200px]">Nama Barang</th>
-                      <th className="px-4 py-3 whitespace-nowrap">Kategori</th>
-                      <th className="px-4 py-3 whitespace-nowrap">Lokasi Penempatan</th>
-                      <th className="px-4 py-3 text-center whitespace-nowrap min-w-[100px]">Stok Fisik</th>
-                      <th className="px-4 py-3 text-center whitespace-nowrap min-w-[125px]">Status Stok</th>
-                      <th className="px-4 py-3 text-center whitespace-nowrap min-w-[80px]">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    {filteredItems.map((item) => {
-                      const isOutOfStock = item.stok === 0;
-                      const isLowStock = !isOutOfStock && item.stok <= item.stok_minimum;
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
 
-                      return (
-                        <tr key={item.id} className="hover:bg-bg/50 transition-colors">
-                          <td className="px-4 py-3 font-mono font-semibold text-text-muted whitespace-nowrap">
-                            {item.kode || 'ATK'}
-                          </td>
-                          <td className="px-4 py-3 font-medium text-text-main min-w-[200px]">
-                            {item.nama}
-                          </td>
-                          <td className="px-4 py-3 text-text-muted whitespace-nowrap">
-                            {item.kategori || 'Umum'}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <RakBadge rak={item.resolvedRak} size="sm" />
-                          </td>
-                          <td className="px-4 py-3 text-center font-mono font-semibold tabular-nums whitespace-nowrap">
-                            {item.stok} {item.satuan}
-                          </td>
-                          <td className="px-4 py-3 text-center whitespace-nowrap">
-                            <div className="flex justify-center whitespace-nowrap">
-                              {isOutOfStock ? (
-                                <Badge variant="habis" className="whitespace-nowrap shrink-0">Habis (0)</Badge>
-                              ) : isLowStock ? (
-                                <Badge variant="menipis" className="whitespace-nowrap shrink-0">Menipis ({item.stok})</Badge>
-                              ) : (
-                                <span className="text-[11px] font-medium text-success inline-flex items-center gap-1 whitespace-nowrap shrink-0">
-                                  <CheckCircle2 className="w-3 h-3 shrink-0" />
-                                  <span>Aman</span>
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-center whitespace-nowrap">
-                            <button
-                              type="button"
-                              onClick={() => setMoveItem(item)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-control text-xs font-semibold text-primary hover:bg-primary/10 border border-primary/20 transition-colors cursor-pointer whitespace-nowrap shrink-0"
-                            >
-                              <ArrowRightLeft className="w-3 h-3 shrink-0" />
-                              <span>Pindah</span>
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                {/* Bottom Pagination Controls */}
+                <div className="px-3.5 py-2.5 bg-surface border-t border-border flex items-center justify-between text-xs">
+                  <button
+                    type="button"
+                    onClick={() => handleMobilePageChange(mobileRakIndex - 1)}
+                    disabled={mobileRakIndex === 0}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Sebelumnya</span>
+                  </button>
+
+                  <div className="flex items-center gap-1.5 font-medium text-text-muted text-[11px]">
+                    <span>Halaman</span>
+                    <span className="font-bold text-primary font-mono text-xs">{mobileRakIndex + 1}</span>
+                    <span>dari 4</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleMobilePageChange(mobileRakIndex + 1)}
+                    disabled={mobileRakIndex === RAK_KEYS.length - 1}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
+                  >
+                    <span>Selanjutnya</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
-            </div>
+
+              {/* Desktop Table View: Full Table */}
+              <div className="hidden sm:block bg-surface rounded-card border border-border overflow-hidden shadow-xs">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[760px] text-left text-xs">
+                    <thead className="bg-bg border-b border-border text-text-muted font-semibold uppercase text-[10px] tracking-wider whitespace-nowrap">
+                      <tr>
+                        <th className="px-4 py-3 whitespace-nowrap">Kode</th>
+                        <th className="px-4 py-3 min-w-[200px]">Nama Barang</th>
+                        <th className="px-4 py-3 whitespace-nowrap">Kategori</th>
+                        <th className="px-4 py-3 whitespace-nowrap">Lokasi Penempatan</th>
+                        <th className="px-4 py-3 text-center whitespace-nowrap min-w-[100px]">Stok Fisik</th>
+                        <th className="px-4 py-3 text-center whitespace-nowrap min-w-[125px]">Status Stok</th>
+                        <th className="px-4 py-3 text-center whitespace-nowrap min-w-[80px]">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {filteredItems.map((item) => {
+                        const isOutOfStock = item.stok === 0;
+                        const isLowStock = !isOutOfStock && item.stok <= item.stok_minimum;
+
+                        return (
+                          <tr key={item.id} className="hover:bg-bg/50 transition-colors">
+                            <td className="px-4 py-3 font-mono font-semibold text-text-muted whitespace-nowrap">
+                              {item.kode || 'ATK'}
+                            </td>
+                            <td className="px-4 py-3 font-medium text-text-main min-w-[200px]">
+                              {item.nama}
+                            </td>
+                            <td className="px-4 py-3 text-text-muted whitespace-nowrap">
+                              {item.kategori || 'Umum'}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <RakBadge rak={item.resolvedRak} size="sm" />
+                            </td>
+                            <td className="px-4 py-3 text-center font-mono font-semibold tabular-nums whitespace-nowrap">
+                              {item.stok} {item.satuan}
+                            </td>
+                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                              <div className="flex justify-center whitespace-nowrap">
+                                {isOutOfStock ? (
+                                  <Badge variant="habis" className="whitespace-nowrap shrink-0">Habis (0)</Badge>
+                                ) : isLowStock ? (
+                                  <Badge variant="menipis" className="whitespace-nowrap shrink-0">Menipis ({item.stok})</Badge>
+                                ) : (
+                                  <span className="text-[11px] font-medium text-success inline-flex items-center gap-1 whitespace-nowrap shrink-0">
+                                    <CheckCircle2 className="w-3 h-3 shrink-0" />
+                                    <span>Aman</span>
+                                  </span>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-center whitespace-nowrap">
+                              <button
+                                type="button"
+                                onClick={() => setMoveItem(item)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-control text-xs font-semibold text-primary hover:bg-primary/10 border border-primary/20 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                              >
+                                <ArrowRightLeft className="w-3 h-3 shrink-0" />
+                                <span>Pindah</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
           )}
         </div>
+
 
         {/* Move Item to Another Rak Modal */}
         {moveItem && (
