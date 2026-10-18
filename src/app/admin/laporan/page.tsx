@@ -154,36 +154,21 @@ export default function AdminLaporanPage() {
   const [inspectedItem, setInspectedItem] = useState<ItemConsumptionRow | null>(null);
   const [inspectedStock, setInspectedStock] = useState<StockAuditRow | null>(null);
 
-  // Print mode detection for full table export and document title
-  const [isPrinting, setIsPrinting] = useState(false);
-
   useEffect(() => {
-    const pageTitle = 'SIMPATK - Pelindo Terminal Petikemas Laporan';
-    document.title = pageTitle;
-
-    const handleBeforePrint = () => {
-      document.title = pageTitle;
-      setIsPrinting(true);
-    };
-    const handleAfterPrint = () => {
-      document.title = pageTitle;
-      setIsPrinting(false);
-    };
-
-    window.addEventListener('beforeprint', handleBeforePrint);
-    window.addEventListener('afterprint', handleAfterPrint);
-    return () => {
-      window.removeEventListener('beforeprint', handleBeforePrint);
-      window.removeEventListener('afterprint', handleAfterPrint);
-    };
+    document.title = 'SIMPATK - Pelindo Terminal Petikemas Laporan';
   }, []);
 
   const handlePrint = () => {
-    document.title = 'SIMPATK - Pelindo Terminal Petikemas Laporan';
-    setIsPrinting(true);
-    setTimeout(() => {
-      window.print();
-    }, 50);
+    try {
+      document.title = 'SIMPATK - Pelindo Terminal Petikemas Laporan';
+      if (typeof window !== 'undefined' && typeof window.print === 'function') {
+        window.print();
+      } else {
+        alert('Fitur cetak dokumen tidak didukung oleh browser ini. Silakan buka melalui browser Chrome atau Safari.');
+      }
+    } catch (err) {
+      console.error('Print error:', err);
+    }
   };
 
   // Load report data matching active date filter
@@ -941,7 +926,7 @@ export default function AdminLaporanPage() {
       <button
         type="button"
         onClick={handlePrint}
-        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control bg-primary hover:bg-primary/90 text-white shadow-xs transition-colors cursor-pointer min-h-[32px] w-full sm:w-auto shrink-0"
+        className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-control bg-primary hover:bg-primary-dark active:scale-[0.98] text-white shadow-xs transition-all cursor-pointer min-h-[38px] sm:min-h-[34px] w-full sm:w-auto shrink-0 touch-manipulation select-none"
       >
         <Printer className="w-3.5 h-3.5" strokeWidth={1.5} />
         <span>Cetak Laporan</span>
@@ -1101,7 +1086,7 @@ export default function AdminLaporanPage() {
           {/* Table Container */}
           <DataTable
             columns={columnsTx}
-            data={isPrinting ? filteredTransactionRows : filteredTransactionRows.slice((pageTx - 1) * 10, pageTx * 10)}
+            data={filteredTransactionRows.slice((pageTx - 1) * 10, pageTx * 10)}
             exportData={filteredTransactionRows}
             totalCount={filteredTransactionRows.length}
             page={pageTx}
@@ -1181,7 +1166,7 @@ export default function AdminLaporanPage() {
 
           <DataTable
             columns={columnsMonthly}
-            data={isPrinting ? monthlyRows : monthlyRows.slice((pageMonthly - 1) * 10, pageMonthly * 10)}
+            data={monthlyRows.slice((pageMonthly - 1) * 10, pageMonthly * 10)}
             exportData={monthlyRows}
             totalCount={monthlyRows.length}
             page={pageMonthly}
@@ -1234,7 +1219,7 @@ export default function AdminLaporanPage() {
 
           <DataTable
             columns={columnsConsumption}
-            data={isPrinting ? consumptionRows : consumptionRows.slice((pageConsumption - 1) * 10, pageConsumption * 10)}
+            data={consumptionRows.slice((pageConsumption - 1) * 10, pageConsumption * 10)}
             exportData={consumptionRows}
             totalCount={consumptionRows.length}
             page={pageConsumption}
@@ -1289,7 +1274,7 @@ export default function AdminLaporanPage() {
 
           <DataTable
             columns={columnsStock}
-            data={isPrinting ? stockAuditRows : stockAuditRows.slice((pageStock - 1) * 10, pageStock * 10)}
+            data={stockAuditRows.slice((pageStock - 1) * 10, pageStock * 10)}
             exportData={stockAuditRows}
             totalCount={stockAuditRows.length}
             page={pageStock}

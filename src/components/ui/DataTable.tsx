@@ -426,6 +426,30 @@ export function DataTable<T extends object>({
               ))
             )}
           </tbody>
+
+          {/* Printable Display: Always renders all rows from exportData (or data) in full without needing state delays */}
+          {((exportData && exportData.length > 0 ? exportData : data) as T[]).length > 0 && (
+            <tbody className="divide-y divide-border/60 bg-surface hidden print:table-row-group">
+              {((exportData && exportData.length > 0 ? exportData : data) as T[]).map((row, rowIdx) => (
+                <tr key={`print-row-${rowIdx}`} className="h-auto">
+                  {columns.map((col) => (
+                    <td
+                      key={`print-col-${col.id}`}
+                      className={`px-3.5 py-2 align-middle ${
+                        col.isNumeric ? 'text-right tabular-nums' : 'text-left'
+                      } ${col.className || ''}`}
+                    >
+                      {col.cell
+                        ? col.cell(row, rowIdx)
+                        : col.accessorKey
+                        ? String((row as Record<string, unknown>)[col.accessorKey as string] ?? '')
+                        : ''}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          )}
         </table>
       </div>
 

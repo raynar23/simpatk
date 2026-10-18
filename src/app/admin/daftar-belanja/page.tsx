@@ -172,8 +172,16 @@ export default function AdminDaftarBelanjaPage() {
   }, []);
 
   const handlePrint = () => {
-    document.title = 'SIMPATK - Pelindo Terminal Petikemas Daftar Belanja';
-    window.print();
+    try {
+      document.title = 'SIMPATK - Pelindo Terminal Petikemas Daftar Belanja';
+      if (typeof window !== 'undefined' && typeof window.print === 'function') {
+        window.print();
+      } else {
+        alert('Fitur cetak dokumen tidak didukung oleh browser ini. Silakan buka melalui browser Chrome atau Safari.');
+      }
+    } catch (err) {
+      console.error('Print error:', err);
+    }
   };
 
   return (
@@ -186,7 +194,7 @@ export default function AdminDaftarBelanjaPage() {
             type="button"
             onClick={handleExportCsv}
             disabled={selectedItems.length === 0}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-control border border-border bg-surface hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-text-main cursor-pointer min-h-[32px]"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-control border border-border bg-surface hover:bg-bg disabled:opacity-40 disabled:cursor-not-allowed transition-colors text-text-main cursor-pointer min-h-[36px] sm:min-h-[32px] touch-manipulation select-none"
           >
             <Download className="w-3.5 h-3.5 text-text-muted" />
             <span>Ekspor CSV</span>
@@ -195,7 +203,7 @@ export default function AdminDaftarBelanjaPage() {
             type="button"
             onClick={handlePrint}
             disabled={selectedItems.length === 0}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-control bg-primary hover:bg-primary-dark text-white shadow-xs transition-colors cursor-pointer min-h-[32px]"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-control bg-primary hover:bg-primary-dark active:scale-[0.98] text-white shadow-xs transition-all cursor-pointer min-h-[38px] sm:min-h-[34px] touch-manipulation select-none disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Cetak Dokumen</span>

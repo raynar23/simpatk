@@ -47,7 +47,7 @@ export function PageContainer({
   }, [title]);
 
   return (
-    <div className={`w-full min-h-full lg:h-full max-w-[1360px] mx-auto px-4 sm:px-6 flex flex-col min-h-0 select-none print:max-w-none print:w-full print:px-0 print:py-0 print:h-auto print:min-h-0 print:overflow-visible print:block ${className}`}>
+    <div className={`w-full min-h-full lg:h-full max-w-[1360px] mx-auto px-4 sm:px-6 flex flex-col min-h-0 print:max-w-none print:w-full print:px-0 print:py-0 print:h-auto print:min-h-0 print:overflow-visible print:block ${className}`}>
       {/* Uniform Responsive Page Header (Hidden during printing) */}
       <div className="min-h-[56px] py-2.5 sm:py-0 sm:h-14 shrink-0 flex flex-col sm:flex-row sm:items-center justify-between border-b border-border/80 gap-2 sm:gap-4 print:hidden">
         <div className="min-w-0 flex-1">
