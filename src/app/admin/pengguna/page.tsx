@@ -245,6 +245,7 @@ export default function AdminPenggunaPage() {
       id: 'nama_divisi',
       header: 'Nama Divisi / Bagian',
       accessorKey: 'nama_divisi',
+      className: 'min-w-[200px]',
       csvValue: (row) => row.nama_divisi,
       cell: (row) => (
         <div className="flex flex-col">
@@ -257,9 +258,10 @@ export default function AdminPenggunaPage() {
       id: 'email',
       header: 'Alamat Email',
       accessorKey: 'email',
+      className: 'min-w-[200px]',
       csvValue: (row) => row.email || '-',
       cell: (row) => (
-        <span className="font-mono text-xs text-text-main select-all">
+        <span className="font-mono text-xs text-text-main select-all whitespace-nowrap">
           {row.email || '-'}
         </span>
       ),
@@ -268,6 +270,7 @@ export default function AdminPenggunaPage() {
       id: 'role',
       header: 'Hak Akses',
       accessorKey: 'role',
+      className: 'min-w-[150px]',
       csvValue: (row) => (row.role === 'admin' ? 'Administrator GA' : 'Divisi Pemohon'),
       cell: (row) => (
         row.role === 'admin' ? (
@@ -285,9 +288,10 @@ export default function AdminPenggunaPage() {
       id: 'created_at',
       header: 'Terdaftar Sejak',
       accessorKey: 'created_at',
+      className: 'min-w-[130px]',
       csvValue: (row) => (row.created_at ? formatDate(row.created_at) : 'Terdaftar'),
       cell: (row) => (
-        <span className="text-xs text-text-muted tabular-nums">
+        <span className="text-xs text-text-muted tabular-nums whitespace-nowrap">
           {row.created_at ? formatDate(row.created_at) : 'Terdaftar'}
         </span>
       ),
@@ -295,6 +299,7 @@ export default function AdminPenggunaPage() {
     {
       id: 'status',
       header: 'Status Akun',
+      className: 'min-w-[100px]',
       csvValue: () => 'Aktif',
       cell: () => (
         <Badge variant="selesai">
@@ -396,6 +401,7 @@ export default function AdminPenggunaPage() {
           enableDynamicHeight={true}
           csvFilename="daftar_pengguna_simpatk.csv"
           emptyMessage="Tidak ada pengguna yang sesuai dengan kriteria pencarian"
+          tableClassName="min-w-[780px]"
           className="flex-1 min-h-0"
         />
       </div>

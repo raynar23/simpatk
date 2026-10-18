@@ -202,9 +202,10 @@ function UserRiwayatContent() {
       header: 'Nomor Tiket',
       accessorKey: 'nomor',
       isSortable: true,
+      className: 'min-w-[130px]',
       csvValue: (row) => row.nomor || `REQ-${row.id.slice(0, 8)}`,
       cell: (row) => (
-        <span className="font-semibold text-primary">
+        <span className="font-semibold text-primary font-mono whitespace-nowrap">
           {row.nomor || `REQ-${row.id.slice(0, 8)}`}
         </span>
       ),
@@ -214,9 +215,10 @@ function UserRiwayatContent() {
       header: 'Waktu Pengajuan',
       accessorKey: 'created_at',
       isSortable: true,
+      className: 'min-w-[130px]',
       csvValue: (row) => formatDate(row.created_at),
       cell: (row) => (
-        <span className="text-xs text-text-muted">
+        <span className="text-xs text-text-muted tabular-nums whitespace-nowrap">
           {formatDate(row.created_at)}
         </span>
       ),
@@ -226,13 +228,14 @@ function UserRiwayatContent() {
       header: 'Nama & Kode Barang',
       accessorKey: 'items.nama',
       isSortable: true,
+      className: 'min-w-[260px]',
       csvValue: (row) =>
         `${row.items?.nama || 'Barang Dihapus'}${
           row.items?.kode ? ` (${row.items.kode})` : ''
         }`,
       cell: (row) => (
-        <div>
-          <p className="font-medium text-text-main text-xs">
+        <div className="min-w-0">
+          <p className="font-medium text-text-main text-xs leading-snug">
             {row.items?.nama || 'Barang Dihapus'}
           </p>
           {row.items?.kode && (
@@ -249,9 +252,10 @@ function UserRiwayatContent() {
       accessorKey: 'jumlah',
       isNumeric: true,
       isSortable: true,
+      className: 'min-w-[100px]',
       csvValue: (row) => `${row.jumlah} ${row.items?.satuan || 'unit'}`,
       cell: (row) => (
-        <span className="tabular-nums font-semibold text-text-main">
+        <span className="tabular-nums font-semibold text-text-main whitespace-nowrap">
           {row.jumlah}{' '}
           <span className="text-xs font-normal text-text-muted">
             {row.items?.satuan || 'unit'}
@@ -263,9 +267,10 @@ function UserRiwayatContent() {
       id: 'keperluan',
       header: 'Keperluan',
       accessorKey: 'keperluan',
+      className: 'min-w-[240px]',
       csvValue: (row) => row.keperluan || '',
       cell: (row) => (
-        <span className="line-clamp-1 text-xs text-text-muted max-w-[280px]">
+        <span className="text-xs text-text-muted leading-snug">
           {row.keperluan}
         </span>
       ),
@@ -275,6 +280,7 @@ function UserRiwayatContent() {
       header: 'Status',
       accessorKey: 'status',
       isSortable: true,
+      className: 'min-w-[110px]',
       csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'),
       cell: (row) => (
         <Badge variant={row.status === 'selesai' ? 'selesai' : 'diproses'}>
@@ -424,6 +430,7 @@ function UserRiwayatContent() {
             }
             csvFilename={`riwayat-permintaan-divisi-${new Date().toISOString().slice(0, 10)}.csv`}
             enableDynamicHeight
+            tableClassName="min-w-[960px]"
             className="h-full border-0"
           />
         </div>

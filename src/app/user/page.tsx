@@ -263,9 +263,10 @@ function UserDashboardContent() {
       id: 'nomor',
       header: 'Nomor Tiket',
       accessorKey: 'nomor',
+      className: 'min-w-[120px]',
       csvValue: (row) => row.nomor || `REQ-${row.id.slice(0, 8)}`,
       cell: (row) => (
-        <span className="font-semibold text-primary tracking-tight">
+        <span className="font-semibold text-primary tracking-tight whitespace-nowrap">
           {row.nomor || `REQ-${row.id.slice(0, 8)}`}
         </span>
       ),
@@ -274,9 +275,10 @@ function UserDashboardContent() {
       id: 'tanggal',
       header: 'Waktu Pengajuan',
       accessorKey: 'created_at',
+      className: 'min-w-[130px] whitespace-nowrap',
       csvValue: (row) => formatDate(row.created_at),
       cell: (row) => (
-        <span className="text-xs text-text-muted">
+        <span className="text-xs text-text-muted whitespace-nowrap">
           {formatDate(row.created_at)}
         </span>
       ),
@@ -284,16 +286,17 @@ function UserDashboardContent() {
     {
       id: 'barang',
       header: 'Barang & Kuantitas',
+      className: 'min-w-[220px]',
       csvValue: (row) =>
         `${row.items?.nama || 'Barang Dihapus'}${
           row.items?.kode ? ` (${row.items.kode})` : ''
         } - ${row.jumlah} ${row.items?.satuan || 'unit'}`,
       cell: (row) => (
-        <div className="min-w-0">
-          <p className="font-medium text-text-main text-xs truncate">
+        <div className="min-w-0 py-0.5">
+          <p className="font-medium text-text-main text-xs leading-snug">
             {row.items?.nama || 'Barang Dihapus'}
           </p>
-          <p className="text-[11px] text-text-muted">
+          <p className="text-[11px] text-text-muted mt-0.5">
             {row.jumlah} {row.items?.satuan || 'unit'}
           </p>
         </div>
@@ -303,6 +306,7 @@ function UserDashboardContent() {
       id: 'status',
       header: 'Status',
       accessorKey: 'status',
+      className: 'min-w-[105px]',
       csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Diproses'),
       cell: (row) => (
         <Badge variant={row.status === 'selesai' ? 'selesai' : 'diproses'}>
@@ -609,6 +613,7 @@ function UserDashboardContent() {
                 emptyMessage="Belum ada riwayat pengajuan ATK."
                 onRowClick={(row) => setSelectedRequest(row)}
                 className="h-full border-0"
+                tableClassName="min-w-[650px]"
               />
             </div>
           </div>

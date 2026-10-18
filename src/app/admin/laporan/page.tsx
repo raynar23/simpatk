@@ -556,33 +556,37 @@ export default function AdminLaporanPage() {
       id: 'nomor',
       header: 'Nomor Tiket',
       accessorKey: 'nomor',
+      className: 'min-w-[130px]',
       csvValue: (row) => row.nomor,
       cell: (row) => (
-        <span className="font-mono text-xs font-semibold text-primary">{row.nomor}</span>
+        <span className="font-mono text-xs font-semibold text-primary whitespace-nowrap">{row.nomor}</span>
       ),
     },
     {
       id: 'created_at',
       header: 'Waktu Pengajuan',
       accessorKey: 'created_at',
+      className: 'min-w-[130px]',
       csvValue: (row) => formatDate(row.created_at),
-      cell: (row) => <span className="text-xs text-text-muted">{formatDate(row.created_at)}</span>,
+      cell: (row) => <span className="text-xs text-text-muted whitespace-nowrap">{formatDate(row.created_at)}</span>,
     },
     {
       id: 'pemohon',
       header: 'Divisi Pemohon',
       accessorKey: 'pemohon',
+      className: 'min-w-[140px]',
       csvValue: (row) => row.pemohon,
-      cell: (row) => <span className="text-xs font-medium text-text-main">{row.pemohon}</span>,
+      cell: (row) => <span className="text-xs font-medium text-text-main leading-snug">{row.pemohon}</span>,
     },
     {
       id: 'namaBarang',
       header: 'Barang ATK',
       accessorKey: 'namaBarang',
+      className: 'min-w-[260px]',
       csvValue: (row) => `${row.namaBarang} (${row.kodeBarang})`,
       cell: (row) => (
-        <div>
-          <p className="text-xs font-medium text-text-main leading-tight">{row.namaBarang}</p>
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-text-main leading-snug">{row.namaBarang}</p>
           <p className="text-[10px] text-text-muted font-mono">{row.kodeBarang} - {row.kategoriBarang}</p>
         </div>
       ),
@@ -592,9 +596,10 @@ export default function AdminLaporanPage() {
       header: 'Jumlah',
       accessorKey: 'jumlah',
       isNumeric: true,
+      className: 'min-w-[95px]',
       csvValue: (row) => `${row.jumlah} ${row.satuan}`,
       cell: (row) => (
-        <span className="tabular-nums text-xs font-semibold text-text-main">
+        <span className="tabular-nums text-xs font-semibold text-text-main whitespace-nowrap">
           {row.jumlah} {row.satuan}
         </span>
       ),
@@ -603,6 +608,7 @@ export default function AdminLaporanPage() {
       id: 'status',
       header: 'Status',
       accessorKey: 'status',
+      className: 'min-w-[110px]',
       csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'),
       cell: (row) => <Badge variant={row.status} />,
     },
@@ -611,9 +617,10 @@ export default function AdminLaporanPage() {
       header: 'Durasi',
       accessorKey: 'durasiJam',
       isNumeric: true,
+      className: 'min-w-[120px]',
       csvValue: (row) => (row.durasiJam !== null ? formatDuration(row.durasiJam) : '-'),
       cell: (row) => (
-        <span className="tabular-nums text-xs text-text-muted">
+        <span className="tabular-nums text-xs text-text-muted whitespace-nowrap">
           {row.durasiJam !== null ? formatDuration(row.durasiJam) : '-'}
         </span>
       ),
@@ -621,14 +628,14 @@ export default function AdminLaporanPage() {
     {
       id: 'aksi',
       header: 'Aksi',
-      className: 'print:hidden',
+      className: 'min-w-[115px] print:hidden',
       excludeFromCsv: true,
       isNumeric: true,
       cell: (row) => (
         <button
           type="button"
           onClick={() => setInspectedTx(row)}
-          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-control transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-control transition-colors cursor-pointer whitespace-nowrap"
         >
           <Eye className="w-3 h-3" />
           <span>Lihat Laporan</span>
@@ -643,17 +650,19 @@ export default function AdminLaporanPage() {
       id: 'periode',
       header: 'Bulan / Periode',
       accessorKey: 'periode',
+      className: 'min-w-[140px]',
       csvValue: (row) => row.periode,
-      cell: (row) => <span className="font-semibold text-text-main text-xs">{row.periode}</span>,
+      cell: (row) => <span className="font-semibold text-text-main text-xs whitespace-nowrap">{row.periode}</span>,
     },
     {
       id: 'totalPermintaan',
       header: 'Total Tiket',
       accessorKey: 'totalPermintaan',
       isNumeric: true,
+      className: 'min-w-[120px]',
       csvValue: (row) => row.totalPermintaan,
       cell: (row) => (
-        <span className="tabular-nums font-semibold text-text-main text-xs">
+        <span className="tabular-nums font-semibold text-text-main text-xs whitespace-nowrap">
           {row.totalPermintaan} tiket
         </span>
       ),
@@ -663,9 +672,10 @@ export default function AdminLaporanPage() {
       header: 'Selesai Diserahkan',
       accessorKey: 'totalSelesai',
       isNumeric: true,
+      className: 'min-w-[140px]',
       csvValue: (row) => `${row.totalSelesai} (${row.persentaseSelesai}%)`,
       cell: (row) => (
-        <span className="tabular-nums font-medium text-success text-xs">
+        <span className="tabular-nums font-medium text-success text-xs whitespace-nowrap">
           {row.totalSelesai} ({row.persentaseSelesai}%)
         </span>
       ),
@@ -675,9 +685,10 @@ export default function AdminLaporanPage() {
       header: 'Sedang Diproses',
       accessorKey: 'totalDiproses',
       isNumeric: true,
+      className: 'min-w-[125px]',
       csvValue: (row) => row.totalDiproses,
       cell: (row) => (
-        <span className="tabular-nums text-text-muted text-xs">
+        <span className="tabular-nums text-text-muted text-xs whitespace-nowrap">
           {row.totalDiproses} tiket
         </span>
       ),
@@ -687,9 +698,10 @@ export default function AdminLaporanPage() {
       header: 'Rata-rata Durasi',
       accessorKey: 'rataWaktuJam',
       isNumeric: true,
+      className: 'min-w-[130px]',
       csvValue: (row) => formatDuration(row.rataWaktuJam),
       cell: (row) => (
-        <span className="tabular-nums text-text-muted text-xs">
+        <span className="tabular-nums text-text-muted text-xs whitespace-nowrap">
           {formatDuration(row.rataWaktuJam)}
         </span>
       ),
@@ -699,9 +711,10 @@ export default function AdminLaporanPage() {
       header: 'Total Unit ATK',
       accessorKey: 'totalUnit',
       isNumeric: true,
+      className: 'min-w-[125px]',
       csvValue: (row) => row.totalUnit,
       cell: (row) => (
-        <span className="tabular-nums font-semibold text-primary text-xs">
+        <span className="tabular-nums font-semibold text-primary text-xs whitespace-nowrap">
           {formatNumber(row.totalUnit)} unit
         </span>
       ),
@@ -709,13 +722,14 @@ export default function AdminLaporanPage() {
     {
       id: 'aksi',
       header: 'Aksi',
+      className: 'min-w-[115px] print:hidden',
       excludeFromCsv: true,
       isNumeric: true,
       cell: (row) => (
         <button
           type="button"
           onClick={() => setInspectedMonthly(row)}
-          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-control transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-control transition-colors cursor-pointer whitespace-nowrap"
         >
           <Eye className="w-3 h-3" />
           <span>Lihat Rincian</span>
@@ -730,33 +744,37 @@ export default function AdminLaporanPage() {
       id: 'kode',
       header: 'Kode',
       accessorKey: 'kode',
+      className: 'min-w-[90px]',
       csvValue: (row) => row.kode,
       cell: (row) => (
-        <span className="font-mono font-semibold text-primary text-xs">{row.kode}</span>
+        <span className="font-mono font-semibold text-primary text-xs whitespace-nowrap">{row.kode}</span>
       ),
     },
     {
       id: 'nama',
       header: 'Nama Barang ATK',
       accessorKey: 'nama',
+      className: 'min-w-[260px]',
       csvValue: (row) => row.nama,
-      cell: (row) => <span className="font-medium text-text-main text-xs">{row.nama}</span>,
+      cell: (row) => <span className="font-medium text-text-main text-xs leading-snug">{row.nama}</span>,
     },
     {
       id: 'kategori',
       header: 'Kategori',
       accessorKey: 'kategori',
+      className: 'min-w-[130px]',
       csvValue: (row) => row.kategori,
-      cell: (row) => <span className="text-text-muted text-xs">{row.kategori}</span>,
+      cell: (row) => <span className="text-text-muted text-xs whitespace-nowrap">{row.kategori}</span>,
     },
     {
       id: 'totalDiminta',
       header: 'Total Permintaan',
       accessorKey: 'totalDiminta',
       isNumeric: true,
+      className: 'min-w-[130px]',
       csvValue: (row) => `${row.totalDiminta} ${row.satuan}`,
       cell: (row) => (
-        <span className="tabular-nums font-bold text-text-main text-xs">
+        <span className="tabular-nums font-bold text-text-main text-xs whitespace-nowrap">
           {formatNumber(row.totalDiminta)} {row.satuan}
         </span>
       ),
@@ -766,9 +784,10 @@ export default function AdminLaporanPage() {
       header: 'Frekuensi Pengajuan',
       accessorKey: 'frekuensiTiket',
       isNumeric: true,
+      className: 'min-w-[140px]',
       csvValue: (row) => row.frekuensiTiket,
       cell: (row) => (
-        <span className="tabular-nums text-text-muted text-xs">{row.frekuensiTiket} kali</span>
+        <span className="tabular-nums text-text-muted text-xs whitespace-nowrap">{row.frekuensiTiket} kali</span>
       ),
     },
     {
@@ -776,9 +795,10 @@ export default function AdminLaporanPage() {
       header: 'Estimasi Nilai Distribusi',
       accessorKey: 'estimasiNilai',
       isNumeric: true,
+      className: 'min-w-[140px]',
       csvValue: (row) => row.estimasiNilai,
       cell: (row) => (
-        <span className="tabular-nums font-semibold text-primary text-xs">
+        <span className="tabular-nums font-semibold text-primary text-xs whitespace-nowrap">
           {formatRupiah(row.estimasiNilai)}
         </span>
       ),
@@ -786,14 +806,14 @@ export default function AdminLaporanPage() {
     {
       id: 'aksi',
       header: 'Aksi',
-      className: 'print:hidden',
+      className: 'min-w-[115px] print:hidden',
       excludeFromCsv: true,
       isNumeric: true,
       cell: (row) => (
         <button
           type="button"
           onClick={() => setInspectedItem(row)}
-          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-control transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-control transition-colors cursor-pointer whitespace-nowrap"
         >
           <Eye className="w-3 h-3" />
           <span>Lihat Distribusi</span>
@@ -808,34 +828,38 @@ export default function AdminLaporanPage() {
       id: 'kode',
       header: 'Kode',
       accessorKey: 'kode',
+      className: 'min-w-[90px]',
       csvValue: (row) => row.kode,
       cell: (row) => (
-        <span className="font-mono font-semibold text-primary text-xs">{row.kode}</span>
+        <span className="font-mono font-semibold text-primary text-xs whitespace-nowrap">{row.kode}</span>
       ),
     },
     {
       id: 'nama',
       header: 'Nama Barang ATK',
       accessorKey: 'nama',
+      className: 'min-w-[260px]',
       csvValue: (row) => row.nama,
-      cell: (row) => <span className="font-medium text-text-main text-xs">{row.nama}</span>,
+      cell: (row) => <span className="font-medium text-text-main text-xs leading-snug">{row.nama}</span>,
     },
     {
       id: 'kategori',
       header: 'Kategori',
       accessorKey: 'kategori',
+      className: 'min-w-[130px]',
       csvValue: (row) => row.kategori,
-      cell: (row) => <span className="text-text-muted text-xs">{row.kategori}</span>,
+      cell: (row) => <span className="text-text-muted text-xs whitespace-nowrap">{row.kategori}</span>,
     },
     {
       id: 'stok',
       header: 'Stok Fisik',
       accessorKey: 'stok',
       isNumeric: true,
+      className: 'min-w-[100px]',
       csvValue: (row) => `${row.stok} ${row.satuan}`,
       cell: (row) => (
         <span
-          className={`tabular-nums font-bold text-xs ${
+          className={`tabular-nums font-bold text-xs whitespace-nowrap ${
             row.stok === 0
               ? 'text-danger'
               : row.stok <= row.stok_minimum
@@ -852,9 +876,10 @@ export default function AdminLaporanPage() {
       header: 'Min. Stok',
       accessorKey: 'stok_minimum',
       isNumeric: true,
+      className: 'min-w-[95px]',
       csvValue: (row) => `${row.stok_minimum} ${row.satuan}`,
       cell: (row) => (
-        <span className="tabular-nums text-text-muted text-xs">
+        <span className="tabular-nums text-text-muted text-xs whitespace-nowrap">
           {row.stok_minimum} {row.satuan}
         </span>
       ),
@@ -864,9 +889,10 @@ export default function AdminLaporanPage() {
       header: 'Estimasi Nilai Stok',
       accessorKey: 'totalValuasi',
       isNumeric: true,
+      className: 'min-w-[140px]',
       csvValue: (row) => row.totalValuasi,
       cell: (row) => (
-        <span className="tabular-nums font-semibold text-text-main text-xs">
+        <span className="tabular-nums font-semibold text-text-main text-xs whitespace-nowrap">
           {formatRupiah(row.totalValuasi)}
         </span>
       ),
@@ -876,6 +902,7 @@ export default function AdminLaporanPage() {
       header: 'Status',
       accessorKey: 'statusStok',
       isNumeric: true,
+      className: 'min-w-[105px]',
       csvValue: (row) =>
         row.statusStok === 'habis' ? 'Habis' : row.statusStok === 'menipis' ? 'Menipis' : 'Normal',
       cell: (row) => <Badge variant={row.statusStok} />,
@@ -883,14 +910,14 @@ export default function AdminLaporanPage() {
     {
       id: 'aksi',
       header: 'Aksi',
-      className: 'print:hidden',
+      className: 'min-w-[115px] print:hidden',
       excludeFromCsv: true,
       isNumeric: true,
       cell: (row) => (
         <button
           type="button"
           onClick={() => setInspectedStock(row)}
-          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-control transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium text-primary hover:bg-primary/10 rounded-control transition-colors cursor-pointer whitespace-nowrap"
         >
           <Eye className="w-3 h-3" />
           <span>Lihat Detail</span>
@@ -1099,7 +1126,7 @@ export default function AdminLaporanPage() {
             isLoading={isLoading}
             emptyMessage="Tidak ada transaksi permintaan pada rentang tanggal terpilih."
             csvFilename={`laporan_transaksi_${formatDateShort(new Date()).replace(/\s+/g, '_')}.csv`}
-            tableClassName="min-w-[850px]"
+            tableClassName="min-w-[1100px]"
             enableDynamicHeight={true}
             className="flex-1 min-h-0"
           />
@@ -1152,7 +1179,7 @@ export default function AdminLaporanPage() {
             isLoading={isLoading}
             emptyMessage="Tidak ada data rekapitulasi pada rentang tanggal ini."
             csvFilename={`laporan_rekapitulasi_${formatDateShort(new Date()).replace(/\s+/g, '_')}.csv`}
-            tableClassName="min-w-[760px]"
+            tableClassName="min-w-[900px]"
             enableDynamicHeight={true}
             className="flex-1 min-h-0"
           />
@@ -1211,7 +1238,7 @@ export default function AdminLaporanPage() {
             isLoading={isLoading}
             emptyMessage="Tidak ada data konsumsi barang pada rentang tanggal ini."
             csvFilename={`laporan_konsumsi_${formatDateShort(new Date()).replace(/\s+/g, '_')}.csv`}
-            tableClassName="min-w-[760px]"
+            tableClassName="min-w-[1020px]"
             enableDynamicHeight={true}
             className="flex-1 min-h-0"
           />
@@ -1287,7 +1314,7 @@ export default function AdminLaporanPage() {
             isLoading={isLoading}
             emptyMessage="Katalog barang fisik kosong."
             csvFilename={`laporan_persediaan_${formatDateShort(new Date()).replace(/\s+/g, '_')}.csv`}
-            tableClassName="min-w-[760px]"
+            tableClassName="min-w-[1040px]"
             enableDynamicHeight={true}
             className="flex-1 min-h-0"
           />

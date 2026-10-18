@@ -53,9 +53,10 @@ export function DashboardPanels({
       id: 'nomor',
       header: 'Nomor',
       accessorKey: 'nomor',
+      className: 'min-w-[120px]',
       csvValue: (row) => row.nomor || `REQ-${row.id.slice(0, 8)}`,
       cell: (row) => (
-        <span className="font-mono font-semibold text-primary text-[11px]">
+        <span className="font-mono font-semibold text-primary text-[11px] whitespace-nowrap">
           {row.nomor || 'REQ'}
         </span>
       ),
@@ -64,6 +65,7 @@ export function DashboardPanels({
       id: 'created_at',
       header: 'Tanggal',
       accessorKey: 'created_at',
+      className: 'min-w-[100px]',
       csvValue: (row) => formatDateShort(row.created_at),
       cell: (row) => (
         <span className="text-text-muted tabular-nums whitespace-nowrap">
@@ -74,9 +76,10 @@ export function DashboardPanels({
     {
       id: 'profiles',
       header: 'Divisi',
+      className: 'min-w-[130px]',
       csvValue: (row) => row.profiles?.nama_divisi || 'Divisi',
       cell: (row) => (
-        <span className="truncate max-w-[130px] font-medium text-text-main">
+        <span className="font-medium text-text-main leading-snug">
           {row.profiles?.nama_divisi || 'Divisi'}
         </span>
       ),
@@ -84,10 +87,11 @@ export function DashboardPanels({
     {
       id: 'items',
       header: 'Barang',
+      className: 'min-w-[200px]',
       csvValue: (row) =>
         `${row.items?.nama || '-'}${row.items?.kode ? ` (${row.items.kode})` : ''}`,
       cell: (row) => (
-        <span className="truncate max-w-[140px] text-text-main">
+        <span className="text-text-main leading-snug">
           {row.items?.nama || '-'}
         </span>
       ),
@@ -97,9 +101,10 @@ export function DashboardPanels({
       header: 'Jumlah',
       accessorKey: 'jumlah',
       isNumeric: true,
+      className: 'min-w-[90px]',
       csvValue: (row) => `${row.jumlah} ${row.items?.satuan || 'unit'}`,
       cell: (row) => (
-        <span className="tabular-nums font-semibold text-text-main">
+        <span className="tabular-nums font-semibold text-text-main whitespace-nowrap">
           {row.jumlah} {row.items?.satuan}
         </span>
       ),
@@ -109,6 +114,7 @@ export function DashboardPanels({
       header: 'Status',
       accessorKey: 'status',
       isNumeric: true,
+      className: 'min-w-[105px]',
       csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'),
       cell: (row) => <Badge variant={row.status as 'diproses' | 'selesai'} />,
     },
@@ -120,9 +126,10 @@ export function DashboardPanels({
       id: 'kode',
       header: 'Kode',
       accessorKey: 'kode',
+      className: 'min-w-[85px]',
       csvValue: (row) => row.kode || 'ATK',
       cell: (row) => (
-        <span className="font-mono font-semibold text-primary text-[11px]">
+        <span className="font-mono font-semibold text-primary text-[11px] whitespace-nowrap">
           {row.kode || 'ATK'}
         </span>
       ),
@@ -131,9 +138,10 @@ export function DashboardPanels({
       id: 'nama',
       header: 'Nama Barang',
       accessorKey: 'nama',
+      className: 'min-w-[220px]',
       csvValue: (row) => row.nama,
       cell: (row) => (
-        <span className="truncate max-w-[180px] font-medium text-text-main">
+        <span className="font-medium text-text-main leading-snug">
           {row.nama}
         </span>
       ),
@@ -142,18 +150,20 @@ export function DashboardPanels({
       id: 'kategori',
       header: 'Kategori',
       accessorKey: 'kategori',
+      className: 'min-w-[120px]',
       csvValue: (row) => row.kategori,
-      cell: (row) => <span className="text-text-muted">{row.kategori}</span>,
+      cell: (row) => <span className="text-text-muted whitespace-nowrap">{row.kategori}</span>,
     },
     {
       id: 'stok',
       header: 'Stok Fisik',
       accessorKey: 'stok',
       isNumeric: true,
+      className: 'min-w-[95px]',
       csvValue: (row) => `${row.stok} ${row.satuan}`,
       cell: (row) => (
         <span
-          className={`tabular-nums font-bold ${
+          className={`tabular-nums font-bold whitespace-nowrap ${
             row.stok === 0 ? 'text-danger' : 'text-danger'
           }`}
         >
@@ -166,9 +176,10 @@ export function DashboardPanels({
       header: 'Batas Minimum',
       accessorKey: 'stok_minimum',
       isNumeric: true,
+      className: 'min-w-[95px]',
       csvValue: (row) => `${row.stok_minimum} ${row.satuan}`,
       cell: (row) => (
-        <span className="tabular-nums text-text-muted">
+        <span className="tabular-nums text-text-muted whitespace-nowrap">
           {row.stok_minimum} {row.satuan}
         </span>
       ),
@@ -177,11 +188,12 @@ export function DashboardPanels({
       id: 'saran',
       header: 'Saran Beli',
       isNumeric: true,
+      className: 'min-w-[95px]',
       csvValue: (row) => `+${Math.max(1, row.stok_minimum * 2 - row.stok)} ${row.satuan}`,
       cell: (row) => {
         const saran = Math.max(1, row.stok_minimum * 2 - row.stok);
         return (
-          <span className="tabular-nums font-semibold text-primary">
+          <span className="tabular-nums font-semibold text-primary whitespace-nowrap">
             +{saran} {row.satuan}
           </span>
         );
@@ -225,6 +237,7 @@ export function DashboardPanels({
             csvFilename="dashboard_permintaan_terbaru.csv"
             emptyMessage="Belum ada transaksi permintaan diajukan."
             className="border-none rounded-none shadow-none flex-1 min-h-0"
+            tableClassName="min-w-[750px]"
           />
         </div>
       </div>
@@ -263,6 +276,7 @@ export function DashboardPanels({
             csvFilename="dashboard_stok_menipis.csv"
             emptyMessage="Semua stok barang dalam kondisi aman di atas batas minimum."
             className="border-none rounded-none shadow-none flex-1 min-h-0"
+            tableClassName="min-w-[720px]"
           />
         </div>
       </div>

@@ -255,10 +255,10 @@ export default function AdminDaftarBelanjaPage() {
               <p>Tidak ada barang yang berada pada batas minimum stok saat ini.</p>
             </div>
           ) : (
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full min-w-[1000px] text-left text-xs border-collapse print:min-w-0 print:w-full">
               <thead className="bg-bg text-text-muted text-[11px] uppercase border-b border-border">
                 <tr>
-                  <th className="py-2.5 px-3 w-10 text-center print:hidden">
+                  <th className="py-2.5 px-3 w-10 min-w-[40px] text-center print:hidden">
                     <button
                       type="button"
                       onClick={toggleSelectAll}
@@ -272,14 +272,14 @@ export default function AdminDaftarBelanjaPage() {
                       )}
                     </button>
                   </th>
-                  <th className="py-2.5 px-3 font-semibold">Kode</th>
-                  <th className="py-2.5 px-3 font-semibold">Nama Barang</th>
-                  <th className="py-2.5 px-3 font-semibold">Kategori</th>
-                  <th className="py-2.5 px-3 font-semibold text-right">Stok Fisik</th>
-                  <th className="py-2.5 px-3 font-semibold text-right">Min. Stok</th>
-                  <th className="py-2.5 px-3 font-semibold text-right text-primary">Saran Beli</th>
-                  <th className="py-2.5 px-3 font-semibold text-right">Harga Satuan</th>
-                  <th className="py-2.5 px-3 font-semibold text-right">Estimasi Biaya</th>
+                  <th className="py-2.5 px-3 font-semibold min-w-[90px] whitespace-nowrap">Kode</th>
+                  <th className="py-2.5 px-3 font-semibold min-w-[280px]">Nama Barang</th>
+                  <th className="py-2.5 px-3 font-semibold min-w-[130px] whitespace-nowrap">Kategori</th>
+                  <th className="py-2.5 px-3 font-semibold text-right min-w-[95px] whitespace-nowrap">Stok Fisik</th>
+                  <th className="py-2.5 px-3 font-semibold text-right min-w-[95px] whitespace-nowrap">Min. Stok</th>
+                  <th className="py-2.5 px-3 font-semibold text-right text-primary min-w-[100px] whitespace-nowrap">Saran Beli</th>
+                  <th className="py-2.5 px-3 font-semibold text-right min-w-[110px] whitespace-nowrap">Harga Satuan</th>
+                  <th className="py-2.5 px-3 font-semibold text-right min-w-[125px] whitespace-nowrap">Estimasi Biaya</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60 bg-surface">
@@ -295,7 +295,7 @@ export default function AdminDaftarBelanjaPage() {
                         isSelected ? 'bg-primary/5' : ''
                       }`}
                     >
-                      <td className="py-2.5 px-3 text-center print:hidden">
+                      <td className="py-2.5 px-3 text-center print:hidden whitespace-nowrap">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -311,33 +311,33 @@ export default function AdminDaftarBelanjaPage() {
                           )}
                         </button>
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-semibold text-primary text-[11px]">
+                      <td className="py-2.5 px-3 font-mono font-semibold text-primary text-[11px] whitespace-nowrap">
                         {item.kode}
                       </td>
-                      <td className="py-2.5 px-3 font-medium text-text-main">
-                        <div className="flex items-center gap-1.5">
+                      <td className="py-2.5 px-3 font-medium text-text-main min-w-[280px]">
+                        <div className="flex items-center gap-2">
                           {isOut && (
-                            <span className="text-[10px] px-1 py-0.2 bg-danger-soft text-danger border border-danger/20 rounded font-semibold">
+                            <span className="text-[10px] px-1.5 py-0.5 bg-danger-soft text-danger border border-danger/20 rounded font-semibold whitespace-nowrap shrink-0">
                               Habis
                             </span>
                           )}
-                          <span>{item.nama}</span>
+                          <span className="leading-snug">{item.nama}</span>
                         </div>
                       </td>
-                      <td className="py-2.5 px-3 text-text-muted text-[11px]">{item.kategori}</td>
-                      <td className="py-2.5 px-3 text-right tabular-nums font-bold text-danger">
+                      <td className="py-2.5 px-3 text-text-muted text-[11px] whitespace-nowrap">{item.kategori}</td>
+                      <td className="py-2.5 px-3 text-right tabular-nums font-bold text-danger whitespace-nowrap">
                         {item.stok} <span className="font-normal text-text-muted">{item.satuan}</span>
                       </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums text-text-muted">
+                      <td className="py-2.5 px-3 text-right tabular-nums text-text-muted whitespace-nowrap">
                         {item.stok_minimum} {item.satuan}
                       </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums font-bold text-primary">
+                      <td className="py-2.5 px-3 text-right tabular-nums font-bold text-primary whitespace-nowrap">
                         +{item.saranBeli} {item.satuan}
                       </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums text-text-main">
+                      <td className="py-2.5 px-3 text-right tabular-nums text-text-main whitespace-nowrap">
                         {item.harga_satuan ? formatRupiah(item.harga_satuan) : '-'}
                       </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums font-semibold text-text-main">
+                      <td className="py-2.5 px-3 text-right tabular-nums font-semibold text-text-main whitespace-nowrap">
                         {item.estimasiBiaya > 0 ? formatRupiah(item.estimasiBiaya) : '-'}
                       </td>
                     </tr>

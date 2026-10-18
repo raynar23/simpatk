@@ -196,9 +196,10 @@ export default function AdminPermintaanPage() {
       header: 'Nomor',
       accessorKey: 'nomor',
       isSortable: true,
+      className: 'min-w-[130px]',
       csvValue: (row) => row.nomor || `REQ-${row.id.slice(0, 8)}`,
       cell: (row) => (
-        <span className="font-mono font-semibold text-primary text-[11px]">
+        <span className="font-mono font-semibold text-primary text-[11px] whitespace-nowrap">
           {row.nomor || 'REQ'}
         </span>
       ),
@@ -208,6 +209,7 @@ export default function AdminPermintaanPage() {
       header: 'Tanggal',
       accessorKey: 'created_at',
       isSortable: true,
+      className: 'min-w-[110px]',
       csvValue: (row) => formatDate(row.created_at),
       cell: (row) => (
         <span className="text-text-muted tabular-nums whitespace-nowrap">
@@ -218,9 +220,10 @@ export default function AdminPermintaanPage() {
     {
       id: 'profiles',
       header: 'Divisi Pemohon',
+      className: 'min-w-[150px]',
       csvValue: (row) => row.profiles?.nama_divisi || 'Divisi Pemohon',
       cell: (row) => (
-        <span className="font-medium text-text-main truncate">
+        <span className="font-medium text-text-main leading-snug">
           {row.profiles?.nama_divisi || 'Divisi Pemohon'}
         </span>
       ),
@@ -228,11 +231,12 @@ export default function AdminPermintaanPage() {
     {
       id: 'items',
       header: 'Nama Barang ATK',
+      className: 'min-w-[260px]',
       csvValue: (row) =>
         `${row.items?.nama || '-'}${row.items?.kode ? ` (${row.items.kode})` : ''}`,
       cell: (row) => (
         <div className="min-w-0">
-          <p className="font-medium text-text-main truncate">{row.items?.nama || '-'}</p>
+          <p className="font-medium text-text-main leading-snug">{row.items?.nama || '-'}</p>
           <p className="text-[10px] text-text-muted font-mono">{row.items?.kode}</p>
         </div>
       ),
@@ -243,9 +247,10 @@ export default function AdminPermintaanPage() {
       accessorKey: 'jumlah',
       isNumeric: true,
       isSortable: true,
+      className: 'min-w-[100px]',
       csvValue: (row) => `${row.jumlah} ${row.items?.satuan || 'unit'}`,
       cell: (row) => (
-        <span className="tabular-nums font-semibold text-text-main">
+        <span className="tabular-nums font-semibold text-text-main whitespace-nowrap">
           {row.jumlah} <span className="font-normal text-text-muted">{row.items?.satuan}</span>
         </span>
       ),
@@ -256,6 +261,7 @@ export default function AdminPermintaanPage() {
       accessorKey: 'status',
       isNumeric: true,
       isSortable: true,
+      className: 'min-w-[110px]',
       csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'),
       cell: (row) => <Badge variant={row.status as 'diproses' | 'selesai'} />,
     },
@@ -357,6 +363,7 @@ export default function AdminPermintaanPage() {
         emptyMessage="Tidak ada permintaan yang sesuai kriteria filter."
         csvFilename="daftar_permintaan_atk.csv"
         enableDynamicHeight={true}
+        tableClassName="min-w-[860px]"
         className={`flex-1 min-h-0 ${highlightedId ? 'ring-2 ring-primary/40 transition-all' : ''}`}
       />
 

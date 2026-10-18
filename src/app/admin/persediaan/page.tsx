@@ -172,9 +172,10 @@ export default function AdminPersediaanPage() {
       header: 'Kode',
       accessorKey: 'kode',
       isSortable: true,
+      className: 'min-w-[90px]',
       csvValue: (row) => row.kode || '',
       cell: (row) => (
-        <span className="font-mono font-semibold text-primary text-[11px]">
+        <span className="font-mono font-semibold text-primary text-[11px] whitespace-nowrap">
           {row.kode || 'ATK-000'}
         </span>
       ),
@@ -184,9 +185,10 @@ export default function AdminPersediaanPage() {
       header: 'Nama Barang',
       accessorKey: 'nama',
       isSortable: true,
+      className: 'min-w-[240px]',
       csvValue: (row) => row.nama,
       cell: (row) => (
-        <span className="font-medium text-text-main truncate max-w-[220px]">
+        <span className="font-medium text-text-main leading-snug">
           {row.nama}
         </span>
       ),
@@ -196,17 +198,19 @@ export default function AdminPersediaanPage() {
       header: 'Kategori',
       accessorKey: 'kategori',
       isSortable: true,
+      className: 'min-w-[130px]',
       csvValue: (row) => row.kategori || 'Lainnya',
       cell: (row) => (
-        <span className="text-text-muted text-[11px]">{row.kategori || 'Lainnya'}</span>
+        <span className="text-text-muted text-[11px] whitespace-nowrap">{row.kategori || 'Lainnya'}</span>
       ),
     },
     {
       id: 'satuan',
       header: 'Satuan',
       accessorKey: 'satuan',
+      className: 'min-w-[80px]',
       csvValue: (row) => row.satuan,
-      cell: (row) => <span className="text-text-muted text-xs">{row.satuan}</span>,
+      cell: (row) => <span className="text-text-muted text-xs whitespace-nowrap">{row.satuan}</span>,
     },
     {
       id: 'stok',
@@ -214,13 +218,14 @@ export default function AdminPersediaanPage() {
       accessorKey: 'stok',
       isNumeric: true,
       isSortable: true,
+      className: 'min-w-[80px]',
       csvValue: (row) => row.stok,
       cell: (row) => {
         const isLow = row.stok <= row.stok_minimum;
         const isZero = row.stok === 0;
         return (
           <span
-            className={`tabular-nums font-bold ${
+            className={`tabular-nums font-bold whitespace-nowrap ${
               isZero ? 'text-danger' : isLow ? 'text-danger' : 'text-text-main'
             }`}
           >
@@ -235,9 +240,10 @@ export default function AdminPersediaanPage() {
       accessorKey: 'stok_minimum',
       isNumeric: true,
       isSortable: true,
+      className: 'min-w-[90px]',
       csvValue: (row) => row.stok_minimum,
       cell: (row) => (
-        <span className="tabular-nums text-text-muted text-xs">
+        <span className="tabular-nums text-text-muted text-xs whitespace-nowrap">
           {row.stok_minimum}
         </span>
       ),
@@ -248,9 +254,10 @@ export default function AdminPersediaanPage() {
       accessorKey: 'harga_satuan',
       isNumeric: true,
       isSortable: true,
+      className: 'min-w-[120px]',
       csvValue: (row) => row.harga_satuan || 0,
       cell: (row) => (
-        <span className="tabular-nums text-text-main text-xs">
+        <span className="tabular-nums text-text-main text-xs whitespace-nowrap">
           {row.harga_satuan ? formatRupiah(row.harga_satuan) : '-'}
         </span>
       ),
@@ -258,6 +265,7 @@ export default function AdminPersediaanPage() {
     {
       id: 'status',
       header: 'Status Stok',
+      className: 'min-w-[105px]',
       csvValue: (row) =>
         row.stok === 0 ? 'Habis' : row.stok <= row.stok_minimum ? 'Menipis' : 'Normal',
       cell: (row) => {
@@ -271,6 +279,7 @@ export default function AdminPersediaanPage() {
       header: 'Tgl Masuk',
       accessorKey: 'created_at',
       isSortable: true,
+      className: 'min-w-[110px]',
       csvValue: (row) => (row.created_at ? formatDate(row.created_at) : '-'),
       cell: (row) => (
         <span className="tabular-nums text-text-muted text-[11px] whitespace-nowrap">
@@ -281,6 +290,7 @@ export default function AdminPersediaanPage() {
     {
       id: 'actions',
       header: 'Aksi',
+      className: 'min-w-[125px]',
       excludeFromCsv: true,
       isNumeric: true,
       cell: (row) => (
@@ -509,7 +519,7 @@ export default function AdminPersediaanPage() {
         emptyMessage="Tidak ada barang ATK yang sesuai filter."
         csvFilename="katalog_persediaan_atk.csv"
         enableDynamicHeight={true}
-        tableClassName="min-w-[820px]"
+        tableClassName="min-w-[1080px]"
         className="flex-1 min-h-0"
       />
 

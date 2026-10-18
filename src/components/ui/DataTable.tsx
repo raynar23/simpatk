@@ -322,7 +322,15 @@ export function DataTable<T extends object>({
 
       {/* Table Content Area with Sticky Header */}
       <div className="flex-1 overflow-x-auto overflow-y-auto min-h-[360px] lg:min-h-0 print:overflow-visible print:min-h-0 print:h-auto">
-        <table className={`w-full min-w-[760px] text-left border-collapse text-xs ${tableClassName} print:min-w-0 print:w-full`}>
+        <table
+          className={`w-full text-left border-collapse text-xs ${
+            tableClassName
+              ? tableClassName.includes('min-w-')
+                ? tableClassName
+                : `min-w-[850px] ${tableClassName}`
+              : 'min-w-[850px]'
+          } print:min-w-0 print:w-full`}
+        >
           <thead className="sticky top-0 z-10 bg-bg border-b border-border">
             <tr>
               {columns.map((col) => {
