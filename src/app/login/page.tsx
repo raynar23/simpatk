@@ -66,7 +66,7 @@ export default function LoginPage() {
   };
 
   return (
-    <main className="min-h-dvh w-full flex flex-col lg:flex-row bg-[#F8FAFC]">
+    <main className="min-h-dvh w-full flex flex-col lg:flex-row bg-[#0B2E50]">
       {/* Left column: Full-bleed Photo Panel with right side drop shadow */}
       <section className="hidden lg:flex relative w-1/2 xl:w-[52%] min-h-dvh select-none overflow-hidden flex-col justify-between p-12 shrink-0 z-20 shadow-[14px_0_40px_rgba(0,0,0,0.18),4px_0_12px_rgba(0,0,0,0.08)] border-r border-black/10">
         {/* Terminal background image with object-position 62% 50% */}
@@ -125,17 +125,21 @@ export default function LoginPage() {
         </div>
       </section>
 
-      {/* Right column: Form Area with Elevated Card & Refined Spacing */}
-      <section className="flex-1 flex flex-col justify-between items-center px-4 py-8 sm:px-8 lg:px-12 min-h-dvh bg-[#F8FAFC] pb-[calc(env(safe-area-inset-bottom,0px)+24px)] relative z-10">
-        <div className="w-full max-w-[420px] my-auto">
-          {/* Form Card Container with multi-layered side & elevation shadow */}
-          <div className="relative bg-surface rounded-sheet border border-border/80 shadow-[0_20px_50px_-12px_rgba(15,23,42,0.10),0_4px_16px_-2px_rgba(15,23,42,0.05),-8px_0_24px_-6px_rgba(17,117,187,0.08)] p-6 sm:p-9 transition-all overflow-hidden">
+      {/* Right column: Form Area with Elevated Blue Background & Refined Card */}
+      <section className="flex-1 flex flex-col justify-between items-center px-6 xs:px-8 sm:px-10 lg:px-12 min-h-dvh bg-gradient-to-br from-[#0B2E50] via-[#0E477A] to-[#071D33] pb-[calc(env(safe-area-inset-bottom,0px)+20px)] pt-[calc(env(safe-area-inset-top,0px)+20px)] relative z-10 overflow-hidden">
+        {/* Ambient subtle light glows for rich corporate depth */}
+        <div className="absolute -top-32 -right-32 w-80 h-80 rounded-full bg-[#1175BB]/25 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -left-32 w-80 h-80 rounded-full bg-[#00A3E0]/15 blur-3xl pointer-events-none" />
+
+        <div className="w-full max-w-[340px] xs:max-w-[360px] sm:max-w-[400px] my-auto relative z-10">
+          {/* Form Card Container with multi-layered border, ring & elevation shadow */}
+          <div className="relative bg-gradient-to-b from-white via-white to-[#F6FAFE] rounded-2xl border border-white/80 ring-1 ring-blue-900/10 shadow-[0_24px_50px_-12px_rgba(0,0,0,0.40),0_12px_24px_-6px_rgba(7,32,56,0.35),0_0_0_1px_rgba(255,255,255,0.3)] p-6 sm:p-8 transition-all overflow-hidden">
             {/* Top decorative primary gradient line */}
-            <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-primary via-primary-light to-primary" />
+            <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-primary via-[#2997E6] to-primary" />
 
             {/* Header with Color Pelindo Logo and Generous Spacing */}
             <div className="mb-6">
-              <div className="relative h-10 w-48 mb-9">
+              <div className="relative h-9 sm:h-10 w-44 sm:w-48 mb-6 sm:mb-8">
                 <Image
                   src="/logo/pelindo-color.png"
                   alt="Logo Pelindo Terminal Petikemas"
@@ -253,7 +257,7 @@ export default function LoginPage() {
         </div>
 
         {/* Small Footer */}
-        <footer className="text-center text-xs text-text-muted py-2 mt-4">
+        <footer className="text-center text-xs text-blue-100/70 py-2 mt-4 font-normal tracking-wide drop-shadow-sm relative z-10">
           General Affairs - PT Pelindo Terminal Petikemas &copy; 2026
         </footer>
       </section>
