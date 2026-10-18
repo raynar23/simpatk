@@ -270,18 +270,21 @@ export default function AdminPenggunaPage() {
       id: 'role',
       header: 'Hak Akses',
       accessorKey: 'role',
+      align: 'center',
       className: 'min-w-[150px]',
       csvValue: (row) => (row.role === 'admin' ? 'Administrator GA' : 'Divisi Pemohon'),
       cell: (row) => (
-        row.role === 'admin' ? (
-          <Badge variant="info">
-            Administrator GA
-          </Badge>
-        ) : (
-          <Badge variant="normal">
-            Divisi Pemohon
-          </Badge>
-        )
+        <div className="flex justify-center">
+          {row.role === 'admin' ? (
+            <Badge variant="info">
+              Administrator GA
+            </Badge>
+          ) : (
+            <Badge variant="normal">
+              Divisi Pemohon
+            </Badge>
+          )}
+        </div>
       ),
     },
     {
@@ -299,12 +302,15 @@ export default function AdminPenggunaPage() {
     {
       id: 'status',
       header: 'Status Akun',
+      align: 'center',
       className: 'min-w-[100px]',
       csvValue: () => 'Aktif',
       cell: () => (
-        <Badge variant="selesai">
-          Aktif
-        </Badge>
+        <div className="flex justify-center">
+          <Badge variant="selesai">
+            Aktif
+          </Badge>
+        </div>
       ),
     },
   ];

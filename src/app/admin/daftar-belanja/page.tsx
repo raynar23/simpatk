@@ -296,9 +296,9 @@ export default function AdminDaftarBelanjaPage() {
                   <th className="py-2.5 px-3 font-semibold min-w-[90px] whitespace-nowrap">Kode</th>
                   <th className="py-2.5 px-3 font-semibold min-w-[280px]">Nama Barang</th>
                   <th className="py-2.5 px-3 font-semibold min-w-[130px] whitespace-nowrap">Kategori</th>
-                  <th className="py-2.5 px-3 font-semibold text-right min-w-[95px] whitespace-nowrap">Stok Fisik</th>
-                  <th className="py-2.5 px-3 font-semibold text-right min-w-[95px] whitespace-nowrap">Min. Stok</th>
-                  <th className="py-2.5 px-3 font-semibold text-right text-primary min-w-[100px] whitespace-nowrap">Saran Beli</th>
+                  <th className="py-2.5 px-3 font-semibold text-center min-w-[95px] whitespace-nowrap">Stok Fisik</th>
+                  <th className="py-2.5 px-3 font-semibold text-center min-w-[95px] whitespace-nowrap">Min. Stok</th>
+                  <th className="py-2.5 px-3 font-semibold text-center text-primary min-w-[100px] whitespace-nowrap">Saran Beli</th>
                   <th className="py-2.5 px-3 font-semibold text-right min-w-[110px] whitespace-nowrap">Harga Satuan</th>
                   <th className="py-2.5 px-3 font-semibold text-right min-w-[125px] whitespace-nowrap">Estimasi Biaya</th>
                 </tr>
@@ -346,13 +346,13 @@ export default function AdminDaftarBelanjaPage() {
                         </div>
                       </td>
                       <td className="py-2.5 px-3 text-text-muted text-[11px] whitespace-nowrap">{item.kategori}</td>
-                      <td className="py-2.5 px-3 text-right tabular-nums font-bold text-danger whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-center tabular-nums font-bold text-danger whitespace-nowrap">
                         {item.stok} <span className="font-normal text-text-muted">{item.satuan}</span>
                       </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums text-text-muted whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-center tabular-nums text-text-muted whitespace-nowrap">
                         {item.stok_minimum} {item.satuan}
                       </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums font-bold text-primary whitespace-nowrap">
+                      <td className="py-2.5 px-3 text-center tabular-nums font-bold text-primary whitespace-nowrap">
                         +{item.saranBeli} {item.satuan}
                       </td>
                       <td className="py-2.5 px-3 text-right tabular-nums text-text-main whitespace-nowrap">

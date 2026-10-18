@@ -20,6 +20,7 @@ export interface ColumnDef<T> {
   csvValue?: (row: T) => string | number | boolean | null | undefined;
   cell?: (row: T, index: number) => React.ReactNode;
   isNumeric?: boolean;
+  align?: 'left' | 'center' | 'right';
   isSortable?: boolean;
   className?: string;
   excludeFromCsv?: boolean;
@@ -335,24 +336,32 @@ export function DataTable<T extends object>({
             <tr>
               {columns.map((col) => {
                 const isCurrentSort = sortColumn === col.id;
+                const alignment = col.align || (col.isNumeric ? 'right' : 'left');
+                const alignClass =
+                  alignment === 'center'
+                    ? 'text-center'
+                    : alignment === 'right'
+                    ? 'text-right'
+                    : 'text-left';
+                const justifyClass =
+                  alignment === 'center'
+                    ? 'justify-center w-full'
+                    : alignment === 'right'
+                    ? 'justify-end w-full'
+                    : '';
+
                 return (
                   <th
                     key={col.id}
                     scope="col"
                     onClick={() => handleSortClick(col.id, col.isSortable)}
-                    className={`h-9 px-3.5 font-semibold text-text-muted text-[11px] tracking-tight uppercase whitespace-nowrap ${
-                      col.isNumeric ? 'text-right' : 'text-left'
-                    } ${
+                    className={`h-9 px-3.5 font-semibold text-text-muted text-[11px] tracking-tight uppercase whitespace-nowrap ${alignClass} ${
                       col.isSortable
                         ? 'cursor-pointer hover:text-text-main hover:bg-border/40 transition-colors'
                         : ''
                     } ${col.className || ''}`}
                   >
-                    <div
-                      className={`inline-flex items-center gap-1 ${
-                        col.isNumeric ? 'justify-end w-full' : ''
-                      }`}
-                    >
+                    <div className={`inline-flex items-center gap-1 ${justifyClass}`}>
                       <span>{col.header}</span>
                       {col.isSortable && (
                         <span className="shrink-0 text-text-muted/70">
@@ -408,20 +417,28 @@ export function DataTable<T extends object>({
                       : 'hover:bg-bg/50'
                   }`}
                 >
-                  {columns.map((col) => (
-                    <td
-                      key={col.id}
-                      className={`px-3.5 py-2 align-middle whitespace-nowrap ${
-                        col.isNumeric ? 'text-right tabular-nums' : 'text-left'
-                      } ${col.className || ''}`}
-                    >
-                      {col.cell
-                        ? col.cell(row, rowIdx)
-                        : col.accessorKey
-                        ? String((row as Record<string, unknown>)[col.accessorKey as string] ?? '')
-                        : ''}
-                    </td>
-                  ))}
+                  {columns.map((col) => {
+                    const alignment = col.align || (col.isNumeric ? 'right' : 'left');
+                    const alignClass =
+                      alignment === 'center'
+                        ? 'text-center'
+                        : alignment === 'right'
+                        ? 'text-right tabular-nums'
+                        : 'text-left';
+
+                    return (
+                      <td
+                        key={col.id}
+                        className={`px-3.5 py-2 align-middle whitespace-nowrap ${alignClass} ${col.className || ''}`}
+                      >
+                        {col.cell
+                          ? col.cell(row, rowIdx)
+                          : col.accessorKey
+                          ? String((row as Record<string, unknown>)[col.accessorKey as string] ?? '')
+                          : ''}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))
             )}
@@ -432,20 +449,28 @@ export function DataTable<T extends object>({
             <tbody className="divide-y divide-border/60 bg-surface hidden print:table-row-group">
               {((exportData && exportData.length > 0 ? exportData : data) as T[]).map((row, rowIdx) => (
                 <tr key={`print-row-${rowIdx}`} className="h-auto">
-                  {columns.map((col) => (
-                    <td
-                      key={`print-col-${col.id}`}
-                      className={`px-3.5 py-2 align-middle ${
-                        col.isNumeric ? 'text-right tabular-nums' : 'text-left'
-                      } ${col.className || ''}`}
-                    >
-                      {col.cell
-                        ? col.cell(row, rowIdx)
-                        : col.accessorKey
-                        ? String((row as Record<string, unknown>)[col.accessorKey as string] ?? '')
-                        : ''}
-                    </td>
-                  ))}
+                  {columns.map((col) => {
+                    const alignment = col.align || (col.isNumeric ? 'right' : 'left');
+                    const alignClass =
+                      alignment === 'center'
+                        ? 'text-center'
+                        : alignment === 'right'
+                        ? 'text-right tabular-nums'
+                        : 'text-left';
+
+                    return (
+                      <td
+                        key={`print-col-${col.id}`}
+                        className={`px-3.5 py-2 align-middle ${alignClass} ${col.className || ''}`}
+                      >
+                        {col.cell
+                          ? col.cell(row, rowIdx)
+                          : col.accessorKey
+                          ? String((row as Record<string, unknown>)[col.accessorKey as string] ?? '')
+                          : ''}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>

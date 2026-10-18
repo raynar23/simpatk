@@ -259,11 +259,15 @@ export default function AdminPermintaanPage() {
       id: 'status',
       header: 'Status',
       accessorKey: 'status',
-      isNumeric: true,
+      align: 'center',
       isSortable: true,
       className: 'min-w-[110px]',
       csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'),
-      cell: (row) => <Badge variant={row.status as 'diproses' | 'selesai'} />,
+      cell: (row) => (
+        <div className="flex justify-center">
+          <Badge variant={row.status as 'diproses' | 'selesai'} />
+        </div>
+      ),
     },
   ];
 

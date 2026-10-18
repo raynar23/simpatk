@@ -306,12 +306,15 @@ function UserDashboardContent() {
       id: 'status',
       header: 'Status',
       accessorKey: 'status',
+      align: 'center',
       className: 'min-w-[105px]',
       csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Diproses'),
       cell: (row) => (
-        <Badge variant={row.status === 'selesai' ? 'selesai' : 'diproses'}>
-          {row.status === 'selesai' ? 'Selesai' : 'Diproses'}
-        </Badge>
+        <div className="flex justify-center">
+          <Badge variant={row.status === 'selesai' ? 'selesai' : 'diproses'}>
+            {row.status === 'selesai' ? 'Selesai' : 'Diproses'}
+          </Badge>
+        </div>
       ),
     },
   ];

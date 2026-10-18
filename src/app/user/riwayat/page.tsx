@@ -279,13 +279,16 @@ function UserRiwayatContent() {
       id: 'status',
       header: 'Status',
       accessorKey: 'status',
+      align: 'center',
       isSortable: true,
       className: 'min-w-[110px]',
       csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'),
       cell: (row) => (
-        <Badge variant={row.status === 'selesai' ? 'selesai' : 'diproses'}>
-          {row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'}
-        </Badge>
+        <div className="flex justify-center">
+          <Badge variant={row.status === 'selesai' ? 'selesai' : 'diproses'}>
+            {row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'}
+          </Badge>
+        </div>
       ),
     },
   ];

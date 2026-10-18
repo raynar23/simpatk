@@ -593,9 +593,14 @@ export default function AdminLaporanPage() {
       id: 'status',
       header: 'Status',
       accessorKey: 'status',
+      align: 'center',
       className: 'min-w-[110px]',
       csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'),
-      cell: (row) => <Badge variant={row.status} />,
+      cell: (row) => (
+        <div className="flex justify-center">
+          <Badge variant={row.status} />
+        </div>
+      ),
     },
     {
       id: 'durasiJam',
@@ -839,34 +844,38 @@ export default function AdminLaporanPage() {
       id: 'stok',
       header: 'Stok Fisik',
       accessorKey: 'stok',
-      isNumeric: true,
+      align: 'center',
       className: 'min-w-[100px]',
       csvValue: (row) => `${row.stok} ${row.satuan}`,
       cell: (row) => (
-        <span
-          className={`tabular-nums font-bold text-xs whitespace-nowrap ${
-            row.stok === 0
-              ? 'text-danger'
-              : row.stok <= row.stok_minimum
-              ? 'text-warning'
-              : 'text-text-main'
-          }`}
-        >
-          {row.stok} {row.satuan}
-        </span>
+        <div className="text-center">
+          <span
+            className={`tabular-nums font-bold text-xs whitespace-nowrap ${
+              row.stok === 0
+                ? 'text-danger'
+                : row.stok <= row.stok_minimum
+                ? 'text-warning'
+                : 'text-text-main'
+            }`}
+          >
+            {row.stok} {row.satuan}
+          </span>
+        </div>
       ),
     },
     {
       id: 'stok_minimum',
       header: 'Min. Stok',
       accessorKey: 'stok_minimum',
-      isNumeric: true,
+      align: 'center',
       className: 'min-w-[95px]',
       csvValue: (row) => `${row.stok_minimum} ${row.satuan}`,
       cell: (row) => (
-        <span className="tabular-nums text-text-muted text-xs whitespace-nowrap">
-          {row.stok_minimum} {row.satuan}
-        </span>
+        <div className="text-center">
+          <span className="tabular-nums text-text-muted text-xs whitespace-nowrap">
+            {row.stok_minimum} {row.satuan}
+          </span>
+        </div>
       ),
     },
     {
@@ -886,11 +895,15 @@ export default function AdminLaporanPage() {
       id: 'statusStok',
       header: 'Status',
       accessorKey: 'statusStok',
-      isNumeric: true,
+      align: 'center',
       className: 'min-w-[105px]',
       csvValue: (row) =>
         row.statusStok === 'habis' ? 'Habis' : row.statusStok === 'menipis' ? 'Menipis' : 'Normal',
-      cell: (row) => <Badge variant={row.statusStok} />,
+      cell: (row) => (
+        <div className="flex justify-center">
+          <Badge variant={row.statusStok} />
+        </div>
+      ),
     },
     {
       id: 'aksi',

@@ -113,10 +113,14 @@ export function DashboardPanels({
       id: 'status',
       header: 'Status',
       accessorKey: 'status',
-      isNumeric: true,
+      align: 'center',
       className: 'min-w-[105px]',
       csvValue: (row) => (row.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'),
-      cell: (row) => <Badge variant={row.status as 'diproses' | 'selesai'} />,
+      cell: (row) => (
+        <div className="flex justify-center">
+          <Badge variant={row.status as 'diproses' | 'selesai'} />
+        </div>
+      ),
     },
   ];
 
@@ -158,44 +162,50 @@ export function DashboardPanels({
       id: 'stok',
       header: 'Stok Fisik',
       accessorKey: 'stok',
-      isNumeric: true,
+      align: 'center',
       className: 'min-w-[95px]',
       csvValue: (row) => `${row.stok} ${row.satuan}`,
       cell: (row) => (
-        <span
-          className={`tabular-nums font-bold whitespace-nowrap ${
-            row.stok === 0 ? 'text-danger' : 'text-danger'
-          }`}
-        >
-          {row.stok === 0 ? 'Habis (0)' : `${row.stok} ${row.satuan}`}
-        </span>
+        <div className="text-center">
+          <span
+            className={`tabular-nums font-bold whitespace-nowrap ${
+              row.stok === 0 ? 'text-danger' : 'text-danger'
+            }`}
+          >
+            {row.stok === 0 ? 'Habis (0)' : `${row.stok} ${row.satuan}`}
+          </span>
+        </div>
       ),
     },
     {
       id: 'stok_minimum',
-      header: 'Batas Minimum',
+      header: 'Min. Stok',
       accessorKey: 'stok_minimum',
-      isNumeric: true,
+      align: 'center',
       className: 'min-w-[95px]',
       csvValue: (row) => `${row.stok_minimum} ${row.satuan}`,
       cell: (row) => (
-        <span className="tabular-nums text-text-muted whitespace-nowrap">
-          {row.stok_minimum} {row.satuan}
-        </span>
+        <div className="text-center">
+          <span className="tabular-nums text-text-muted whitespace-nowrap">
+            {row.stok_minimum} {row.satuan}
+          </span>
+        </div>
       ),
     },
     {
       id: 'saran',
       header: 'Saran Beli',
-      isNumeric: true,
+      align: 'center',
       className: 'min-w-[95px]',
       csvValue: (row) => `+${Math.max(1, row.stok_minimum * 2 - row.stok)} ${row.satuan}`,
       cell: (row) => {
         const saran = Math.max(1, row.stok_minimum * 2 - row.stok);
         return (
-          <span className="tabular-nums font-semibold text-primary whitespace-nowrap">
-            +{saran} {row.satuan}
-          </span>
+          <div className="text-center">
+            <span className="tabular-nums font-semibold text-primary whitespace-nowrap">
+              +{saran} {row.satuan}
+            </span>
+          </div>
         );
       },
     },

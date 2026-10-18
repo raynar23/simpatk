@@ -234,7 +234,7 @@ export default function AdminPersediaanPage() {
       id: 'stok',
       header: 'Stok',
       accessorKey: 'stok',
-      isNumeric: true,
+      align: 'center',
       isSortable: true,
       className: 'min-w-[80px]',
       csvValue: (row) => row.stok,
@@ -242,13 +242,15 @@ export default function AdminPersediaanPage() {
         const isLow = row.stok <= row.stok_minimum;
         const isZero = row.stok === 0;
         return (
-          <span
-            className={`tabular-nums font-bold whitespace-nowrap ${
-              isZero ? 'text-danger' : isLow ? 'text-danger' : 'text-text-main'
-            }`}
-          >
-            {row.stok}
-          </span>
+          <div className="text-center">
+            <span
+              className={`tabular-nums font-bold whitespace-nowrap ${
+                isZero ? 'text-danger' : isLow ? 'text-danger' : 'text-text-main'
+              }`}
+            >
+              {row.stok}
+            </span>
+          </div>
         );
       },
     },
@@ -256,14 +258,16 @@ export default function AdminPersediaanPage() {
       id: 'stok_minimum',
       header: 'Min. Stok',
       accessorKey: 'stok_minimum',
-      isNumeric: true,
+      align: 'center',
       isSortable: true,
       className: 'min-w-[90px]',
       csvValue: (row) => row.stok_minimum,
       cell: (row) => (
-        <span className="tabular-nums text-text-muted text-xs whitespace-nowrap">
-          {row.stok_minimum}
-        </span>
+        <div className="text-center">
+          <span className="tabular-nums text-text-muted text-xs whitespace-nowrap">
+            {row.stok_minimum}
+          </span>
+        </div>
       ),
     },
     {
@@ -283,14 +287,21 @@ export default function AdminPersediaanPage() {
     {
       id: 'status',
       header: 'Status Stok',
+      align: 'center',
       className: 'min-w-[105px]',
       csvValue: (row) =>
         row.stok === 0 ? 'Habis' : row.stok <= row.stok_minimum ? 'Menipis' : 'Normal',
-      cell: (row) => {
-        if (row.stok === 0) return <Badge variant="habis" />;
-        if (row.stok <= row.stok_minimum) return <Badge variant="menipis" />;
-        return <Badge variant="normal" />;
-      },
+      cell: (row) => (
+        <div className="flex justify-center">
+          {row.stok === 0 ? (
+            <Badge variant="habis" />
+          ) : row.stok <= row.stok_minimum ? (
+            <Badge variant="menipis" />
+          ) : (
+            <Badge variant="normal" />
+          )}
+        </div>
+      ),
     },
     {
       id: 'created_at',

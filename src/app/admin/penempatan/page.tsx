@@ -478,8 +478,8 @@ export default function AdminPenempatanPage() {
                       <th className="px-4 py-3">Nama Barang</th>
                       <th className="px-4 py-3">Kategori</th>
                       <th className="px-4 py-3">Lokasi Penempatan</th>
-                      <th className="px-4 py-3 text-right">Stok Fisik</th>
-                      <th className="px-4 py-3">Status Stok</th>
+                      <th className="px-4 py-3 text-center">Stok Fisik</th>
+                      <th className="px-4 py-3 text-center">Status Stok</th>
                       <th className="px-4 py-3 text-center">Aksi</th>
                     </tr>
                   </thead>
@@ -502,20 +502,22 @@ export default function AdminPenempatanPage() {
                           <td className="px-4 py-3">
                             <RakBadge rak={item.resolvedRak} size="sm" />
                           </td>
-                          <td className="px-4 py-3 text-right font-mono font-semibold tabular-nums">
+                          <td className="px-4 py-3 text-center font-mono font-semibold tabular-nums">
                             {item.stok} {item.satuan}
                           </td>
-                          <td className="px-4 py-3">
-                            {isOutOfStock ? (
-                              <Badge variant="habis">Habis (0)</Badge>
-                            ) : isLowStock ? (
-                              <Badge variant="menipis">Menipis ({item.stok})</Badge>
-                            ) : (
-                              <span className="text-[11px] font-medium text-success inline-flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3" />
-                                <span>Aman</span>
-                              </span>
-                            )}
+                          <td className="px-4 py-3 text-center">
+                            <div className="flex justify-center">
+                              {isOutOfStock ? (
+                                <Badge variant="habis">Habis (0)</Badge>
+                              ) : isLowStock ? (
+                                <Badge variant="menipis">Menipis ({item.stok})</Badge>
+                              ) : (
+                                <span className="text-[11px] font-medium text-success inline-flex items-center gap-1">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  <span>Aman</span>
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="px-4 py-3 text-center">
                             <button
