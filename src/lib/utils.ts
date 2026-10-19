@@ -79,19 +79,48 @@ export function formatDuration(hours: number): string {
   return `${days} hari`;
 }
 
-// Parses custom user-inputted unit from request purpose if provided [Satuan: ...]
-export function parseRequestKeperluan(keperluan?: string | null, fallbackSatuan?: string) {
-  if (!keperluan) return { satuan: fallbackSatuan || 'unit', cleanKeperluan: '-' };
-  const match = keperluan.match(/^\[Satuan:\s*([^\]]+)\]\s*([\s\S]*)$/i);
-  if (match) {
+export interface ParsedRequestKeperluan {
+  namaBarang: string;
+  satuan: string;
+  cleanKeperluan: string;
+}
+
+// Parses custom user-inputted unit and item name from request purpose if provided [Barang: ...] [Satuan: ...]
+export function parseRequestKeperluan(
+  keperluan?: string | null,
+  fallbackSatuan?: string,
+  fallbackBarang?: string
+): ParsedRequestKeperluan {
+  if (!keperluan) {
     return {
-      satuan: match[1].trim(),
-      cleanKeperluan: match[2].trim() || '-',
+      namaBarang: fallbackBarang || '',
+      satuan: fallbackSatuan || 'unit',
+      cleanKeperluan: '-',
     };
   }
+
+  let text = keperluan;
+  let namaBarang = fallbackBarang || '';
+  let satuan = fallbackSatuan || 'unit';
+
+  // Extract [Barang: ...] tag if present
+  const barangMatch = text.match(/\[Barang:\s*([^\]]+)\]/i);
+  if (barangMatch) {
+    namaBarang = barangMatch[1].trim();
+    text = text.replace(barangMatch[0], '').trim();
+  }
+
+  // Extract [Satuan: ...] tag if present
+  const satuanMatch = text.match(/\[Satuan:\s*([^\]]+)\]/i);
+  if (satuanMatch) {
+    satuan = satuanMatch[1].trim();
+    text = text.replace(satuanMatch[0], '').trim();
+  }
+
   return {
-    satuan: fallbackSatuan || 'unit',
-    cleanKeperluan: keperluan.trim() || '-',
+    namaBarang: namaBarang || fallbackBarang || '',
+    satuan: satuan || fallbackSatuan || 'unit',
+    cleanKeperluan: text.trim() || '-',
   };
 }
 

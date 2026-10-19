@@ -30,7 +30,9 @@ export interface RequestItem {
   id: string;
   nomor?: string;
   user_id: string;
-  item_id: string;
+  item_id?: string | null;
+  nama_barang?: string | null;
+  satuan?: string | null;
   jumlah: number;
   keperluan: string;
   status: RequestStatus;
