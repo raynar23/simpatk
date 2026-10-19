@@ -10,6 +10,7 @@ import {
   fetchServerNotificationState,
   persistNotificationState,
 } from '@/lib/notificationState';
+import { parseRequestKeperluan } from '@/lib/utils';
 
 interface NotificationsDropdownProps {
   role: 'admin' | 'user';
@@ -82,7 +83,7 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
             fetchServerNotificationState(),
             supabase
               .from('requests')
-              .select('id, nomor, status, created_at, completed_at, items(nama), profiles(nama_divisi)')
+              .select('id, nomor, status, created_at, completed_at, keperluan, items(nama), profiles(nama_divisi)')
               .order('created_at', { ascending: false })
               .limit(10),
             supabase
@@ -106,10 +107,13 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
                   ? createdMs > lastReadMs
                   : r.status === 'diproses';
 
+              const parsed = parseRequestKeperluan(r.keperluan, undefined, (r.items as unknown as { nama: string })?.nama);
+              const itemNama = (r as unknown as { nama_barang?: string }).nama_barang || parsed.namaBarang || (r.items as unknown as { nama: string })?.nama || 'Barang ATK';
+
               return {
                 id: r.id,
                 nomor: r.nomor || 'REQ',
-                item_nama: (r.items as unknown as { nama: string })?.nama || 'Barang ATK',
+                item_nama: itemNama,
                 status: r.status,
                 created_at: r.created_at,
                 completed_at: r.completed_at,
@@ -136,7 +140,7 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
             fetchServerNotificationState(),
             supabase
               .from('requests')
-              .select('id, nomor, status, created_at, completed_at, items(nama), profiles(nama_divisi)')
+              .select('id, nomor, status, created_at, completed_at, keperluan, items(nama), profiles(nama_divisi)')
               .eq('user_id', userId)
               .order('created_at', { ascending: false })
               .limit(10),
@@ -158,10 +162,13 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
                   ? createdMs > lastReadMs || completedMs > lastReadMs
                   : r.status === 'selesai' && now - (completedMs || createdMs) < 7 * 86400000;
 
+              const parsed = parseRequestKeperluan(r.keperluan, undefined, (r.items as unknown as { nama: string })?.nama);
+              const itemNama = (r as unknown as { nama_barang?: string }).nama_barang || parsed.namaBarang || (r.items as unknown as { nama: string })?.nama || 'Barang ATK';
+
               return {
                 id: r.id,
                 nomor: r.nomor || 'REQ',
-                item_nama: (r.items as unknown as { nama: string })?.nama || 'Barang ATK',
+                item_nama: itemNama,
                 status: r.status,
                 created_at: r.created_at,
                 completed_at: r.completed_at,
@@ -215,16 +222,19 @@ export function NotificationsDropdown({ role, userId }: NotificationsDropdownPro
               setUnreadCount((prev) => prev + 1);
               const { data } = await supabase
                 .from('requests')
-                .select('id, nomor, status, created_at, completed_at, items(nama), profiles(nama_divisi)')
+                .select('id, nomor, status, created_at, completed_at, keperluan, items(nama), profiles(nama_divisi)')
                 .eq('id', payload.new.id)
                 .single();
 
               if (data) {
                 const now = Date.now();
+                const parsed = parseRequestKeperluan(data.keperluan, undefined, (data.items as unknown as { nama: string })?.nama);
+                const itemNama = (data as unknown as { nama_barang?: string }).nama_barang || parsed.namaBarang || (data.items as unknown as { nama: string })?.nama || 'Barang ATK';
+
                 const newItem: NotificationItem = {
                   id: data.id,
                   nomor: data.nomor || 'REQ',
-                  item_nama: (data.items as unknown as { nama: string })?.nama || 'Barang ATK',
+                  item_nama: itemNama,
                   status: data.status,
                   created_at: data.created_at,
                   completed_at: data.completed_at,

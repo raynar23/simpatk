@@ -149,14 +149,17 @@ export default function AdminPermintaanPage() {
     // Search query filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (r) =>
+      result = result.filter((r) => {
+        const parsed = parseRequestKeperluan(r.keperluan, r.items?.satuan, r.items?.nama);
+        const itemName = r.nama_barang || parsed.namaBarang || r.items?.nama || '';
+        return (
           r.nomor?.toLowerCase().includes(q) ||
-          r.items?.nama?.toLowerCase().includes(q) ||
+          itemName.toLowerCase().includes(q) ||
           r.items?.kode?.toLowerCase().includes(q) ||
           r.keperluan?.toLowerCase().includes(q) ||
           r.profiles?.nama_divisi?.toLowerCase().includes(q)
-      );
+        );
+      });
     }
 
     // Sorting
@@ -165,8 +168,10 @@ export default function AdminPermintaanPage() {
       let valB: unknown = b[sortColumn as keyof RequestWithDetails];
 
       if (sortColumn === 'items') {
-        valA = a.items?.nama || '';
-        valB = b.items?.nama || '';
+        const parsedA = parseRequestKeperluan(a.keperluan, a.items?.satuan, a.items?.nama);
+        const parsedB = parseRequestKeperluan(b.keperluan, b.items?.satuan, b.items?.nama);
+        valA = a.nama_barang || parsedA.namaBarang || a.items?.nama || '';
+        valB = b.nama_barang || parsedB.namaBarang || b.items?.nama || '';
       } else if (sortColumn === 'profiles') {
         valA = a.profiles?.nama_divisi || '';
         valB = b.profiles?.nama_divisi || '';
@@ -232,14 +237,21 @@ export default function AdminPermintaanPage() {
       id: 'items',
       header: 'Nama Barang ATK',
       className: 'min-w-[260px]',
-      csvValue: (row) =>
-        `${row.items?.nama || '-'}${row.items?.kode ? ` (${row.items.kode})` : ''}`,
-      cell: (row) => (
-        <div className="min-w-0">
-          <p className="font-medium text-text-main leading-snug">{row.items?.nama || '-'}</p>
-          <p className="text-[10px] text-text-muted font-mono">{row.items?.kode}</p>
-        </div>
-      ),
+      csvValue: (row) => {
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan, row.items?.nama);
+        const itemName = row.nama_barang || parsed.namaBarang || row.items?.nama || '-';
+        return `${itemName}${row.items?.kode ? ` (${row.items.kode})` : ''}`;
+      },
+      cell: (row) => {
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan, row.items?.nama);
+        const itemName = row.nama_barang || parsed.namaBarang || row.items?.nama || '-';
+        return (
+          <div className="min-w-0">
+            <p className="font-medium text-text-main leading-snug">{itemName}</p>
+            <p className="text-[10px] text-text-muted font-mono">{row.items?.kode || 'Non-Katalog'}</p>
+          </div>
+        );
+      },
     },
     {
       id: 'jumlah',
@@ -249,11 +261,11 @@ export default function AdminPermintaanPage() {
       isSortable: true,
       className: 'min-w-[100px]',
       csvValue: (row) => {
-        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan, row.items?.nama);
         return `${row.jumlah} ${parsed.satuan}`;
       },
       cell: (row) => {
-        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan, row.items?.nama);
         return (
           <span className="tabular-nums font-semibold text-text-main whitespace-nowrap">
             {row.jumlah} <span className="font-normal text-text-muted">{parsed.satuan}</span>

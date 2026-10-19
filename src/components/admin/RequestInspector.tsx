@@ -137,24 +137,27 @@ function RequestInspectorContent({
             <div className="flex items-center justify-between">
               <span className="text-text-muted">Kode Barang:</span>
               <span className="font-mono font-semibold text-primary text-[11px]">
-                {request.items?.kode || 'ATK-000'}
+                {request.items?.kode || 'Non-Katalog'}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-text-muted">Nama Barang:</span>
               <span className="font-medium text-text-main text-right">
-                {request.items?.nama || '-'}
+                {request.nama_barang ||
+                  parseRequestKeperluan(request.keperluan, request.items?.satuan, request.items?.nama).namaBarang ||
+                  request.items?.nama ||
+                  '-'}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-text-muted">Kategori:</span>
-              <span className="text-text-main">{request.items?.kategori || 'Lainnya'}</span>
+              <span className="text-text-main">{request.items?.kategori || 'Manual / Permintaan Khusus'}</span>
             </div>
             <div className="flex items-center justify-between pt-1 border-t border-border/50 font-medium">
               <span className="text-text-muted">Jumlah Diminta:</span>
               <span className="text-sm font-bold text-text-main tabular-nums">
                 {request.jumlah}{' '}
-                {parseRequestKeperluan(request.keperluan, request.items?.satuan).satuan}
+                {parseRequestKeperluan(request.keperluan, request.items?.satuan, request.items?.nama).satuan}
               </span>
             </div>
           </div>

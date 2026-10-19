@@ -88,13 +88,20 @@ export function DashboardPanels({
       id: 'items',
       header: 'Barang',
       className: 'min-w-[200px]',
-      csvValue: (row) =>
-        `${row.items?.nama || '-'}${row.items?.kode ? ` (${row.items.kode})` : ''}`,
-      cell: (row) => (
-        <span className="text-text-main leading-snug">
-          {row.items?.nama || '-'}
-        </span>
-      ),
+      csvValue: (row) => {
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan, row.items?.nama);
+        const itemName = row.nama_barang || parsed.namaBarang || row.items?.nama || '-';
+        return `${itemName}${row.items?.kode ? ` (${row.items.kode})` : ''}`;
+      },
+      cell: (row) => {
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan, row.items?.nama);
+        const itemName = row.nama_barang || parsed.namaBarang || row.items?.nama || '-';
+        return (
+          <span className="text-text-main leading-snug">
+            {itemName}
+          </span>
+        );
+      },
     },
     {
       id: 'jumlah',
@@ -103,11 +110,11 @@ export function DashboardPanels({
       isNumeric: true,
       className: 'min-w-[90px]',
       csvValue: (row) => {
-        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan, row.items?.nama);
         return `${row.jumlah} ${parsed.satuan}`;
       },
       cell: (row) => {
-        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan, row.items?.nama);
         return (
           <span className="tabular-nums font-semibold text-text-main whitespace-nowrap">
             {row.jumlah} {parsed.satuan}

@@ -216,7 +216,8 @@ export default function AdminLaporanPage() {
     return rawRequests.map((r) => {
       const it = r.items;
       const prof = r.profiles;
-      const parsed = parseRequestKeperluan(r.keperluan, it?.satuan);
+      const parsed = parseRequestKeperluan(r.keperluan, it?.satuan, it?.nama);
+      const itemName = r.nama_barang || parsed.namaBarang || it?.nama || 'Barang ATK';
       let durasiJam: number | null = null;
       if (r.status === 'selesai' && r.completed_at) {
         durasiJam = (new Date(r.completed_at).getTime() - new Date(r.created_at).getTime()) / 3600000;
@@ -227,9 +228,9 @@ export default function AdminLaporanPage() {
         created_at: r.created_at,
         completed_at: r.completed_at || null,
         pemohon: String(prof?.nama_divisi || 'Divisi Pemohon'),
-        namaBarang: String(it?.nama || 'Barang ATK'),
-        kodeBarang: String(it?.kode || 'ATK'),
-        kategoriBarang: String(it?.kategori || 'Umum'),
+        namaBarang: itemName,
+        kodeBarang: String(it?.kode || 'Non-Katalog'),
+        kategoriBarang: String(it?.kategori || 'Manual / Permintaan Khusus'),
         jumlah: r.jumlah || 1,
         satuan: parsed.satuan,
         status: (r.status as 'diproses' | 'selesai') || 'diproses',
@@ -341,19 +342,21 @@ export default function AdminLaporanPage() {
 
     // Tally demands
     rawRequests.forEach((req) => {
-      if (!req.item_id) return;
-      const existing = itemMap.get(req.item_id);
+      const parsed = parseRequestKeperluan(req.keperluan, req.items?.satuan, req.items?.nama);
+      const itemName = req.nama_barang || parsed.namaBarang || req.items?.nama || 'Barang ATK';
+      const itemKey = req.item_id || `manual-${itemName.toLowerCase()}`;
+      const existing = itemMap.get(itemKey);
       const qty = Number(req.jumlah || 0);
       if (existing) {
         existing.totalDiminta += qty;
         existing.frekuensiTiket += 1;
       } else {
         const it = req.items;
-        itemMap.set(req.item_id, {
-          kode: it?.kode || 'ATK',
-          nama: it?.nama || 'Barang ATK',
-          kategori: it?.kategori || 'Umum',
-          satuan: it?.satuan || 'unit',
+        itemMap.set(itemKey, {
+          kode: it?.kode || 'Non-Katalog',
+          nama: itemName,
+          kategori: it?.kategori || 'Manual / Permintaan Khusus',
+          satuan: parsed.satuan || it?.satuan || 'unit',
           totalDiminta: qty,
           frekuensiTiket: 1,
         });

@@ -125,11 +125,12 @@ function UserRiwayatContent() {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       result = result.filter((r) => {
+        const parsed = parseRequestKeperluan(r.keperluan, r.items?.satuan, r.items?.nama);
+        const itemName = r.nama_barang || parsed.namaBarang || r.items?.nama || '';
         const nomor = (r.nomor || '').toLowerCase();
-        const nama = (r.items?.nama || '').toLowerCase();
         const kode = (r.items?.kode || '').toLowerCase();
         const keperluan = (r.keperluan || '').toLowerCase();
-        return nomor.includes(q) || nama.includes(q) || kode.includes(q) || keperluan.includes(q);
+        return nomor.includes(q) || itemName.toLowerCase().includes(q) || kode.includes(q) || keperluan.includes(q);
       });
     }
 
@@ -139,8 +140,10 @@ function UserRiwayatContent() {
       let valB: unknown = b[sortColumn as keyof RequestWithDetails];
 
       if (sortColumn === 'items.nama') {
-        valA = a.items?.nama || '';
-        valB = b.items?.nama || '';
+        const parsedA = parseRequestKeperluan(a.keperluan, a.items?.satuan, a.items?.nama);
+        const parsedB = parseRequestKeperluan(b.keperluan, b.items?.satuan, b.items?.nama);
+        valA = a.nama_barang || parsedA.namaBarang || a.items?.nama || '';
+        valB = b.nama_barang || parsedB.namaBarang || b.items?.nama || '';
       }
 
       if (valA === valB) return 0;
@@ -231,22 +234,31 @@ function UserRiwayatContent() {
       accessorKey: 'items.nama',
       isSortable: true,
       className: 'min-w-[260px]',
-      csvValue: (row) =>
-        `${row.items?.nama || 'Barang Dihapus'}${
-          row.items?.kode ? ` (${row.items.kode})` : ''
-        }`,
-      cell: (row) => (
-        <div className="min-w-0">
-          <p className="font-medium text-text-main text-xs leading-snug">
-            {row.items?.nama || 'Barang Dihapus'}
-          </p>
-          {row.items?.kode && (
-            <p className="text-[11px] text-text-muted font-mono">
-              {row.items.kode}
+      csvValue: (row) => {
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan, row.items?.nama);
+        const itemName = row.nama_barang || parsed.namaBarang || row.items?.nama || 'Barang ATK';
+        return `${itemName}${row.items?.kode ? ` (${row.items.kode})` : ''}`;
+      },
+      cell: (row) => {
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan, row.items?.nama);
+        const itemName = row.nama_barang || parsed.namaBarang || row.items?.nama || 'Barang ATK';
+        return (
+          <div className="min-w-0">
+            <p className="font-medium text-text-main text-xs leading-snug">
+              {itemName}
             </p>
-          )}
-        </div>
-      ),
+            {row.items?.kode ? (
+              <p className="text-[11px] text-text-muted font-mono">
+                {row.items.kode}
+              </p>
+            ) : (
+              <p className="text-[10px] text-text-muted italic">
+                Non-Katalog
+              </p>
+            )}
+          </div>
+        );
+      },
     },
     {
       id: 'jumlah',
@@ -256,11 +268,11 @@ function UserRiwayatContent() {
       isSortable: true,
       className: 'min-w-[100px]',
       csvValue: (row) => {
-        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan, row.items?.nama);
         return `${row.jumlah} ${parsed.satuan}`;
       },
       cell: (row) => {
-        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan, row.items?.nama);
         return (
           <span className="tabular-nums font-semibold text-text-main whitespace-nowrap">
             {row.jumlah}{' '}
@@ -491,7 +503,10 @@ function UserRiwayatContent() {
               <div className="flex items-center justify-between pt-1 border-t border-border/50">
                 <span className="text-text-muted">Barang ATK</span>
                 <span className="font-semibold text-text-main text-right">
-                  {selectedRequest.items?.nama}
+                  {selectedRequest.nama_barang ||
+                    parseRequestKeperluan(selectedRequest.keperluan, selectedRequest.items?.satuan, selectedRequest.items?.nama).namaBarang ||
+                    selectedRequest.items?.nama ||
+                    'Barang ATK'}
                 </span>
               </div>
               {selectedRequest.items?.kode && (
@@ -506,7 +521,7 @@ function UserRiwayatContent() {
                 <span className="text-text-muted">Kuantitas Permintaan</span>
                 <span className="font-semibold text-text-main">
                   {selectedRequest.jumlah}{' '}
-                  {parseRequestKeperluan(selectedRequest.keperluan, selectedRequest.items?.satuan).satuan}
+                  {parseRequestKeperluan(selectedRequest.keperluan, selectedRequest.items?.satuan, selectedRequest.items?.nama).satuan}
                 </span>
               </div>
             </div>
