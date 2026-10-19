@@ -68,8 +68,8 @@ export function calculateDashboardAnalytics(
   // Inventory stock KPIs
   const barang_menipis = allItems.filter((i) => i.stok <= i.stok_minimum).length;
   const barang_habis = allItems.filter((i) => i.stok === 0).length;
-  const nilai_persediaan = allItems.reduce(
-    (acc, i) => acc + Number(i.stok || 0) * Number(i.harga_satuan || 0),
+  const total_stok_fisik = allItems.reduce(
+    (acc, i) => acc + Number(i.stok || 0),
     0
   );
 
@@ -83,7 +83,8 @@ export function calculateDashboardAnalytics(
     tingkat_penyelesaian_persen,
     barang_menipis,
     barang_habis,
-    nilai_persediaan,
+    total_stok_fisik,
+    nilai_persediaan: total_stok_fisik,
   };
 
   // 2. Status Breakdown (Donut Chart)

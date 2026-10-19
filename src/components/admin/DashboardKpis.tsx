@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { KpiCard } from '@/components/ui/KpiCard';
-import { formatRupiah, formatNumber, formatDuration } from '@/lib/utils';
+import { formatNumber, formatDuration } from '@/lib/utils';
 
 export interface DashboardKpiData {
   total_permintaan: number;
@@ -15,7 +15,8 @@ export interface DashboardKpiData {
   tingkat_penyelesaian_persen: number;
   barang_menipis: number;
   barang_habis: number;
-  nilai_persediaan: number;
+  total_stok_fisik: number;
+  nilai_persediaan?: number;
 }
 
 interface DashboardKpisProps {
@@ -95,11 +96,11 @@ export function DashboardKpis({ data, isLoading, periodLabel }: DashboardKpisPro
         sublabel={`${data.barang_habis} barang habis`}
       />
 
-      {/* 5. Nilai Persediaan */}
+      {/* 5. Total Unit Fisik */}
       <KpiCard
-        label="Nilai Persediaan"
-        value={formatRupiah(data.nilai_persediaan)}
-        sublabel="Estimasi aset fisik ATK"
+        label="Total Fisik ATK"
+        value={`${formatNumber(data.total_stok_fisik ?? data.nilai_persediaan ?? 0)} unit`}
+        sublabel="Akumulasi fisik inventaris"
         className="col-span-2 sm:col-span-1"
       />
     </div>

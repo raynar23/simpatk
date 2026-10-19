@@ -15,7 +15,7 @@ import { Timeline } from '@/components/ui/Timeline';
 import { Badge } from '@/components/ui/Badge';
 import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/ui/Toast';
-import { formatDate } from '@/lib/utils';
+import { formatDate, parseRequestKeperluan } from '@/lib/utils';
 import type { RequestWithDetails } from '@/lib/types';
 
 interface RequestInspectorProps {
@@ -153,7 +153,8 @@ function RequestInspectorContent({
             <div className="flex items-center justify-between pt-1 border-t border-border/50 font-medium">
               <span className="text-text-muted">Jumlah Diminta:</span>
               <span className="text-sm font-bold text-text-main tabular-nums">
-                {request.jumlah} {request.items?.satuan || 'unit'}
+                {request.jumlah}{' '}
+                {parseRequestKeperluan(request.keperluan, request.items?.satuan).satuan}
               </span>
             </div>
           </div>
@@ -166,7 +167,7 @@ function RequestInspectorContent({
             <span>Keperluan Operasional</span>
           </div>
           <p className="text-xs text-text-main bg-surface p-3 rounded-control border border-border leading-relaxed">
-            {request.keperluan || 'Tidak ada keterangan keperluan operasional.'}
+            {parseRequestKeperluan(request.keperluan).cleanKeperluan || 'Tidak ada keterangan keperluan operasional.'}
           </p>
         </div>
 

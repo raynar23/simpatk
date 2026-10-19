@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { formatRupiah, formatNumber } from '@/lib/utils';
+import { formatNumber } from '@/lib/utils';
 import type { Item } from '@/lib/types';
 
 interface InventorySummaryStripProps {
@@ -31,8 +31,8 @@ export function InventorySummaryStrip({ items, isLoading }: InventorySummaryStri
   // Unified low stock definition: stok <= stok_minimum (includes 0)
   const lowStockCount = items.filter((it) => it.stok <= it.stok_minimum).length;
   const outOfStockCount = items.filter((it) => it.stok === 0).length;
-  const totalValuation = items.reduce(
-    (sum, it) => sum + (it.stok || 0) * (it.harga_satuan || 0),
+  const totalPhysicalStock = items.reduce(
+    (sum, it) => sum + (it.stok || 0),
     0
   );
 
@@ -56,9 +56,9 @@ export function InventorySummaryStrip({ items, isLoading }: InventorySummaryStri
       color: 'text-danger',
     },
     {
-      label: 'Nilai Persediaan',
-      value: formatRupiah(totalValuation),
-      sublabel: 'Total estimasi aset fisik',
+      label: 'Total Fisik ATK',
+      value: formatNumber(totalPhysicalStock),
+      sublabel: 'Akumulasi seluruh unit fisik',
       color: 'text-text-main',
     },
   ];

@@ -14,7 +14,7 @@ import { RakBadge } from '@/components/admin/RakBadge';
 import { getItemRak, getSavedRakOverrides, type RakKey } from '@/lib/rakUtils';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
-import { formatRupiah, isLowStock, formatDateShort, formatDate } from '@/lib/utils';
+import { isLowStock, formatDateShort, formatDate } from '@/lib/utils';
 import type { Item } from '@/lib/types';
 
 export default function AdminPersediaanPage() {
@@ -268,20 +268,6 @@ export default function AdminPersediaanPage() {
             {row.stok_minimum}
           </span>
         </div>
-      ),
-    },
-    {
-      id: 'harga_satuan',
-      header: 'Harga Satuan',
-      accessorKey: 'harga_satuan',
-      isNumeric: true,
-      isSortable: true,
-      className: 'min-w-[120px]',
-      csvValue: (row) => row.harga_satuan || 0,
-      cell: (row) => (
-        <span className="tabular-nums text-text-main text-xs whitespace-nowrap">
-          {row.harga_satuan ? formatRupiah(row.harga_satuan) : '-'}
-        </span>
       ),
     },
     {

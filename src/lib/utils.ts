@@ -79,3 +79,19 @@ export function formatDuration(hours: number): string {
   return `${days} hari`;
 }
 
+// Parses custom user-inputted unit from request purpose if provided [Satuan: ...]
+export function parseRequestKeperluan(keperluan?: string | null, fallbackSatuan?: string) {
+  if (!keperluan) return { satuan: fallbackSatuan || 'unit', cleanKeperluan: '-' };
+  const match = keperluan.match(/^\[Satuan:\s*([^\]]+)\]\s*([\s\S]*)$/i);
+  if (match) {
+    return {
+      satuan: match[1].trim(),
+      cleanKeperluan: match[2].trim() || '-',
+    };
+  }
+  return {
+    satuan: fallbackSatuan || 'unit',
+    cleanKeperluan: keperluan.trim() || '-',
+  };
+}
+

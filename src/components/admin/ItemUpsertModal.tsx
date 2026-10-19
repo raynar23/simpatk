@@ -63,7 +63,6 @@ function ItemUpsertForm({
   const [satuan, setSatuan] = useState(itemToEdit?.satuan || 'buah');
   const [stokAwal, setStokAwal] = useState<string>(String(itemToEdit?.stok ?? 10));
   const [stokMinimum, setStokMinimum] = useState<string>(String(itemToEdit?.stok_minimum ?? 5));
-  const [hargaSatuan, setHargaSatuan] = useState<string>(String(itemToEdit?.harga_satuan ?? ''));
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -80,12 +79,6 @@ function ItemUpsertForm({
       return;
     }
 
-    const price = hargaSatuan.trim() ? parseInt(hargaSatuan, 10) : null;
-    if (price !== null && (isNaN(price) || price < 0)) {
-      setErrorMsg('Harga satuan harus berupa angka nominal yang valid.');
-      return;
-    }
-
     setIsSubmitting(true);
     setErrorMsg(null);
 
@@ -99,7 +92,6 @@ function ItemUpsertForm({
             kategori,
             satuan: satuan.trim(),
             stok_minimum: minStock,
-            harga_satuan: price,
           })
           .eq('id', itemToEdit.id)
           .select()
@@ -132,7 +124,6 @@ function ItemUpsertForm({
             satuan: satuan.trim(),
             stok: initialStock,
             stok_minimum: minStock,
-            harga_satuan: price,
           })
           .select()
           .single();
@@ -239,37 +230,20 @@ function ItemUpsertForm({
         </div>
       </div>
 
-      {/* Satuan & Harga Satuan */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label htmlFor="item_satuan" className="block text-xs font-semibold text-text-main mb-1">
-            Satuan
-          </label>
-          <input
-            id="item_satuan"
-            type="text"
-            value={satuan}
-            onChange={(e) => setSatuan(e.target.value)}
-            placeholder="rim, lusin, buah, box, dll."
-            className="w-full px-2.5 py-1.5 rounded-control border border-border bg-bg text-text-main text-xs focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary"
-            required
-          />
-        </div>
-
-        <div>
-          <label htmlFor="item_harga" className="block text-xs font-semibold text-text-main mb-1">
-            Harga Satuan (Rp)
-          </label>
-          <input
-            id="item_harga"
-            type="number"
-            min="0"
-            value={hargaSatuan}
-            onChange={(e) => setHargaSatuan(e.target.value)}
-            placeholder="Contoh: 54000"
-            className="w-full px-2.5 py-1.5 rounded-control border border-border bg-bg text-text-main text-xs focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary tabular-nums"
-          />
-        </div>
+      {/* Satuan Default */}
+      <div>
+        <label htmlFor="item_satuan" className="block text-xs font-semibold text-text-main mb-1">
+          Satuan Default
+        </label>
+        <input
+          id="item_satuan"
+          type="text"
+          value={satuan}
+          onChange={(e) => setSatuan(e.target.value)}
+          placeholder="rim, lusin, buah, box, pcs, dll."
+          className="w-full px-2.5 py-1.5 rounded-control border border-border bg-bg text-text-main text-xs focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary"
+          required
+        />
       </div>
 
       {/* Stock Fields */}

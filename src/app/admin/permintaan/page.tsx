@@ -10,7 +10,7 @@ import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
 import { RequestInspector } from '@/components/admin/RequestInspector';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
-import { formatDateShort, formatDate } from '@/lib/utils';
+import { formatDateShort, formatDate, parseRequestKeperluan } from '@/lib/utils';
 import type { RequestWithDetails } from '@/lib/types';
 
 export default function AdminPermintaanPage() {
@@ -248,12 +248,18 @@ export default function AdminPermintaanPage() {
       isNumeric: true,
       isSortable: true,
       className: 'min-w-[100px]',
-      csvValue: (row) => `${row.jumlah} ${row.items?.satuan || 'unit'}`,
-      cell: (row) => (
-        <span className="tabular-nums font-semibold text-text-main whitespace-nowrap">
-          {row.jumlah} <span className="font-normal text-text-muted">{row.items?.satuan}</span>
-        </span>
-      ),
+      csvValue: (row) => {
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        return `${row.jumlah} ${parsed.satuan}`;
+      },
+      cell: (row) => {
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        return (
+          <span className="tabular-nums font-semibold text-text-main whitespace-nowrap">
+            {row.jumlah} <span className="font-normal text-text-muted">{parsed.satuan}</span>
+          </span>
+        );
+      },
     },
     {
       id: 'status',

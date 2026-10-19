@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { DataTable, type ColumnDef } from '@/components/ui/DataTable';
 import { Badge } from '@/components/ui/Badge';
-import { formatDateShort } from '@/lib/utils';
+import { formatDateShort, parseRequestKeperluan } from '@/lib/utils';
 import type { RequestWithDetails, Item } from '@/lib/types';
 
 interface DashboardPanelsProps {
@@ -102,12 +102,18 @@ export function DashboardPanels({
       accessorKey: 'jumlah',
       isNumeric: true,
       className: 'min-w-[90px]',
-      csvValue: (row) => `${row.jumlah} ${row.items?.satuan || 'unit'}`,
-      cell: (row) => (
-        <span className="tabular-nums font-semibold text-text-main whitespace-nowrap">
-          {row.jumlah} {row.items?.satuan}
-        </span>
-      ),
+      csvValue: (row) => {
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        return `${row.jumlah} ${parsed.satuan}`;
+      },
+      cell: (row) => {
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        return (
+          <span className="tabular-nums font-semibold text-text-main whitespace-nowrap">
+            {row.jumlah} {parsed.satuan}
+          </span>
+        );
+      },
     },
     {
       id: 'status',
