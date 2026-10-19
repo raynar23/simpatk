@@ -110,7 +110,6 @@ function CommandPaletteModal({
     { label: 'Persediaan', href: '/admin/persediaan', icon: Boxes },
     { label: 'Pembaruan Stok', href: '/admin/pembaruan-stok', icon: ArrowUpDown },
     { label: 'Penempatan ATK', href: '/admin/penempatan', icon: Layers },
-    { label: 'Daftar Belanja', href: '/admin/daftar-belanja', icon: ShoppingCart },
     { label: 'Laporan', href: '/admin/laporan', icon: FileText },
     { label: 'Pengguna', href: '/admin/pengguna', icon: Users },
     { label: 'Pengaturan', href: '/admin/pengaturan', icon: Settings },
@@ -119,8 +118,6 @@ function CommandPaletteModal({
   const userNav = [
     { label: 'Dashboard', href: '/user', icon: LayoutDashboard },
     { label: 'Riwayat Permintaan', href: '/user/riwayat', icon: Clock },
-    { label: 'Katalog ATK', href: '/user/katalog', icon: BookOpen },
-    { label: 'Penempatan ATK', href: '/user/penempatan', icon: Layers },
     { label: 'Pengaturan', href: '/user/pengaturan', icon: Settings },
   ];
 

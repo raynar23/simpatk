@@ -294,13 +294,8 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
       ],
     },
     {
-      groupLabel: 'PENGADAAN & ANALISIS',
+      groupLabel: 'LAPORAN & ANALISIS',
       items: [
-        {
-          label: 'Daftar Belanja',
-          href: '/admin/daftar-belanja',
-          icon: ShoppingCart,
-        },
         { label: 'Laporan', href: '/admin/laporan', icon: FileText },
       ],
     },
@@ -329,8 +324,6 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
           icon: Clock,
           count: userUpdatesCount,
         },
-        { label: 'Katalog ATK', href: '/user/katalog', icon: BookOpen },
-        { label: 'Penempatan ATK', href: '/user/penempatan', icon: Layers },
       ],
     },
     {

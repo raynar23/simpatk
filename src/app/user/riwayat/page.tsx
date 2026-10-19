@@ -16,7 +16,7 @@ import { Inspector } from '@/components/ui/Inspector';
 import { Timeline } from '@/components/ui/Timeline';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
-import { formatDate } from '@/lib/utils';
+import { formatDate, parseRequestKeperluan } from '@/lib/utils';
 import type { RequestWithDetails } from '@/lib/types';
 
 function UserRiwayatContent() {
@@ -187,10 +187,12 @@ function UserRiwayatContent() {
   // Handle re-order
   const handleReorder = (item: RequestWithDetails) => {
     if (!item.items?.id) return;
+    const parsed = parseRequestKeperluan(item.keperluan, item.items?.satuan);
     const params = new URLSearchParams({
       item: item.items.id,
       qty: String(item.jumlah || 1),
-      reason: item.keperluan || '',
+      unit: parsed.satuan,
+      reason: parsed.cleanKeperluan,
     });
     router.push(`/user?${params.toString()}`);
   };
@@ -253,27 +255,36 @@ function UserRiwayatContent() {
       isNumeric: true,
       isSortable: true,
       className: 'min-w-[100px]',
-      csvValue: (row) => `${row.jumlah} ${row.items?.satuan || 'unit'}`,
-      cell: (row) => (
-        <span className="tabular-nums font-semibold text-text-main whitespace-nowrap">
-          {row.jumlah}{' '}
-          <span className="text-xs font-normal text-text-muted">
-            {row.items?.satuan || 'unit'}
+      csvValue: (row) => {
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        return `${row.jumlah} ${parsed.satuan}`;
+      },
+      cell: (row) => {
+        const parsed = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        return (
+          <span className="tabular-nums font-semibold text-text-main whitespace-nowrap">
+            {row.jumlah}{' '}
+            <span className="text-xs font-normal text-text-muted">
+              {parsed.satuan}
+            </span>
           </span>
-        </span>
-      ),
+        );
+      },
     },
     {
       id: 'keperluan',
       header: 'Keperluan',
       accessorKey: 'keperluan',
       className: 'min-w-[240px]',
-      csvValue: (row) => row.keperluan || '',
-      cell: (row) => (
-        <span className="text-xs text-text-muted leading-snug">
-          {row.keperluan}
-        </span>
-      ),
+      csvValue: (row) => parseRequestKeperluan(row.keperluan).cleanKeperluan,
+      cell: (row) => {
+        const parsed = parseRequestKeperluan(row.keperluan);
+        return (
+          <span className="text-xs text-text-muted leading-snug">
+            {parsed.cleanKeperluan || '-'}
+          </span>
+        );
+      },
     },
     {
       id: 'status',
@@ -494,7 +505,8 @@ function UserRiwayatContent() {
               <div className="flex items-center justify-between">
                 <span className="text-text-muted">Kuantitas Permintaan</span>
                 <span className="font-semibold text-text-main">
-                  {selectedRequest.jumlah} {selectedRequest.items?.satuan || 'unit'}
+                  {selectedRequest.jumlah}{' '}
+                  {parseRequestKeperluan(selectedRequest.keperluan, selectedRequest.items?.satuan).satuan}
                 </span>
               </div>
             </div>
@@ -505,7 +517,7 @@ function UserRiwayatContent() {
                 Keterangan Keperluan
               </span>
               <p className="rounded-control bg-bg border border-border/60 p-2.5 text-text-main leading-relaxed">
-                {selectedRequest.keperluan}
+                {parseRequestKeperluan(selectedRequest.keperluan).cleanKeperluan || '-'}
               </p>
             </div>
 

@@ -23,7 +23,7 @@ import { Inspector } from '@/components/ui/Inspector';
 import { Timeline } from '@/components/ui/Timeline';
 import { Badge } from '@/components/ui/Badge';
 import { useToast } from '@/components/ui/Toast';
-import { formatDate } from '@/lib/utils';
+import { formatDate, parseRequestKeperluan } from '@/lib/utils';
 import type { Item, RequestWithDetails } from '@/lib/types';
 
 function UserDashboardContent() {
@@ -33,6 +33,7 @@ function UserDashboardContent() {
 
   const itemParam = searchParams.get('item') || '';
   const qtyParam = searchParams.get('qty');
+  const unitParam = searchParams.get('unit') || '';
   const reasonParam = searchParams.get('reason') || '';
 
   const [userId, setUserId] = useState<string | null>(null);
@@ -45,6 +46,7 @@ function UserDashboardContent() {
   const [jumlah, setJumlah] = useState<number>(() =>
     qtyParam && !isNaN(Number(qtyParam)) ? Math.max(1, Number(qtyParam)) : 1
   );
+  const [satuan, setSatuan] = useState<string>(unitParam);
   const [keperluan, setKeperluan] = useState<string>(reasonParam);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -175,6 +177,9 @@ function UserDashboardContent() {
 
     setIsSubmitting(true);
 
+    const trimmedSatuan = satuan.trim() || selectedItem?.satuan || 'pcs';
+    const finalKeperluan = `[Satuan: ${trimmedSatuan}] ${keperluan.trim()}`;
+
     try {
       const { data, error } = await supabase
         .from('requests')
@@ -182,7 +187,7 @@ function UserDashboardContent() {
           user_id: userId,
           item_id: selectedItemId,
           jumlah,
-          keperluan: keperluan.trim(),
+          keperluan: finalKeperluan,
           status: 'diproses',
         })
         .select('*, items(*)')
@@ -203,6 +208,7 @@ function UserDashboardContent() {
       // Reset form
       setSelectedItemId('');
       setJumlah(1);
+      setSatuan('');
       setKeperluan('');
       setPage(1);
 
@@ -288,20 +294,25 @@ function UserDashboardContent() {
       id: 'barang',
       header: 'Barang & Kuantitas',
       className: 'min-w-[220px]',
-      csvValue: (row) =>
-        `${row.items?.nama || 'Barang Dihapus'}${
+      csvValue: (row) => {
+        const { satuan: unit } = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        return `${row.items?.nama || 'Barang Dihapus'}${
           row.items?.kode ? ` (${row.items.kode})` : ''
-        } - ${row.jumlah} ${row.items?.satuan || 'unit'}`,
-      cell: (row) => (
-        <div className="min-w-0 py-0.5">
-          <p className="font-medium text-text-main text-xs leading-snug">
-            {row.items?.nama || 'Barang Dihapus'}
-          </p>
-          <p className="text-[11px] text-text-muted mt-0.5">
-            {row.jumlah} {row.items?.satuan || 'unit'}
-          </p>
-        </div>
-      ),
+        } - ${row.jumlah} ${unit}`;
+      },
+      cell: (row) => {
+        const { satuan: unit } = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        return (
+          <div className="min-w-0 py-0.5">
+            <p className="font-medium text-text-main text-xs leading-snug">
+              {row.items?.nama || 'Barang Dihapus'}
+            </p>
+            <p className="text-[11px] text-text-muted mt-0.5 font-medium">
+              {row.jumlah} {unit}
+            </p>
+          </div>
+        );
+      },
     },
     {
       id: 'status',
@@ -327,25 +338,11 @@ function UserDashboardContent() {
       actions={
         <div className="flex items-center gap-2">
           <Link
-            href="/user/katalog"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-medium text-text-main bg-surface border border-border hover:bg-bg transition-colors"
-          >
-            <BookOpen className="w-3.5 h-3.5 text-text-muted" />
-            <span>Katalog ATK</span>
-          </Link>
-          <Link
-            href="/user/penempatan"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-medium text-text-main bg-surface border border-border hover:bg-bg transition-colors"
-          >
-            <Layers className="w-3.5 h-3.5 text-text-muted" />
-            <span>Denah Rak ATK</span>
-          </Link>
-          <Link
             href="/user/riwayat"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-medium text-text-main bg-surface border border-border hover:bg-bg transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-control text-xs font-semibold text-text-main bg-surface border border-border hover:bg-bg transition-colors"
           >
             <Clock className="w-3.5 h-3.5 text-text-muted" />
-            <span>Riwayat Lengkap</span>
+            <span>Riwayat Pengajuan</span>
           </Link>
         </div>
       }
@@ -451,15 +448,20 @@ function UserDashboardContent() {
                       id="item-select"
                       value={selectedItemId}
                       onChange={(e) => {
-                        setSelectedItemId(e.target.value);
+                        const val = e.target.value;
+                        setSelectedItemId(val);
                         setFormError(null);
+                        const matched = items.find((i) => i.id === val);
+                        if (matched && !satuan) {
+                          setSatuan(matched.satuan || 'pcs');
+                        }
                       }}
                       className="w-full appearance-none pl-3 pr-8.5 py-2 text-xs rounded-control border border-border bg-bg text-text-main transition-colors focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer min-h-[38px]"
                     >
-                      <option value="">-- Pilih Barang dari Katalog --</option>
+                      <option value="">-- Pilih Barang ATK --</option>
                       {items.map((it) => (
                         <option key={it.id} value={it.id}>
-                          {it.kode ? `[${it.kode}] ` : ''}{it.nama} ({it.satuan}) - Stok: {it.stok}
+                          {it.kode ? `[${it.kode}] ` : ''}{it.nama}
                         </option>
                       ))}
                     </select>
@@ -470,40 +472,28 @@ function UserDashboardContent() {
                   </div>
                 </div>
 
-                {/* Stock Context Notice: Informational only, all requests accepted */}
+                {/* Category Context (Zero Stock Info) */}
                 {selectedItem && (
-                  <div className="rounded-control bg-bg/80 border border-border p-2.5 text-xs space-y-1.5">
+                  <div className="rounded-control bg-bg/80 border border-border p-2.5 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-text-muted">Kategori:</span>
-                      <span className="font-medium text-text-main">{selectedItem.kategori || 'Umum'}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-text-muted">Jumlah Stok Fisik:</span>
-                      <span className="font-semibold text-text-main tabular-nums">
-                        {selectedItem.stok} {selectedItem.satuan}
-                      </span>
-                    </div>
-                    <div className="pt-1.5 mt-0.5 border-t border-border/60 flex items-start gap-1.5 text-text-muted text-[11px] leading-relaxed">
-                      <AlertCircle className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                      <span>
-                        Stok saat ini: {selectedItem.stok} {selectedItem.satuan}. Permintaan tetap diterima.
-                      </span>
+                      <span className="text-text-muted">Kategori Barang:</span>
+                      <span className="font-semibold text-text-main">{selectedItem.kategori || 'Umum'}</span>
                     </div>
                   </div>
                 )}
 
-                {/* Quantity with Interactive Stepper */}
-                <div>
-                  <label htmlFor="jumlah-input" className="block text-xs font-medium text-text-main mb-1.5">
-                    Jumlah Permintaan <span className="text-danger">*</span>
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <div className="inline-flex items-center rounded-control border border-border bg-bg overflow-hidden">
+                {/* Quantity and Custom Satuan */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="jumlah-input" className="block text-xs font-medium text-text-main mb-1.5">
+                      Jumlah Permintaan <span className="text-danger">*</span>
+                    </label>
+                    <div className="inline-flex items-center w-full rounded-control border border-border bg-bg overflow-hidden min-h-[38px]">
                       <button
                         type="button"
                         onClick={handleDecrement}
                         disabled={jumlah <= 1}
-                        className="px-3 py-2 text-text-muted hover:text-text-main hover:bg-surface disabled:opacity-40 transition-colors"
+                        className="px-3 py-2 text-text-muted hover:text-text-main hover:bg-surface disabled:opacity-40 transition-colors cursor-pointer"
                         aria-label="Kurangi jumlah"
                       >
                         <Minus className="w-3.5 h-3.5" />
@@ -517,21 +507,44 @@ function UserDashboardContent() {
                           const val = parseInt(e.target.value, 10);
                           setJumlah(isNaN(val) ? 1 : Math.max(1, val));
                         }}
-                        className="w-16 text-center bg-transparent text-xs font-semibold text-text-main focus:outline-none tabular-nums"
+                        className="flex-1 text-center bg-transparent text-xs font-semibold text-text-main focus:outline-none tabular-nums py-2"
                       />
                       <button
                         type="button"
                         onClick={handleIncrement}
-                        className="px-3 py-2 text-text-muted hover:text-text-main hover:bg-surface transition-colors"
+                        className="px-3 py-2 text-text-muted hover:text-text-main hover:bg-surface transition-colors cursor-pointer"
                         aria-label="Tambah jumlah"
                       >
                         <Plus className="w-3.5 h-3.5" />
                       </button>
                     </div>
+                  </div>
 
-                    <span className="text-xs text-text-muted font-medium px-2.5 py-1.5 bg-bg rounded-control border border-border/60">
-                      {selectedItem?.satuan || 'Unit'}
-                    </span>
+                  <div>
+                    <label htmlFor="satuan-input" className="block text-xs font-medium text-text-main mb-1.5">
+                      Satuan Barang <span className="text-danger">*</span>
+                    </label>
+                    <input
+                      id="satuan-input"
+                      type="text"
+                      list="satuan-suggestions"
+                      value={satuan}
+                      onChange={(e) => setSatuan(e.target.value)}
+                      placeholder="pcs, box, rim, lusin..."
+                      className="w-full rounded-control border border-border bg-bg px-3 py-2 text-xs text-text-main placeholder:text-text-muted/60 transition-colors focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[38px]"
+                      required
+                    />
+                    <datalist id="satuan-suggestions">
+                      <option value="pcs" />
+                      <option value="buah" />
+                      <option value="box" />
+                      <option value="rim" />
+                      <option value="pack" />
+                      <option value="lusin" />
+                      <option value="lembar" />
+                      <option value="roll" />
+                      <option value="set" />
+                    </datalist>
                   </div>
                 </div>
 
@@ -669,39 +682,41 @@ function UserDashboardContent() {
           )
         }
       >
-        {selectedRequest && (
-          <div className="space-y-5 text-xs">
-            {/* Status & Item Headline */}
-            <div className="rounded-control bg-bg p-3 border border-border/80 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-text-muted font-medium">Status Pengajuan</span>
-                <Badge variant={selectedRequest.status === 'selesai' ? 'selesai' : 'diproses'}>
-                  {selectedRequest.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'}
-                </Badge>
+        {selectedRequest && (() => {
+          const parsed = parseRequestKeperluan(selectedRequest.keperluan, selectedRequest.items?.satuan);
+          return (
+            <div className="space-y-5 text-xs">
+              {/* Status & Item Headline */}
+              <div className="rounded-control bg-bg p-3 border border-border/80 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-text-muted font-medium">Status Pengajuan</span>
+                  <Badge variant={selectedRequest.status === 'selesai' ? 'selesai' : 'diproses'}>
+                    {selectedRequest.status === 'selesai' ? 'Selesai' : 'Sedang Diproses'}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between pt-1 border-t border-border/50">
+                  <span className="text-text-muted">Barang</span>
+                  <span className="font-semibold text-text-main text-right">
+                    {selectedRequest.items?.nama}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-text-muted">Kuantitas</span>
+                  <span className="font-semibold text-text-main">
+                    {selectedRequest.jumlah} {parsed.satuan}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center justify-between pt-1 border-t border-border/50">
-                <span className="text-text-muted">Barang</span>
-                <span className="font-semibold text-text-main text-right">
-                  {selectedRequest.items?.nama}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-text-muted">Kuantitas</span>
-                <span className="font-semibold text-text-main">
-                  {selectedRequest.jumlah} {selectedRequest.items?.satuan || 'unit'}
-                </span>
-              </div>
-            </div>
 
-            {/* Purpose */}
-            <div>
-              <span className="block text-text-muted font-medium mb-1">
-                Keperluan
-              </span>
-              <p className="rounded-control bg-bg border border-border/60 p-2.5 text-text-main leading-relaxed">
-                {selectedRequest.keperluan}
-              </p>
-            </div>
+              {/* Purpose */}
+              <div>
+                <span className="block text-text-muted font-medium mb-1">
+                  Keperluan
+                </span>
+                <p className="rounded-control bg-bg border border-border/60 p-2.5 text-text-main leading-relaxed">
+                  {parsed.cleanKeperluan}
+                </p>
+              </div>
 
             {/* GA Follow-up Notes (if any) */}
             {selectedRequest.catatan_ga && (
@@ -715,20 +730,21 @@ function UserDashboardContent() {
               </div>
             )}
 
-            {/* Timeline progression */}
-            <div>
-              <span className="block text-text-muted font-medium mb-2">
-                Kronologi & Riwayat Status
-              </span>
-              <Timeline
-                createdAt={selectedRequest.created_at}
-                status={selectedRequest.status}
-                completedAt={selectedRequest.completed_at}
-                catatanGa={selectedRequest.catatan_ga}
-              />
+              {/* Timeline progression */}
+              <div>
+                <span className="block text-text-muted font-medium mb-2">
+                  Kronologi & Riwayat Status
+                </span>
+                <Timeline
+                  createdAt={selectedRequest.created_at}
+                  status={selectedRequest.status}
+                  completedAt={selectedRequest.completed_at}
+                  catatanGa={selectedRequest.catatan_ga}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </Inspector>
     </PageContainer>
   );
