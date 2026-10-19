@@ -52,7 +52,7 @@ export function Sidebar({ divisionName = 'General Affairs' }: SidebarProps) {
           <div className="relative h-9 w-40 mb-2">
             <Image
               src="/logo/tps-white.png"
-              alt="Logo Pelindo Terminal Petikemas TPS"
+              alt="Logo PT Terminal Petikemas Surabaya"
               fill
               className="object-contain object-left"
               priority

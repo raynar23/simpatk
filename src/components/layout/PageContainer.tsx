@@ -35,7 +35,7 @@ export function PageContainer({
       else if (lower.includes('dashboard')) suffix = 'Dashboard';
       else if (lower.includes('pengaturan')) suffix = 'Pengaturan';
 
-      const pageDocTitle = `SIMPATK - Pelindo Terminal Petikemas ${suffix}`;
+      const pageDocTitle = `SIMPATK - PT Terminal Petikemas Surabaya ${suffix}`;
       document.title = pageDocTitle;
 
       const handleBeforePrint = () => {

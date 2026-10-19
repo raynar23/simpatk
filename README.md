@@ -1,6 +1,6 @@
 # SIMPATK - Sistem Informasi Manajemen Permintaan ATK
 
-Sistem Informasi Manajemen Permintaan Alat Tulis Kantor (ATK) internal divisi untuk **General Affairs, PT Pelindo Terminal Petikemas**.
+Sistem Informasi Manajemen Permintaan Alat Tulis Kantor (ATK) internal divisi untuk **General Affairs, PT Terminal Petikemas Surabaya**.
 
 Aplikasi ini memfasilitasi pengajuan kebutuhan ATK oleh divisi operasional ke General Affairs secara langsung, pemantauan status pemrosesan secara *realtime*, serta pencatatan dan pengelolaan persediaan fisik ATK dengan standar antarmuka profesional bergaya macOS dan iOS.
 
@@ -92,4 +92,4 @@ Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
 ---
 
 ## Hak Cipta
-PT Pelindo Terminal Petikemas &copy; 2025.
+PT Terminal Petikemas Surabaya &copy; 2026.

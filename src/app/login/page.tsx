@@ -107,7 +107,7 @@ export default function LoginPage() {
           <div className="relative h-11 w-56">
             <Image
               src="/logo/tps-white.png"
-              alt="Logo Pelindo Terminal Petikemas TPS"
+              alt="Logo PT Terminal Petikemas Surabaya"
               fill
               className="object-contain object-left drop-shadow-md"
               priority
@@ -124,7 +124,7 @@ export default function LoginPage() {
             SIMPATK
           </h1>
           <p className="text-sm text-white/95 leading-relaxed drop-shadow-sm font-normal">
-            Sistem Informasi Permintaan Alat Tulis Kantor, General Affairs Pelindo Terminal Petikemas.
+            Sistem Informasi Permintaan Alat Tulis Kantor, General Affairs PT Terminal Petikemas Surabaya.
           </p>
 
           <div className="pt-2 flex flex-wrap items-center gap-2.5 text-xs text-white/95">
@@ -214,7 +214,7 @@ export default function LoginPage() {
                 <div className="relative h-10 w-44 sm:w-48">
                   <Image
                     src="/logo/pelindo-color.png"
-                    alt="Logo Pelindo Terminal Petikemas"
+                    alt="Logo PT Terminal Petikemas Surabaya"
                     fill
                     className="object-contain object-right"
                     priority
@@ -331,7 +331,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <footer className="text-center text-xs text-white/85 py-2 mt-4 font-normal tracking-wide drop-shadow-sm relative z-10">
-          General Affairs - PT Pelindo Terminal Petikemas (c) 2026
+          General Affairs - PT Terminal Petikemas Surabaya (c) 2026
         </footer>
       </section>
     </main>

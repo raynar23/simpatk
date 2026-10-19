@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "SIMPATK - Pelindo Terminal Petikemas",
+  title: "SIMPATK - PT Terminal Petikemas Surabaya",
   description: "Sistem Informasi Manajemen Permintaan ATK General Affairs",
   icons: {
     icon: [

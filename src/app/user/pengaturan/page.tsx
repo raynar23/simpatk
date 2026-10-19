@@ -289,7 +289,7 @@ export default function UserPengaturanPage() {
             SIMPATK Versi 2.0
           </p>
           <p className="text-[11px] mt-0.5">
-            General Affairs (c) 2026 PT Pelindo Terminal Petikemas TPS Surabaya. Hak cipta dilindungi.
+            General Affairs (c) 2026 PT Terminal Petikemas Surabaya. Hak cipta dilindungi.
           </p>
         </div>
       </div>

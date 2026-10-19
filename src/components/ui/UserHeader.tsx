@@ -28,7 +28,7 @@ export function UserHeader({ divisionName = 'Divisi Operasional & Komersial' }: 
           <div className="relative h-8 w-36 sm:w-44">
             <Image
               src="/logo/pelindo-color.png"
-              alt="Logo Pelindo Terminal Petikemas"
+              alt="Logo PT Terminal Petikemas Surabaya"
               fill
               className="object-contain object-left"
               priority

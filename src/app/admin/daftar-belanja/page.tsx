@@ -153,7 +153,7 @@ export default function AdminDaftarBelanjaPage() {
 
   const handlePrint = () => {
     try {
-      document.title = 'SIMPATK - Pelindo Terminal Petikemas Daftar Belanja';
+      document.title = 'SIMPATK - PT Terminal Petikemas Surabaya Daftar Belanja';
       if (typeof window !== 'undefined' && typeof window.print === 'function') {
         window.print();
       } else {
@@ -223,7 +223,7 @@ export default function AdminDaftarBelanjaPage() {
             <div className="relative h-[72px] w-64 sm:w-72 shrink-0 pr-1">
               <Image
                 src="/logo/pelindo-color.png"
-                alt="Logo Pelindo Terminal Petikemas TPS Surabaya"
+                alt="Logo PT Terminal Petikemas Surabaya"
                 fill
                 className="object-contain object-right"
                 priority
@@ -237,7 +237,7 @@ export default function AdminDaftarBelanjaPage() {
               Daftar Belanja Pengadaan Alat Tulis Kantor
             </h1>
             <p className="text-xs text-text-muted mt-1">
-              Departemen General Affairs - PT Pelindo Terminal Petikemas TPS
+              Departemen General Affairs - PT Terminal Petikemas Surabaya
             </p>
           </div>
         </div>

@@ -451,7 +451,7 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
                 <div className="relative h-11 w-44 my-1">
                   <Image
                     src="/logo/tps-white.png"
-                    alt="Logo Pelindo Terminal Petikemas TPS"
+                    alt="Logo PT Terminal Petikemas Surabaya"
                     fill
                     className="object-contain object-left"
                     priority
@@ -582,7 +582,7 @@ export function AppSidebar({ role, divisionName, userId }: AppSidebarProps) {
               <div className="relative h-10 w-44 my-1">
                 <Image
                   src="/logo/tps-white.png"
-                  alt="Logo Pelindo Terminal Petikemas TPS"
+                  alt="Logo PT Terminal Petikemas Surabaya"
                   fill
                   className="object-contain object-left"
                   priority
