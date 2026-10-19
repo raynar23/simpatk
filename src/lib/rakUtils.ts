@@ -70,7 +70,7 @@ export const RAK_DEFINITIONS: RakDefinition[] = [
     id: 'Rak 4',
     nama: 'Rak 4: Arsip & Meja',
     sub: 'Ordner, Stapler, Klip & Lainnya',
-    zona: 'Zona D - Rak Penyimpanan Samping',
+    zona: 'Zona D - Baris Samping',
     deskripsi: 'Penyimpanan map ordner, schnellhecter, stapler, isi staples, paper clip, binder clip, serta baterai alkaline.',
     defaultCategories: ['Arsip dan Map', 'Perlengkapan Meja', 'Lainnya'],
     theme: {

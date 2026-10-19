@@ -336,7 +336,7 @@ export default function AdminPenempatanPage() {
                       <Layers className="w-3.5 h-3.5 text-primary shrink-0" />
                       {activeRakDef.id}
                     </span>
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-control border whitespace-nowrap shrink-0 ${activeRakDef.theme.badgeBg}`}>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-control border whitespace-nowrap shrink-0 max-w-[200px] truncate ${activeRakDef.theme.badgeBg}`}>
                       {activeRakDef.sub}
                     </span>
                   </div>
@@ -544,24 +544,28 @@ export default function AdminPenempatanPage() {
                   return (
                     <div className="bg-surface rounded-card border border-border overflow-hidden shadow-xs flex flex-col">
                       {/* Shelf Header */}
-                      <div className={`px-3.5 py-3 border-b flex items-center justify-between gap-2 ${mobileDef.theme.headerBg}`}>
-                        <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`px-3.5 py-2.5 sm:py-3 border-b flex flex-col gap-2 ${mobileDef.theme.headerBg}`}>
+                        <div className="flex items-center gap-2.5 min-w-0 w-full">
                           <div className="w-8 h-8 rounded-control bg-white shadow-xs border border-border flex items-center justify-center text-primary shrink-0">
                             <Layers className="w-4 h-4" />
                           </div>
-                          <div className="min-w-0">
+                          <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <h3 className="text-xs font-bold text-text-main">{mobileDef.nama}</h3>
-                              <span className="text-[10px] font-semibold text-text-muted">
+                              <h3 className="text-xs sm:text-sm font-bold text-text-main">{mobileDef.nama}</h3>
+                              <span className="text-[10px] sm:text-[11px] font-semibold text-text-muted shrink-0">
                                 ({mobileRackItems.length} jenis ATK)
                               </span>
                             </div>
-                            <p className="text-[10px] text-text-muted truncate">{mobileDef.deskripsi}</p>
+                            <p className="text-[10px] text-text-muted truncate mt-0.5">{mobileDef.deskripsi}</p>
                           </div>
                         </div>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/90 border border-border/80 text-text-muted shrink-0">
-                          {mobileDef.zona}
-                        </span>
+
+                        <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-border/50 text-[10px]">
+                          <span className="text-text-muted font-medium shrink-0">Lokasi Penempatan:</span>
+                          <span className="font-mono px-2 py-0.5 rounded bg-white/90 border border-border/80 text-text-muted font-medium">
+                            {mobileDef.zona}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Shelf Slots Container with UNIFORM FIXED HEIGHT for all pages */}
@@ -697,27 +701,27 @@ export default function AdminPenempatanPage() {
                       <div
                         className={`px-4 py-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-2 ${rakDef.theme.headerBg}`}
                       >
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <div className="w-8 h-8 rounded-control bg-white shadow-xs border border-border flex items-center justify-center text-primary shrink-0">
                             <Layers className="w-4 h-4" />
                           </div>
-                          <div>
-                            <div className="flex items-center gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
                               <h3 className="text-sm font-bold text-text-main">{rakDef.nama}</h3>
-                              <span className="text-[11px] font-semibold text-text-muted">
+                              <span className="text-[11px] font-semibold text-text-muted shrink-0">
                                 ({rackItems.length} jenis ATK)
                               </span>
                               {totalPages > 1 && (
-                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0">
                                   Halaman {safeCurrentPage} dari {totalPages}
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-text-muted">{rakDef.deskripsi}</p>
+                            <p className="text-[11px] text-text-muted truncate mt-0.5">{rakDef.deskripsi}</p>
                           </div>
                         </div>
 
-                        <div className="text-right flex items-center gap-2">
+                        <div className="text-right flex items-center gap-2 shrink-0">
                           <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-white/90 border border-border/80 text-text-muted">
                             {rakDef.zona}
                           </span>
