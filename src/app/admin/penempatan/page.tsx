@@ -645,31 +645,36 @@ export default function AdminPenempatanPage() {
                       </div>
 
                       {/* Bottom Pagination Controls */}
-                      <div className="px-3.5 py-2.5 bg-surface border-t border-border flex items-center justify-between text-xs">
+                      <div className="px-3 sm:px-4 py-2.5 bg-surface border-t border-border flex items-center justify-between gap-2 text-xs select-none">
                         <button
                           type="button"
                           onClick={() => handleMobilePageChange(mobileRakIndex - 1)}
                           disabled={mobileRakIndex === 0}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
+                          className="inline-flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer shrink-0 min-h-[34px] active:scale-[0.98]"
+                          title="Rak Sebelumnya"
                         >
-                          <ChevronLeft className="w-3.5 h-3.5" />
-                          <span>Sebelumnya</span>
+                          <ChevronLeft className="w-3.5 h-3.5 shrink-0" />
+                          <span className="hidden min-[360px]:inline">Sebelumnya</span>
                         </button>
 
-                        <div className="flex items-center gap-1.5 font-medium text-text-muted text-[11px]">
+                        <div className="flex items-center justify-center gap-1.5 font-medium text-text-muted text-xs whitespace-nowrap shrink-0">
                           <span>Halaman</span>
-                          <span className="font-bold text-primary font-mono text-xs">{mobileRakIndex + 1}</span>
-                          <span>dari 4</span>
+                          <span className="font-bold text-primary font-mono text-xs px-2 py-0.5 rounded-badge bg-primary/10 border border-primary/20">
+                            {mobileRakIndex + 1}
+                          </span>
+                          <span>dari</span>
+                          <span className="font-semibold text-text-main font-mono text-xs">4</span>
                         </div>
 
                         <button
                           type="button"
                           onClick={() => handleMobilePageChange(mobileRakIndex + 1)}
                           disabled={mobileRakIndex === RAK_KEYS.length - 1}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
+                          className="inline-flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer shrink-0 active:scale-[0.98] min-h-[34px]"
+                          title="Rak Selanjutnya"
                         >
-                          <span>Selanjutnya</span>
-                          <ChevronRight className="w-3.5 h-3.5" />
+                          <span className="hidden min-[360px]:inline">Selanjutnya</span>
+                          <ChevronRight className="w-3.5 h-3.5 shrink-0" />
                         </button>
                       </div>
                     </div>
@@ -939,31 +944,36 @@ export default function AdminPenempatanPage() {
                 </div>
 
                 {/* Bottom Pagination Controls */}
-                <div className="px-3.5 py-2.5 bg-surface border-t border-border flex items-center justify-between text-xs">
+                <div className="px-3 sm:px-4 py-2.5 bg-surface border-t border-border flex items-center justify-between gap-2 text-xs select-none">
                   <button
                     type="button"
                     onClick={() => handleMobilePageChange(mobileRakIndex - 1)}
                     disabled={mobileRakIndex === 0}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
+                    className="inline-flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer shrink-0 min-h-[34px] active:scale-[0.98]"
+                    title="Rak Sebelumnya"
                   >
-                    <ChevronLeft className="w-3.5 h-3.5" />
-                    <span>Sebelumnya</span>
+                    <ChevronLeft className="w-3.5 h-3.5 shrink-0" />
+                    <span className="hidden min-[360px]:inline">Sebelumnya</span>
                   </button>
 
-                  <div className="flex items-center gap-1.5 font-medium text-text-muted text-[11px]">
+                  <div className="flex items-center justify-center gap-1.5 font-medium text-text-muted text-xs whitespace-nowrap shrink-0">
                     <span>Halaman</span>
-                    <span className="font-bold text-primary font-mono text-xs">{mobileRakIndex + 1}</span>
-                    <span>dari 4</span>
+                    <span className="font-bold text-primary font-mono text-xs px-2 py-0.5 rounded-badge bg-primary/10 border border-primary/20">
+                      {mobileRakIndex + 1}
+                    </span>
+                    <span>dari</span>
+                    <span className="font-semibold text-text-main font-mono text-xs">4</span>
                   </div>
 
                   <button
                     type="button"
                     onClick={() => handleMobilePageChange(mobileRakIndex + 1)}
                     disabled={mobileRakIndex === RAK_KEYS.length - 1}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer"
+                    className="inline-flex items-center justify-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-control text-xs font-semibold border border-border text-text-main bg-bg hover:bg-surface disabled:opacity-30 disabled:pointer-events-none transition-all cursor-pointer shrink-0 active:scale-[0.98] min-h-[34px]"
+                    title="Rak Selanjutnya"
                   >
-                    <span>Selanjutnya</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
+                    <span className="hidden min-[360px]:inline">Selanjutnya</span>
+                    <ChevronRight className="w-3.5 h-3.5 shrink-0" />
                   </button>
                 </div>
               </div>
