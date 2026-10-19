@@ -344,7 +344,7 @@ export default function AdminPermintaanPage() {
             {/* Date Range Filter with balanced chevron and calendar icon */}
             <div className="relative inline-flex items-center">
               <Calendar
-                className="pointer-events-none absolute left-2.5 w-3.5 h-3.5 text-text-muted"
+                className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-text-muted"
                 strokeWidth={1.5}
               />
               <select
@@ -353,7 +353,7 @@ export default function AdminPermintaanPage() {
                   setDateRangeFilter(e.target.value as typeof dateRangeFilter);
                   setPage(1);
                 }}
-                className="appearance-none pl-8 pr-8.5 py-1.5 text-xs rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[32px] cursor-pointer"
+                className="appearance-none pl-6 pr-6 py-0.5 h-7 min-h-[28px] text-[11px] rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
                 title="Filter rentang waktu permintaan"
               >
                 <option value="semua">Semua Waktu</option>
@@ -362,7 +362,7 @@ export default function AdminPermintaanPage() {
                 <option value="month">Bulan Ini</option>
               </select>
               <ChevronDown
-                className="pointer-events-none absolute right-3 w-3.5 h-3.5 text-text-muted"
+                className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-text-muted"
                 strokeWidth={1.5}
               />
             </div>

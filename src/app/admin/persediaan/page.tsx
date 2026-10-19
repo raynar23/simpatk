@@ -413,7 +413,7 @@ export default function AdminPersediaanPage() {
                     setCategoryFilter(e.target.value);
                     setPage(1);
                   }}
-                  className="w-full sm:w-auto appearance-none pl-3 pr-7 py-1.5 text-xs rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[34px] cursor-pointer truncate"
+                  className="w-full sm:w-auto appearance-none pl-2.5 pr-6 py-0.5 text-[11px] rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary h-7 min-h-[28px] cursor-pointer truncate"
                   title="Filter berdasarkan kategori ATK"
                 >
                   <option value="semua">Semua Kategori</option>
@@ -424,7 +424,7 @@ export default function AdminPersediaanPage() {
                   ))}
                 </select>
                 <ChevronDown
-                  className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted"
+                  className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-text-muted"
                   strokeWidth={1.5}
                 />
               </div>
@@ -432,7 +432,7 @@ export default function AdminPersediaanPage() {
               {/* Filter Tanggal Dropdown with calendar icon and balanced chevron */}
               <div className="relative w-full sm:w-auto">
                 <Calendar
-                  className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted"
+                  className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-text-muted"
                   strokeWidth={1.5}
                 />
                 <select
@@ -441,7 +441,7 @@ export default function AdminPersediaanPage() {
                     setDateFilter(e.target.value as typeof dateFilter);
                     setPage(1);
                   }}
-                  className="w-full sm:w-auto appearance-none pl-7 pr-7 py-1.5 text-xs rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary min-h-[34px] cursor-pointer truncate"
+                  className="w-full sm:w-auto appearance-none pl-6 pr-6 py-0.5 text-[11px] rounded-control border border-border bg-bg text-text-main focus:bg-surface focus:outline-none focus:ring-1 focus:ring-primary h-7 min-h-[28px] cursor-pointer truncate"
                   title="Filter berdasarkan rentang waktu pendaftaran"
                 >
                   <option value="semua">Semua Waktu</option>
@@ -452,7 +452,7 @@ export default function AdminPersediaanPage() {
                   <option value="custom">Kustom Tanggal...</option>
                 </select>
                 <ChevronDown
-                  className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted"
+                  className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-text-muted"
                   strokeWidth={1.5}
                 />
               </div>
@@ -460,7 +460,7 @@ export default function AdminPersediaanPage() {
 
             {/* Custom Date Inputs if 'custom' is active */}
             {dateFilter === 'custom' && (
-              <div className="inline-flex items-center gap-1.5 bg-bg px-2 py-1 rounded-control border border-border text-xs">
+              <div className="inline-flex items-center gap-1.5 bg-bg px-2 py-0.5 h-7 rounded-control border border-border text-xs">
                 <span className="text-text-muted text-[11px]">Dari:</span>
                 <input
                   type="date"
@@ -469,7 +469,7 @@ export default function AdminPersediaanPage() {
                     setCustomStartDate(e.target.value);
                     setPage(1);
                   }}
-                  className="px-1.5 py-0.5 text-xs rounded-control border border-border bg-surface text-text-main focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="px-1.5 py-0.5 text-[11px] rounded-control border border-border bg-surface text-text-main focus:outline-none focus:ring-1 focus:ring-primary"
                   title="Tanggal Awal"
                 />
                 <span className="text-text-muted text-[11px]">Sampai:</span>
@@ -480,7 +480,7 @@ export default function AdminPersediaanPage() {
                     setCustomEndDate(e.target.value);
                     setPage(1);
                   }}
-                  className="px-1.5 py-0.5 text-xs rounded-control border border-border bg-surface text-text-main focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="px-1.5 py-0.5 text-[11px] rounded-control border border-border bg-surface text-text-main focus:outline-none focus:ring-1 focus:ring-primary"
                   title="Tanggal Akhir"
                 />
               </div>
@@ -496,7 +496,7 @@ export default function AdminPersediaanPage() {
                   setCustomEndDate('');
                   setPage(1);
                 }}
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] rounded-control border border-border bg-surface hover:bg-bg text-text-muted hover:text-text-main transition-colors cursor-pointer min-h-[32px]"
+                className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] rounded-control border border-border bg-surface hover:bg-bg text-text-muted hover:text-text-main transition-colors cursor-pointer h-7 min-h-[28px]"
                 title="Kembalikan filter tanggal ke Semua Waktu"
               >
                 <RotateCcw className="w-3 h-3" />
