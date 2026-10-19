@@ -557,6 +557,114 @@ set nama = excluded.nama,
     harga_satuan = excluded.harga_satuan,
     rak = excluded.rak;
 
+-- ------------------------------------------------------------------------------
+-- 12. OTOMATISASI PROFIL PENGGUNA BARU (AUTH TRIGGER)
+-- ------------------------------------------------------------------------------
+-- Setiap kali akun baru didaftarkan lewat Supabase Auth, trigger ini akan
+-- otomatis membuat baris profil di tabel public.profiles.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  insert into public.profiles (id, email, nama_divisi, role)
+  values (
+    new.id,
+    new.email,
+    coalesce(new.raw_user_meta_data->>'nama_divisi', 'Divisi Pemohon'),
+    case 
+      when new.email = 'admin@tps.co.id' or coalesce(new.raw_user_meta_data->>'role', '') = 'admin' then 'admin'::public.app_role
+      else 'user'::public.app_role
+    end
+  )
+  on conflict (id) do update set
+    email = excluded.email,
+    nama_divisi = coalesce(excluded.nama_divisi, public.profiles.nama_divisi),
+    role = case when new.email = 'admin@tps.co.id' then 'admin'::public.app_role else public.profiles.role end;
+  return new;
+end;
+$$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- ------------------------------------------------------------------------------
+-- 13. AKUN PENGGUNA DEMO OTOMATIS (AUTH & PROFILES)
+-- ------------------------------------------------------------------------------
+-- Membuat 2 akun demo resmi: Admin GA & Divisi Pemohon langsung siap login
+create extension if not exists pgcrypto;
+
+do $$
+declare
+  v_admin_id uuid := '00000000-0000-0000-0000-000000000001'::uuid;
+  v_user_id  uuid := '00000000-0000-0000-0000-000000000002'::uuid;
+begin
+  -- 1. Akun Admin GA (admin@tps.co.id / Admin123!)
+  if not exists (select 1 from auth.users where email = 'admin@tps.co.id') then
+    insert into auth.users (
+      id, instance_id, aud, role, email, encrypted_password,
+      email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+    ) values (
+      v_admin_id,
+      '00000000-0000-0000-0000-000000000000'::uuid,
+      'authenticated',
+      'authenticated',
+      'admin@tps.co.id',
+      crypt('Admin123!', gen_salt('bf')),
+      now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"nama_divisi":"General Affairs","role":"admin"}'::jsonb,
+      now(),
+      now()
+    );
+  end if;
+
+  -- 2. Akun Divisi Pemohon (pemohon@tps.co.id / User123!)
+  if not exists (select 1 from auth.users where email = 'pemohon@tps.co.id') then
+    insert into auth.users (
+      id, instance_id, aud, role, email, encrypted_password,
+      email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+    ) values (
+      v_user_id,
+      '00000000-0000-0000-0000-000000000000'::uuid,
+      'authenticated',
+      'authenticated',
+      'pemohon@tps.co.id',
+      crypt('User123!', gen_salt('bf')),
+      now(),
+      '{"provider":"email","providers":["email"]}'::jsonb,
+      '{"nama_divisi":"Divisi Operasional & Komersial","role":"user"}'::jsonb,
+      now(),
+      now()
+    );
+  end if;
+
+  -- 3. Sinkronisasi Profil Admin
+  insert into public.profiles (id, role, nama_divisi, email)
+  select id, 'admin'::public.app_role, 'General Affairs', 'admin@tps.co.id'
+  from auth.users where email = 'admin@tps.co.id'
+  on conflict (id) do update set
+    role = 'admin'::public.app_role,
+    nama_divisi = 'General Affairs',
+    email = 'admin@tps.co.id';
+
+  -- 4. Sinkronisasi Profil Pemohon
+  insert into public.profiles (id, role, nama_divisi, email)
+  select id, 'user'::public.app_role, 'Divisi Operasional & Komersial', 'pemohon@tps.co.id'
+  from auth.users where email = 'pemohon@tps.co.id'
+  on conflict (id) do update set
+    role = 'user'::public.app_role,
+    nama_divisi = 'Divisi Operasional & Komersial',
+    email = 'pemohon@tps.co.id';
+
+end $$;
+
 -- ==============================================================================
 -- SELESAI: Database SIMPATK siap 100% digunakan!
+-- Akun Login Demo:
+-- 1. Admin GA : admin@tps.co.id  (Password: Admin123!)
+-- 2. Pemohon  : pemohon@tps.co.id (Password: User123!)
 -- ==============================================================================
