@@ -11,13 +11,12 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { PageContainer } from '@/components/layout/PageContainer';
-import { formatRupiah, isLowStock } from '@/lib/utils';
+import { isLowStock } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
 import type { Item } from '@/lib/types';
 
 interface ShoppingItem extends Item {
   saranBeli: number;
-  estimasiBiaya: number;
 }
 
 export default function AdminDaftarBelanjaPage() {
@@ -39,20 +38,19 @@ export default function AdminDaftarBelanjaPage() {
           .select('*')
           .order('stok', { ascending: true });
 
-        if (ignore) return;
-        if (error) {
-          showToast('Gagal memuat persediaan barang.', 'error');
-          return;
-        }
+        if (error) throw error;
 
-        if (data) {
+        if (!ignore && data) {
           setItems(data as Item[]);
-          // Default select all low stock items
-          const lowList = (data as Item[]).filter((it) => isLowStock(it.stok, it.stok_minimum));
-          setSelectedIds(new Set(lowList.map((it) => it.id)));
+          // Pre-select all low stock items
+          const lowStockIds = (data as Item[])
+            .filter((i) => isLowStock(i.stok, i.stok_minimum))
+            .map((i) => i.id);
+          setSelectedIds(new Set(lowStockIds));
         }
-      } catch {
-        if (!ignore) showToast('Gagal menghubungi server.', 'error');
+      } catch (err) {
+        console.error('Failed to load items for shopping list:', err);
+        showToast('Gagal memuat rekomendasi belanja', 'error');
       } finally {
         if (!ignore) setIsLoading(false);
       }
@@ -65,111 +63,93 @@ export default function AdminDaftarBelanjaPage() {
     };
   }, [supabase, showToast]);
 
-  // Derive shopping items with formula: (stok_minimum * 2) - stok
+  // Compute shopping recommendations
   const shoppingList: ShoppingItem[] = useMemo(() => {
     return items
-      .filter((it) => isLowStock(it.stok, it.stok_minimum))
-      .map((it) => {
-        const saranBeli = Math.max(1, it.stok_minimum * 2 - it.stok);
-        const estimasiBiaya = saranBeli * (it.harga_satuan || 0);
+      .filter((i) => isLowStock(i.stok, i.stok_minimum))
+      .map((i) => {
+        // Formula: Target = 2 * stok_minimum. Saran Beli = Math.max(0, Target - stok)
+        const target = i.stok_minimum * 2;
+        const saranBeli = Math.max(target - i.stok, 0);
+
         return {
-          ...it,
+          ...i,
           saranBeli,
-          estimasiBiaya,
         };
-      });
+      })
+      .filter((i) => i.saranBeli > 0);
   }, [items]);
 
-  // Selected totals
   const selectedItems = useMemo(() => {
-    return shoppingList.filter((it) => selectedIds.has(it.id));
+    return shoppingList.filter((item) => selectedIds.has(item.id));
   }, [shoppingList, selectedIds]);
 
-  const totalEstimatedCost = useMemo(() => {
-    return selectedItems.reduce((acc, curr) => acc + curr.estimasiBiaya, 0);
-  }, [selectedItems]);
-
-  const isAllSelected = shoppingList.length > 0 && selectedIds.size === shoppingList.length;
+  const isAllSelected =
+    shoppingList.length > 0 && selectedIds.size === shoppingList.length;
 
   const toggleSelectAll = () => {
     if (isAllSelected) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(shoppingList.map((it) => it.id)));
+      setSelectedIds(new Set(shoppingList.map((i) => i.id)));
     }
   };
 
   const toggleSelectItem = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
+    const next = new Set(selectedIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setSelectedIds(next);
   };
 
-  // Export selected to CSV
   const handleExportCsv = () => {
     if (selectedItems.length === 0) return;
 
-    const headers = [
-      'Kode Barang',
-      'Nama Barang',
-      'Kategori',
-      'Satuan',
-      'Stok Saat Ini',
-      'Stok Minimum',
-      'Saran Jumlah Beli',
-      'Harga Satuan (IDR)',
-      'Estimasi Total Biaya (IDR)',
-    ];
+    try {
+      const headers = [
+        'Kode',
+        'Nama Barang',
+        'Kategori',
+        'Stok Fisik',
+        'Stok Minimum',
+        'Satuan',
+        'Saran Pembelian',
+      ];
 
-    const rows = selectedItems.map((it) => [
-      `"${it.kode}"`,
-      `"${it.nama.replace(/"/g, '""')}"`,
-      `"${it.kategori}"`,
-      `"${it.satuan}"`,
-      it.stok,
-      it.stok_minimum,
-      it.saranBeli,
-      it.harga_satuan || 0,
-      it.estimasiBiaya,
-    ]);
+      const rows = selectedItems.map((item) => [
+        `"${item.kode}"`,
+        `"${item.nama.replace(/"/g, '""')}"`,
+        `"${item.kategori}"`,
+        item.stok,
+        item.stok_minimum,
+        `"${item.satuan}"`,
+        item.saranBeli,
+      ]);
 
-    const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', `daftar_belanja_atk_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join(
+        '\n'
+      );
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute(
+        'download',
+        `daftar-belanja-atk-${new Date().toISOString().split('T')[0]}.csv`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showToast(`Berhasil mengekspor ${selectedItems.length} barang`, 'success');
+    } catch (err) {
+      console.error('Export CSV error:', err);
+      showToast('Gagal mengekspor CSV', 'error');
+    }
   };
-
-  // Set official page document title for browser save as PDF filename
-  useEffect(() => {
-    const pageTitle = 'SIMPATK - Pelindo Terminal Petikemas Daftar Belanja';
-    document.title = pageTitle;
-
-    const handleBeforePrint = () => {
-      document.title = pageTitle;
-    };
-    const handleAfterPrint = () => {
-      document.title = pageTitle;
-    };
-
-    window.addEventListener('beforeprint', handleBeforePrint);
-    window.addEventListener('afterprint', handleAfterPrint);
-    return () => {
-      window.removeEventListener('beforeprint', handleBeforePrint);
-      window.removeEventListener('afterprint', handleAfterPrint);
-    };
-  }, []);
 
   const handlePrint = () => {
     try {
@@ -215,11 +195,11 @@ export default function AdminDaftarBelanjaPage() {
       {/* Printable Sheet Container */}
       <div className="bg-surface rounded-card border border-border flex-1 min-h-0 flex flex-col overflow-hidden print:border-none print:shadow-none print:bg-white print:overflow-visible">
         {/* Printable Official Header: Shown ONLY when printing (Standard Dokumen RKS / RAB Pelindo) */}
-        <div className="hidden print:flex flex-col gap-4 pt-4 pb-6 mb-8 border-b-2 border-black bg-white">
+        <div className="hidden print:flex flex-col gap-1.5 pt-2 pb-6 mb-8 border-b-2 border-black bg-white">
           {/* Top Row: Information on Left, Logo on Right */}
           <div className="flex items-start justify-between gap-4">
             {/* Pojok Atas Kiri: Tanggal Cetak & Formula Beli */}
-            <div className="text-left text-xs text-text-muted space-y-1.5 pt-1">
+            <div className="text-left text-xs text-text-muted space-y-1.5 pt-3">
               <p className="text-xs">
                 Tanggal Cetak:{' '}
                 <span className="font-semibold text-text-main">
@@ -239,8 +219,8 @@ export default function AdminDaftarBelanjaPage() {
               </p>
             </div>
 
-            {/* Pojok Atas Kanan: Logo Pelindo TPS */}
-            <div className="relative h-12 w-56 shrink-0">
+            {/* Pojok Atas Kanan: Logo Pelindo TPS (diperbesar 50%, tanpa terpotong & padding terkompensasi) */}
+            <div className="relative h-[72px] w-64 sm:w-72 shrink-0 pr-1">
               <Image
                 src="/logo/pelindo-color.png"
                 alt="Logo Pelindo Terminal Petikemas TPS Surabaya"
@@ -252,7 +232,7 @@ export default function AdminDaftarBelanjaPage() {
           </div>
 
           {/* Document Title Block */}
-          <div className="pt-3 border-t border-gray-200">
+          <div className="pt-1.5 border-t border-gray-200">
             <h1 className="text-lg font-bold text-text-main tracking-tight uppercase">
               Daftar Belanja Pengadaan Alat Tulis Kantor
             </h1>
@@ -276,7 +256,7 @@ export default function AdminDaftarBelanjaPage() {
               <p>Tidak ada barang yang berada pada batas minimum stok saat ini.</p>
             </div>
           ) : (
-            <table className="w-full min-w-[1000px] text-left text-xs border-collapse print:min-w-0 print:w-full">
+            <table className="w-full min-w-[700px] text-left text-xs border-collapse print:min-w-0 print:w-full">
               <thead className="bg-bg text-text-muted text-[11px] uppercase border-b border-border">
                 <tr>
                   <th className="py-2.5 px-3 w-10 min-w-[40px] text-center print:hidden">
@@ -299,8 +279,6 @@ export default function AdminDaftarBelanjaPage() {
                   <th className="py-2.5 px-3 font-semibold text-center min-w-[95px] whitespace-nowrap">Stok Fisik</th>
                   <th className="py-2.5 px-3 font-semibold text-center min-w-[95px] whitespace-nowrap">Min. Stok</th>
                   <th className="py-2.5 px-3 font-semibold text-center text-primary min-w-[100px] whitespace-nowrap">Saran Beli</th>
-                  <th className="py-2.5 px-3 font-semibold text-right min-w-[110px] whitespace-nowrap">Harga Satuan</th>
-                  <th className="py-2.5 px-3 font-semibold text-right min-w-[125px] whitespace-nowrap">Estimasi Biaya</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60 bg-surface">
@@ -355,12 +333,6 @@ export default function AdminDaftarBelanjaPage() {
                       <td className="py-2.5 px-3 text-center tabular-nums font-bold text-primary whitespace-nowrap">
                         +{item.saranBeli} {item.satuan}
                       </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums text-text-main whitespace-nowrap">
-                        {item.harga_satuan ? formatRupiah(item.harga_satuan) : '-'}
-                      </td>
-                      <td className="py-2.5 px-3 text-right tabular-nums font-semibold text-text-main whitespace-nowrap">
-                        {item.estimasiBiaya > 0 ? formatRupiah(item.estimasiBiaya) : '-'}
-                      </td>
                     </tr>
                   );
                 })}
@@ -378,17 +350,9 @@ export default function AdminDaftarBelanjaPage() {
                 {shoppingList.length} barang dipilih untuk pengadaan.
               </span>
             </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-text-muted">Total Estimasi Anggaran:</span>
-              <span className="text-base font-bold text-primary tabular-nums">
-                {formatRupiah(totalEstimatedCost)}
-              </span>
-            </div>
           </div>
         )}
       </div>
     </PageContainer>
   );
 }
-

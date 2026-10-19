@@ -27,7 +27,7 @@ import {
   formatDisplayDateShort,
 } from '@/components/admin/DashboardDateFilter';
 import {
-  formatRupiah,
+  parseRequestKeperluan,
   isLowStock,
   formatDuration,
   formatMonthYear,
@@ -77,7 +77,6 @@ interface ItemConsumptionRow extends Record<string, unknown> {
   totalDiminta: number;
   frekuensiTiket: number;
   rataPerTiket: number;
-  estimasiNilai: number;
 }
 
 interface StockAuditRow extends Record<string, unknown> {
@@ -88,8 +87,6 @@ interface StockAuditRow extends Record<string, unknown> {
   satuan: string;
   stok: number;
   stok_minimum: number;
-  harga_satuan: number;
-  totalValuasi: number;
   statusStok: 'habis' | 'menipis' | 'normal';
 }
 
@@ -219,6 +216,7 @@ export default function AdminLaporanPage() {
     return rawRequests.map((r) => {
       const it = r.items;
       const prof = r.profiles;
+      const parsed = parseRequestKeperluan(r.keperluan, it?.satuan);
       let durasiJam: number | null = null;
       if (r.status === 'selesai' && r.completed_at) {
         durasiJam = (new Date(r.completed_at).getTime() - new Date(r.created_at).getTime()) / 3600000;
@@ -233,10 +231,10 @@ export default function AdminLaporanPage() {
         kodeBarang: String(it?.kode || 'ATK'),
         kategoriBarang: String(it?.kategori || 'Umum'),
         jumlah: r.jumlah || 1,
-        satuan: String(it?.satuan || 'unit'),
+        satuan: parsed.satuan,
         status: (r.status as 'diproses' | 'selesai') || 'diproses',
         durasiJam: durasiJam !== null ? Math.max(0, durasiJam) : null,
-        keperluan: r.keperluan ? String(r.keperluan) : null,
+        keperluan: parsed.cleanKeperluan || null,
         catatan: r.catatan_ga ? String(r.catatan_ga) : null,
       };
     });
@@ -326,7 +324,6 @@ export default function AdminLaporanPage() {
         satuan: string;
         totalDiminta: number;
         frekuensiTiket: number;
-        hargaSatuan: number;
       }
     >();
 
@@ -339,7 +336,6 @@ export default function AdminLaporanPage() {
         satuan: it.satuan || 'unit',
         totalDiminta: 0,
         frekuensiTiket: 0,
-        hargaSatuan: it.harga_satuan || 0,
       });
     });
 
@@ -360,7 +356,6 @@ export default function AdminLaporanPage() {
           satuan: it?.satuan || 'unit',
           totalDiminta: qty,
           frekuensiTiket: 1,
-          hargaSatuan: it?.harga_satuan || 0,
         });
       }
     });
@@ -376,7 +371,6 @@ export default function AdminLaporanPage() {
         frekuensiTiket: val.frekuensiTiket,
         rataPerTiket:
           val.frekuensiTiket > 0 ? Number((val.totalDiminta / val.frekuensiTiket).toFixed(1)) : 0,
-        estimasiNilai: val.totalDiminta * val.hargaSatuan,
       }))
       .filter((row) => {
         if (!itemSearch) return true;
@@ -390,7 +384,7 @@ export default function AdminLaporanPage() {
       .sort((a, b) => b.totalDiminta - a.totalDiminta);
   }, [rawItems, rawRequests, itemSearch]);
 
-  // --- 4. Laporan Posisi & Valuasi Persediaan Fisik ---
+  // --- 4. Laporan Posisi Persediaan Fisik ---
   const stockAuditRows = useMemo<StockAuditRow[]>(() => {
     return rawItems
       .map((it) => {
@@ -406,8 +400,6 @@ export default function AdminLaporanPage() {
           satuan: it.satuan,
           stok: it.stok,
           stok_minimum: it.stok_minimum,
-          harga_satuan: it.harga_satuan || 0,
-          totalValuasi: (it.stok || 0) * (it.harga_satuan || 0),
           statusStok,
         };
       })
@@ -492,7 +484,6 @@ export default function AdminLaporanPage() {
       'Total Kuantitas Diminta',
       'Frekuensi Pengajuan',
       'Rata-rata per Tiket',
-      'Estimasi Nilai Distribusi (IDR)',
     ];
     const rows = consumptionRows.map((r) => [
       r.kode,
@@ -502,7 +493,6 @@ export default function AdminLaporanPage() {
       r.totalDiminta,
       r.frekuensiTiket,
       r.rataPerTiket,
-      r.estimasiNilai,
     ]);
     downloadCsv(`laporan_konsumsi_barang_${formatDateShort(new Date())}.csv`, headers, rows);
     showToast('Laporan konsumsi barang berhasil diunduh.', 'success');
@@ -517,8 +507,6 @@ export default function AdminLaporanPage() {
       'Stok Fisik',
       'Batas Minimum',
       'Status Stok',
-      'Harga Satuan (IDR)',
-      'Total Valuasi Fisik (IDR)',
     ];
     const rows = stockAuditRows.map((r) => [
       r.kode,
@@ -528,8 +516,6 @@ export default function AdminLaporanPage() {
       r.stok,
       r.stok_minimum,
       r.statusStok,
-      r.harga_satuan,
-      r.totalValuasi,
     ]);
     downloadCsv(`laporan_posisi_persediaan_${formatDateShort(new Date())}.csv`, headers, rows);
     showToast('Laporan posisi persediaan fisik berhasil diunduh.', 'success');
@@ -781,19 +767,6 @@ export default function AdminLaporanPage() {
       ),
     },
     {
-      id: 'estimasiNilai',
-      header: 'Estimasi Nilai Distribusi',
-      accessorKey: 'estimasiNilai',
-      isNumeric: true,
-      className: 'min-w-[140px]',
-      csvValue: (row) => row.estimasiNilai,
-      cell: (row) => (
-        <span className="tabular-nums font-semibold text-primary text-xs whitespace-nowrap">
-          {formatRupiah(row.estimasiNilai)}
-        </span>
-      ),
-    },
-    {
       id: 'aksi',
       header: 'Aksi',
       className: 'min-w-[115px] print:hidden',
@@ -879,19 +852,6 @@ export default function AdminLaporanPage() {
       ),
     },
     {
-      id: 'totalValuasi',
-      header: 'Estimasi Nilai Stok',
-      accessorKey: 'totalValuasi',
-      isNumeric: true,
-      className: 'min-w-[140px]',
-      csvValue: (row) => row.totalValuasi,
-      cell: (row) => (
-        <span className="tabular-nums font-semibold text-text-main text-xs whitespace-nowrap">
-          {formatRupiah(row.totalValuasi)}
-        </span>
-      ),
-    },
-    {
       id: 'statusStok',
       header: 'Status',
       accessorKey: 'statusStok',
@@ -956,11 +916,11 @@ export default function AdminLaporanPage() {
       contentClassName="space-y-3"
     >
       {/* Official Header for Print Mode */}
-      <div className="hidden print:flex flex-col gap-4 pt-4 pb-6 mb-8 border-b-2 border-black bg-white">
+      <div className="hidden print:flex flex-col gap-1.5 pt-2 pb-6 mb-8 border-b-2 border-black bg-white">
         {/* Top Row: Information on Left, Logo on Right */}
         <div className="flex items-start justify-between gap-4">
           {/* Pojok Atas Kiri: Periode Data & Waktu Cetak */}
-          <div className="text-left text-xs text-text-muted space-y-1.5 pt-1">
+          <div className="text-left text-xs text-text-muted space-y-1.5 pt-3">
             <p className="text-xs">
               Periode Data:{' '}
               <span className="font-semibold text-text-main">
@@ -973,8 +933,8 @@ export default function AdminLaporanPage() {
             </p>
           </div>
 
-          {/* Pojok Atas Kanan: Logo Pelindo TPS */}
-          <div className="relative h-12 w-56 shrink-0">
+          {/* Pojok Atas Kanan: Logo Pelindo TPS (diperbesar 50%, tanpa terpotong & padding terkompensasi) */}
+          <div className="relative h-[72px] w-64 sm:w-72 shrink-0 pr-1">
             <Image
               src="/logo/pelindo-color.png"
               alt="Logo Pelindo Terminal Petikemas TPS Surabaya"
@@ -986,7 +946,7 @@ export default function AdminLaporanPage() {
         </div>
 
         {/* Document Title Block */}
-        <div className="pt-3 border-t border-gray-200">
+        <div className="pt-1.5 border-t border-gray-200">
           <h1 className="text-lg font-bold text-text-main uppercase tracking-tight">
             {activeReport === 'transaksi'
               ? 'Laporan Riwayat Permintaan Alat Tulis Kantor'
@@ -994,7 +954,7 @@ export default function AdminLaporanPage() {
               ? 'Laporan Rekapitulasi Kinerja Bulanan Alat Tulis Kantor'
               : activeReport === 'konsumsi'
               ? 'Laporan Konsumsi & Distribusi Barang Alat Tulis Kantor'
-              : 'Laporan Posisi Persediaan & Valuasi Fisik Alat Tulis Kantor'}
+              : 'Laporan Posisi Persediaan Fisik Alat Tulis Kantor'}
           </h1>
           <p className="text-xs text-text-muted mt-1">General Affairs - PT Pelindo Terminal Petikemas</p>
         </div>
@@ -1207,9 +1167,9 @@ export default function AdminLaporanPage() {
               </p>
             </div>
             <div className="p-3 bg-surface rounded-card border border-border">
-              <p className="text-[11px] text-text-muted font-medium">Estimasi Pengeluaran</p>
+              <p className="text-[11px] text-text-muted font-medium">Jenis Barang Diminta</p>
               <p className="text-lg font-bold text-text-main tabular-nums mt-0.5">
-                {formatRupiah(consumptionRows.reduce((acc, curr) => acc + curr.estimasiNilai, 0))}
+                {consumptionRows.filter((r) => r.totalDiminta > 0).length} SKU
               </p>
             </div>
             <div className="p-3 bg-surface rounded-card border border-border">
@@ -1254,15 +1214,15 @@ export default function AdminLaporanPage() {
         </div>
       )}
 
-      {/* --- MODUL 4: POSISI PERSEDIAAN FISIK & VALUASI --- */}
+      {/* --- MODUL 4: POSISI PERSEDIAAN FISIK --- */}
       {activeReport === 'persediaan' && (
         <div className="flex-1 min-h-0 flex flex-col space-y-2.5">
           {/* Mini Summary Banner (4 balanced cards: 2x2 on mobile, 4 columns on desktop) */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 shrink-0 print:hidden">
             <div className="p-3 bg-surface rounded-card border border-border">
-              <p className="text-[11px] text-text-muted font-medium">Total Valuasi Fisik</p>
+              <p className="text-[11px] text-text-muted font-medium">Total Unit Fisik</p>
               <p className="text-lg font-bold text-text-main tabular-nums mt-0.5">
-                {formatRupiah(rawItems.reduce((acc, curr) => acc + curr.stok * (curr.harga_satuan || 0), 0))}
+                {formatNumber(rawItems.reduce((acc, curr) => acc + (curr.stok || 0), 0))} unit
               </p>
             </div>
             <div className="p-3 bg-surface rounded-card border border-border">
@@ -1500,16 +1460,10 @@ export default function AdminLaporanPage() {
                   {inspectedItem.frekuensiTiket} kali
                 </span>
               </div>
-              <div className="p-2.5 rounded-control border border-border bg-surface">
+              <div className="p-2.5 rounded-control border border-border bg-surface col-span-2">
                 <span className="text-text-muted block text-[11px]">Rata-rata per Tiket</span>
                 <span className="font-semibold text-text-main tabular-nums mt-0.5 block">
                   {inspectedItem.rataPerTiket} {inspectedItem.satuan}
-                </span>
-              </div>
-              <div className="p-2.5 rounded-control border border-border bg-surface">
-                <span className="text-text-muted block text-[11px]">Estimasi Nilai Distribusi</span>
-                <span className="font-semibold text-text-main tabular-nums mt-0.5 block">
-                  {formatRupiah(inspectedItem.estimasiNilai)}
                 </span>
               </div>
             </div>
@@ -1559,18 +1513,6 @@ export default function AdminLaporanPage() {
                 <span className="text-text-muted block text-[11px]">Batas Minimum Aman</span>
                 <span className="font-bold text-text-main text-base tabular-nums mt-0.5 block">
                   {inspectedStock.stok_minimum} {inspectedStock.satuan}
-                </span>
-              </div>
-              <div className="p-2.5 rounded-control border border-border bg-surface">
-                <span className="text-text-muted block text-[11px]">Harga Satuan</span>
-                <span className="font-semibold text-text-main tabular-nums mt-0.5 block">
-                  {formatRupiah(inspectedStock.harga_satuan)}
-                </span>
-              </div>
-              <div className="p-2.5 rounded-control border border-border bg-surface">
-                <span className="text-text-muted block text-[11px]">Estimasi Total Nilai Aset</span>
-                <span className="font-semibold text-text-main tabular-nums mt-0.5 block">
-                  {formatRupiah(inspectedStock.totalValuasi)}
                 </span>
               </div>
             </div>
