@@ -42,7 +42,7 @@ function UserDashboardContent() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Form states initialized directly from search parameters if present
-  const [selectedItemId, setSelectedItemId] = useState<string>(itemParam);
+  const [namaBarang, setNamaBarang] = useState<string>('');
   const [jumlah, setJumlah] = useState<number>(() =>
     qtyParam && !isNaN(Number(qtyParam)) ? Math.max(1, Number(qtyParam)) : 1
   );
@@ -61,10 +61,22 @@ function UserDashboardContent() {
   const [page, setPage] = useState(1);
   const pageSize = 5;
 
-  // Selected item reference
-  const selectedItem = useMemo(() => {
-    return items.find((it) => it.id === selectedItemId) || null;
-  }, [items, selectedItemId]);
+  // Selected item reference if manual input matches an existing catalog item
+  const matchedItem = useMemo(() => {
+    if (!namaBarang.trim()) return null;
+    return items.find((it) => it.nama.toLowerCase() === namaBarang.trim().toLowerCase()) || null;
+  }, [items, namaBarang]);
+
+  // Pre-fill namaBarang if itemParam (ID or name) was passed in URL
+  useEffect(() => {
+    if (itemParam && items.length > 0 && !namaBarang) {
+      const found = items.find((it) => it.id === itemParam || it.nama.toLowerCase() === itemParam.toLowerCase());
+      if (found) {
+        setNamaBarang(found.nama);
+        if (!satuan) setSatuan(found.satuan || 'pcs');
+      }
+    }
+  }, [itemParam, items, namaBarang, satuan]);
 
   // Load items and user requests asynchronously after mount
   useEffect(() => {
@@ -155,8 +167,9 @@ function UserDashboardContent() {
     e.preventDefault();
     setFormError(null);
 
-    if (!selectedItemId) {
-      setFormError('Silakan pilih barang ATK terlebih dahulu.');
+    const trimmedBarang = namaBarang.trim();
+    if (!trimmedBarang) {
+      setFormError('Silakan masukkan nama barang ATK yang dibutuhkan.');
       return;
     }
 
@@ -177,36 +190,64 @@ function UserDashboardContent() {
 
     setIsSubmitting(true);
 
-    const trimmedSatuan = satuan.trim() || selectedItem?.satuan || 'pcs';
-    const finalKeperluan = `[Satuan: ${trimmedSatuan}] ${keperluan.trim()}`;
+    const trimmedSatuan = satuan.trim() || matchedItem?.satuan || 'pcs';
+    const finalKeperluan = `[Barang: ${trimmedBarang}] [Satuan: ${trimmedSatuan}] ${keperluan.trim()}`;
+
+    // Fallback item ID to satisfy NOT NULL foreign key constraint if migration 007 is not executed yet
+    const fallbackItemId = matchedItem?.id || (items.length > 0 ? items[0].id : null);
 
     try {
-      const { data, error } = await supabase
+      // 1. Try modern insert with nama_barang & satuan (and matched item_id if any)
+      const primaryPayload: Record<string, unknown> = {
+        user_id: userId,
+        item_id: matchedItem ? matchedItem.id : fallbackItemId,
+        nama_barang: trimmedBarang,
+        satuan: trimmedSatuan,
+        jumlah,
+        keperluan: finalKeperluan,
+        status: 'diproses',
+      };
+
+      let insertResult = await supabase
         .from('requests')
-        .insert({
-          user_id: userId,
-          item_id: selectedItemId,
-          jumlah,
-          keperluan: finalKeperluan,
-          status: 'diproses',
-        })
+        .insert(primaryPayload)
         .select('*, items(*)')
         .single();
 
-      if (error) {
-        setFormError('Gagal mengirimkan permintaan: ' + error.message);
+      // If schema doesn't yet have nama_barang/satuan columns, gracefully retry without them
+      if (
+        insertResult.error &&
+        (insertResult.error.message?.includes('nama_barang') ||
+          insertResult.error.message?.includes('satuan'))
+      ) {
+        const legacyPayload: Record<string, unknown> = {
+          user_id: userId,
+          item_id: matchedItem ? matchedItem.id : fallbackItemId,
+          jumlah,
+          keperluan: finalKeperluan,
+          status: 'diproses',
+        };
+        insertResult = await supabase
+          .from('requests')
+          .insert(legacyPayload)
+          .select('*, items(*)')
+          .single();
+      }
+
+      if (insertResult.error) {
+        setFormError('Gagal mengirimkan permintaan: ' + insertResult.error.message);
         return;
       }
 
       showToast('Permintaan ATK berhasil diajukan.', 'success');
 
       // Prepend to requests list
-      if (data) {
-        setRequests((prev) => [data as RequestWithDetails, ...prev]);
+      if (insertResult.data) {
+        setRequests((prev) => [insertResult.data as RequestWithDetails, ...prev]);
       }
 
       // Reset form
-      setSelectedItemId('');
+      setNamaBarang('');
       setJumlah(1);
       setSatuan('');
       setKeperluan('');
@@ -295,17 +336,25 @@ function UserDashboardContent() {
       header: 'Barang & Kuantitas',
       className: 'min-w-[220px]',
       csvValue: (row) => {
-        const { satuan: unit } = parseRequestKeperluan(row.keperluan, row.items?.satuan);
-        return `${row.items?.nama || 'Barang Dihapus'}${
-          row.items?.kode ? ` (${row.items.kode})` : ''
-        } - ${row.jumlah} ${unit}`;
+        const { satuan: unit, namaBarang: parsedBarang } = parseRequestKeperluan(
+          row.keperluan,
+          row.items?.satuan,
+          row.items?.nama
+        );
+        const itemName = (row as RequestWithDetails).nama_barang || parsedBarang || row.items?.nama || 'Barang ATK';
+        return `${itemName}${row.items?.kode ? ` (${row.items.kode})` : ''} - ${row.jumlah} ${unit}`;
       },
       cell: (row) => {
-        const { satuan: unit } = parseRequestKeperluan(row.keperluan, row.items?.satuan);
+        const { satuan: unit, namaBarang: parsedBarang } = parseRequestKeperluan(
+          row.keperluan,
+          row.items?.satuan,
+          row.items?.nama
+        );
+        const itemName = (row as RequestWithDetails).nama_barang || parsedBarang || row.items?.nama || 'Barang ATK';
         return (
           <div className="min-w-0 py-0.5">
             <p className="font-medium text-text-main text-xs leading-snug">
-              {row.items?.nama || 'Barang Dihapus'}
+              {itemName}
             </p>
             <p className="text-[11px] text-text-muted mt-0.5 font-medium">
               {row.jumlah} {unit}
@@ -432,53 +481,58 @@ function UserDashboardContent() {
                 Form Permintaan ATK
               </h2>
               <p className="text-xs text-text-muted mt-0.5">
-                Pilih barang inventaris dan cantumkan jumlah keperluan.
+                Input kebutuhan barang ATK dan cantumkan jumlah keperluan.
               </p>
             </div>
 
             <form onSubmit={handleSubmit} className="flex-1 flex flex-col justify-between space-y-4">
               <div className="space-y-3.5">
-                {/* Item Selection */}
+                {/* Manual Item Input with Datalist Suggestions */}
                 <div>
-                  <label htmlFor="item-select" className="block text-xs font-medium text-text-main mb-1.5">
-                    Pilih Barang ATK <span className="text-danger">*</span>
+                  <label htmlFor="nama-barang-input" className="block text-xs font-medium text-text-main mb-1.5">
+                    Nama Barang ATK <span className="text-danger">*</span>
                   </label>
                   <div className="relative">
-                    <select
-                      id="item-select"
-                      value={selectedItemId}
+                    <input
+                      id="nama-barang-input"
+                      type="text"
+                      list="atk-catalog-list"
+                      value={namaBarang}
                       onChange={(e) => {
                         const val = e.target.value;
-                        setSelectedItemId(val);
+                        setNamaBarang(val);
                         setFormError(null);
-                        const matched = items.find((i) => i.id === val);
+                        const matched = items.find(
+                          (i) => i.nama.toLowerCase() === val.trim().toLowerCase()
+                        );
                         if (matched && !satuan) {
                           setSatuan(matched.satuan || 'pcs');
                         }
                       }}
-                      className="w-full appearance-none pl-3 pr-8.5 py-2 text-xs rounded-control border border-border bg-bg text-text-main transition-colors focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary cursor-pointer min-h-[38px]"
-                    >
-                      <option value="">-- Pilih Barang ATK --</option>
+                      placeholder="Ketik manual nama barang ATK yang dibutuhkan..."
+                      className="w-full pl-3 pr-3 py-2 text-xs rounded-control border border-border bg-bg text-text-main placeholder:text-text-muted transition-colors focus:bg-surface focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary min-h-[38px]"
+                      required
+                    />
+                    <datalist id="atk-catalog-list">
                       {items.map((it) => (
-                        <option key={it.id} value={it.id}>
-                          {it.kode ? `[${it.kode}] ` : ''}{it.nama}
+                        <option key={it.id} value={it.nama}>
+                          {it.kode ? `[${it.kode}] ` : ''}{it.kategori ? `(${it.kategori})` : ''}
                         </option>
                       ))}
-                    </select>
-                    <ChevronDown
-                      className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-text-muted"
-                      strokeWidth={1.5}
-                    />
+                    </datalist>
                   </div>
+                  <p className="text-[11px] text-text-muted mt-1">
+                    Bebas input nama barang apa saja yang dibutuhkan divisi Anda (bisa memilih saran atau input barang baru).
+                  </p>
                 </div>
 
-                {/* Category Context (Zero Stock Info) */}
-                {selectedItem && (
-                  <div className="rounded-control bg-bg/80 border border-border p-2.5 text-xs">
-                    <div className="flex items-center justify-between">
-                      <span className="text-text-muted">Kategori Barang:</span>
-                      <span className="font-semibold text-text-main">{selectedItem.kategori || 'Umum'}</span>
-                    </div>
+                {/* Category Context (If Identified from Catalog) */}
+                {matchedItem && (
+                  <div className="rounded-control bg-bg/80 border border-border p-2.5 text-xs flex items-center justify-between">
+                    <span className="text-text-muted">Katalog Teridentifikasi:</span>
+                    <span className="font-semibold text-text-main font-mono text-[11px]">
+                      {matchedItem.kode} - {matchedItem.kategori || 'Umum'}
+                    </span>
                   </div>
                 )}
 
@@ -658,13 +712,14 @@ function UserDashboardContent() {
                 onClick={() => {
                   const req = selectedRequest;
                   setSelectedRequest(null);
-                  if (req.items?.id) {
-                    setSelectedItemId(req.items.id);
-                    setJumlah(req.jumlah);
-                    setKeperluan(req.keperluan);
-                    setMobileTab('form');
-                    showToast('Data pengajuan telah disalin ke formulir.', 'info');
-                  }
+                  const parsed = parseRequestKeperluan(req.keperluan, req.items?.satuan, req.items?.nama);
+                  const itemName = req.nama_barang || parsed.namaBarang || req.items?.nama || '';
+                  setNamaBarang(itemName);
+                  setSatuan(parsed.satuan || 'pcs');
+                  setJumlah(req.jumlah);
+                  setKeperluan(parsed.cleanKeperluan !== '-' ? parsed.cleanKeperluan : '');
+                  setMobileTab('form');
+                  showToast('Data pengajuan telah disalin ke formulir.', 'info');
                 }}
                 className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-control bg-primary hover:bg-primary-dark text-white text-xs font-semibold transition-colors"
               >
@@ -683,7 +738,16 @@ function UserDashboardContent() {
         }
       >
         {selectedRequest && (() => {
-          const parsed = parseRequestKeperluan(selectedRequest.keperluan, selectedRequest.items?.satuan);
+          const parsed = parseRequestKeperluan(
+            selectedRequest.keperluan,
+            selectedRequest.items?.satuan,
+            selectedRequest.items?.nama
+          );
+          const itemName =
+            (selectedRequest as RequestWithDetails).nama_barang ||
+            parsed.namaBarang ||
+            selectedRequest.items?.nama ||
+            'Barang ATK';
           return (
             <div className="space-y-5 text-xs">
               {/* Status & Item Headline */}
@@ -697,7 +761,7 @@ function UserDashboardContent() {
                 <div className="flex items-center justify-between pt-1 border-t border-border/50">
                   <span className="text-text-muted">Barang</span>
                   <span className="font-semibold text-text-main text-right">
-                    {selectedRequest.items?.nama}
+                    {itemName}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
